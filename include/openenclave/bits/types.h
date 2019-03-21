@@ -1,12 +1,22 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+/**
+ * @file types.h
+ *
+ * This file defines the types used by the OE SDK.
+ */
+
 #ifndef _OE_BITS_TYPES_H
 #define _OE_BITS_TYPES_H
 
 #include "defs.h"
 
-/* Basic types */
+/**
+ * @cond DEV
+ *
+ * Basic types
+ */
 #if defined(__GNUC__)
 typedef long ssize_t;
 typedef unsigned long size_t;
@@ -121,6 +131,9 @@ typedef uint32_t in_addr_t;
 #define OE_UINT64_MAX (0xffffffffffffffffu)
 #define OE_SIZE_MAX OE_UINT64_MAX
 #define OE_SSIZE_MAX OE_INT64_MAX
+/**
+ * @endcond
+ */
 
 /**
  * This enumeration defines values for the **enclave_type** parameter
@@ -145,6 +158,7 @@ typedef struct _oe_enclave oe_enclave_t;
 
 /**
  * This enumeration type defines the policy used to derive a seal key.
+ * This definition is shared by the enclave and the host.
  */
 typedef enum _oe_seal_policy
 {
@@ -165,10 +179,10 @@ typedef enum _oe_seal_policy
      */
     _OE_SEAL_POLICY_MAX = OE_ENUM_MAX,
 } oe_seal_policy_t;
-/**< typedef enum _oe_seal_policy oe_seal_policy_t*/
 
 /**
  * This enumeration defines the type of a asymmetric key.
+ * This definition is shared by the enclave and the host.
  */
 typedef enum _oe_asymmetric_key_type
 {
@@ -182,10 +196,10 @@ typedef enum _oe_asymmetric_key_type
      */
     _OE_ASYMMETRIC_KEY_TYPE_MAX = OE_ENUM_MAX,
 } oe_asymmetric_key_type_t;
-/**< typedef enum _oe_asymmetric_key_type oe_asymmetric_key_type_t*/
 
 /**
  * This enumeration defines the format of the asymmetric key.
+ * This definition is shared by the enclave and the host.
  */
 typedef enum _oe_asymmetric_key_format
 {
@@ -199,8 +213,11 @@ typedef enum _oe_asymmetric_key_format
      */
     _OE_ASYMMETRIC_KEY_FORMAT_MAX = OE_ENUM_MAX,
 } oe_asymmetric_key_format_t;
-/**< typedef enum _oe_asymmetric_key_format oe_asymmetric_key_format_t*/
 
+/**
+ * This struct contains the parameters for asymmetric key derivation.
+ * This definition is shared by the enclave and the host.
+ */
 typedef struct _oe_asymmetric_key_params
 {
     /**
@@ -223,6 +240,5 @@ typedef struct _oe_asymmetric_key_params
      */
     size_t user_data_size;
 } oe_asymmetric_key_params_t;
-/**< typedef enum _oe_asymmetric_key_params oe_asymmetric_key_params_t*/
 
 #endif /* _OE_BITS_TYPES_H */
