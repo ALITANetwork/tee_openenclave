@@ -1,8 +1,9 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+
 string(REPLACE ";" "  " MBEDTLS_SPECTRE_MITIGATION_FLAGS "${OE_SPECTRE_MITIGATION_FLAGS}")
-set(MBEDTLS_WRAP_CFLAGS "-nostdinc -I${PROJECT_SOURCE_DIR}/include/openenclave/corelibc -I${PROJECT_SOURCE_DIR}/include -DOE_NEED_STDC_NAMES -fPIE -fno-builtin-udivti3 ${MBEDTLS_SPECTRE_MITIGATION_FLAGS} -ftls-model=local-exec")
+set(MBEDTLS_WRAP_CFLAGS "-nostdinc -I${PROJECT_SOURCE_DIR}/include/openenclave/corelibc -I${PROJECT_SOURCE_DIR}/include/openenclave -I${PROJECT_SOURCE_DIR}/include -DOE_NEED_STDC_NAMES -fPIE -fno-builtin-udivti3 ${MBEDTLS_SPECTRE_MITIGATION_FLAGS} -ftls-model=local-exec")
 
 if (USE_CLANGW)
   set(MBEDTLS_WRAP_CFLAGS "-target x86_64-pc-linux ${MBEDTLS_WRAP_CFLAGS}")
@@ -68,7 +69,7 @@ target_link_libraries(mbedtls_imported INTERFACE oecore)
 add_library(mbedx509_imported IMPORTED STATIC)
 set_target_properties(mbedx509_imported PROPERTIES
   IMPORTED_LOCATION ${BINARY_DIR}/library/libmbedx509.a)
-target_link_libraries(mbedx509_imported INTERFACE oecore)
+target_link_libraries(mbedx509_imported INTERFACE oelibc oecore)
 
 add_library(mbedcrypto_imported IMPORTED STATIC)
 set_target_properties(mbedcrypto_imported PROPERTIES
