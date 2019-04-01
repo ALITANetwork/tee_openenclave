@@ -14,8 +14,6 @@
 #include <openenclave/internal/calls.h>
 #include <openenclave/internal/thread.h>
 #include <openenclave/internal/print.h>
-#include <openenclave/internal/hostbatch.h>
-#include "../common/hostfsargs.h"
 #include "../../../common/oe_t.h"
 #include <openenclave/corelibc/stdlib.h>
 #include <openenclave/corelibc/string.h>
@@ -41,8 +39,6 @@ static oe_spinlock_t _lock;
 #define FS_MAGIC 0x5f35f964
 #define FILE_MAGIC 0xfe48c6ff
 #define DIR_MAGIC 0x8add1b0b
-
-typedef oe_hostfs_args_t args_t;
 
 typedef struct _fs
 {

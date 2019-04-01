@@ -417,11 +417,6 @@ static oe_result_t _handle_ocall(
             oe_handle_log(enclave, arg_in);
             break;
 
-        case OE_OCALL_HOSTFS:
-        {
-            oe_handle_hostfs_ocall((void*)arg_in);
-            break;
-        }
         case OE_OCALL_HOSTSOCK:
         {
             oe_handle_hostsock_ocall((void*)arg_in);
