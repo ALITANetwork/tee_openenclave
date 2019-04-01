@@ -60,3 +60,4 @@ tools/oeedger8r/main\.ml
 device/edl/sgxfs.edl
 tools/oesign/getopt\.h
 tools/oesign/getopt_long\.c
+device/edl/sgxfs.edl
