@@ -36,8 +36,8 @@ static void* epoll_wait_thread(void* arg_)
     {
         size_t num_notifications = (size_t)ret;
         struct epoll_event* ev = args->events;
-        struct oe_device_notifications* notifications =
-            (struct oe_device_notifications*)ev;
+        oe_device_notifications_t* notifications =
+            (oe_device_notifications_t*)ev;
 
         OE_STATIC_ASSERT(sizeof(notifications[0]) == sizeof(ev[0]));
 

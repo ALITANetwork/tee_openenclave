@@ -33,7 +33,7 @@ oe_device_t* oe_epoll_get_epoll(void);
 int oe_register_epoll_device(void);
 
 OE_PACK_BEGIN
-struct oe_device_notifications
+typedef struct _oe_device_notifications
 {
     uint32_t event_mask; // oe_epoll_event.event
     union {
@@ -45,7 +45,7 @@ struct oe_device_notifications
                 list_idx; // On the host side we set this into the event data
         };
     };
-};
+} oe_device_notifications_t;
 OE_PACK_END
 
 struct oe_device_notification_args

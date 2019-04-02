@@ -92,7 +92,8 @@ void ecall_oe_polling_notify(
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(
         notifications,
-        (pargs_in->num_notifications * sizeof(struct oe_device_notifications)));
+        (pargs_in->num_notifications *
+         sizeof(struct _oe_device_notifications)));
 
     /* Set out and in-out pointers. In-out parameters are copied to output
      * buffer. */

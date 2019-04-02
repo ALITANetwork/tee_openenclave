@@ -10,7 +10,7 @@ enclave {
 
         public int oe_polling_notify(
             [in, count=num_notifications]
-            struct oe_device_notifications* notifications,
+            struct _oe_device_notifications* notifications,
             size_t num_notifications);
     };
 

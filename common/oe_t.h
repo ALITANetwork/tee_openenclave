@@ -16,7 +16,7 @@ OE_EXTERNC_BEGIN
 
 void public_root_ecall(void);
 int oe_polling_notify(
-    struct oe_device_notifications* notifications,
+    struct _oe_device_notifications* notifications,
     size_t num_notifications);
 
 /* List of ocalls */

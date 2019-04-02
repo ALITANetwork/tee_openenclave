@@ -56,7 +56,7 @@ typedef struct _public_root_ecall_args_t
 typedef struct _oe_polling_notify_args_t
 {
     int _retval;
-    struct oe_device_notifications* notifications;
+    struct _oe_device_notifications* notifications;
     size_t num_notifications;
     oe_result_t _result;
 } oe_polling_notify_args_t;

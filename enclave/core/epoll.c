@@ -181,7 +181,7 @@ static const size_t NODE_CHUNK = 256;
 
 struct _notification_node
 {
-    struct oe_device_notifications notice;
+    struct _oe_device_notifications notice;
     struct _notification_node* pnext;
 };
 
@@ -318,7 +318,7 @@ static struct _notification_node* _new_notification()
 
 int oe_post_device_notifications(
     int num_notifications,
-    struct oe_device_notifications* notices)
+    oe_device_notifications_t* notices)
 {
     struct _notification_node** pplist = NULL;
     struct _notification_node* pnode = NULL;
@@ -463,7 +463,7 @@ int oe_get_epoll_events(
 // synchronisaion issues. Instead, we send the list and notify the list, the
 // push the doorbell
 int oe_polling_notify(
-    struct oe_device_notifications* notifications,
+    oe_device_notifications_t* notifications,
     size_t num_notifications)
 {
     int ret = -1;

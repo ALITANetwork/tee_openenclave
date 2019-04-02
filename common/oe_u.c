@@ -99,7 +99,7 @@ done:
 oe_result_t oe_polling_notify(
     oe_enclave_t* enclave,
     int* _retval,
-    struct oe_device_notifications* notifications,
+    struct _oe_device_notifications* notifications,
     size_t num_notifications)
 {
     oe_result_t _result = OE_FAILURE;
@@ -120,7 +120,7 @@ oe_result_t oe_polling_notify(
 
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
-    _args.notifications = (struct oe_device_notifications*)notifications;
+    _args.notifications = (struct _oe_device_notifications*)notifications;
     _args.num_notifications = num_notifications;
 
     /* Compute input buffer size. Include in and in-out parameters. */
@@ -128,7 +128,8 @@ oe_result_t oe_polling_notify(
     if (notifications)
         OE_ADD_SIZE(
             _input_buffer_size,
-            (_args.num_notifications * sizeof(struct oe_device_notifications)));
+            (_args.num_notifications *
+             sizeof(struct _oe_device_notifications)));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_polling_notify_args_t));
@@ -152,7 +153,7 @@ oe_result_t oe_polling_notify(
 
     OE_WRITE_IN_PARAM(
         notifications,
-        (_args.num_notifications * sizeof(struct oe_device_notifications)));
+        (_args.num_notifications * sizeof(struct _oe_device_notifications)));
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
