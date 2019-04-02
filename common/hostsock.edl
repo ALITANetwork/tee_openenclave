@@ -138,14 +138,20 @@ enclave {
 
         int oe_hostsock_getsockname(
             int sockfd, 
-            [user_check] struct sockaddr *addr, 
-            [out, size=1] socklen_t *addrlen,
+            [in, out, size=addrlen_in] struct sockaddr* addr, 
+            socklen_t addrlen_in,
+            [out, size=1] socklen_t* addrlen_out,
             [out, count=1] int* err);
 
         int oe_hostsock_getpeername(
             int sockfd, 
-            [user_check] struct sockaddr *addr, 
-            [out, count=1] socklen_t *addrlen,
+            [in, out, size=addrlen_in] struct sockaddr* addr, 
+            socklen_t addrlen_in,
+            [out, size=1] socklen_t* addrlen_out,
+            [out, count=1] int* err);
+
+        int oe_hostsock_shutdown_device(
+            int sockfd, 
             [out, count=1] int* err);
     };
 };

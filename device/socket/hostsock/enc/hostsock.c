@@ -19,7 +19,6 @@
 #include <openenclave/corelibc/sys/uio.h>
 #include <openenclave/corelibc/sys/socket.h>
 #include <openenclave/internal/print.h>
-#include "../common/hostsockargs.h"
 #include "../../../common/oe_t.h"
 
 /*
@@ -33,34 +32,6 @@
 static oe_host_batch_t* _host_batch;
 static oe_spinlock_t _lock;
 
-static void _atexit_handler()
-{
-    oe_spin_lock(&_lock);
-    oe_host_batch_delete(_host_batch);
-    _host_batch = NULL;
-    oe_spin_unlock(&_lock);
-}
-
-static oe_host_batch_t* _get_host_batch(void)
-{
-    const size_t BATCH_SIZE = sizeof(oe_hostsock_args_t) + OE_BUFSIZ;
-
-    if (_host_batch == NULL)
-    {
-        oe_spin_lock(&_lock);
-
-        if (_host_batch == NULL)
-        {
-            _host_batch = oe_host_batch_new(BATCH_SIZE);
-            oe_atexit(_atexit_handler);
-        }
-
-        oe_spin_unlock(&_lock);
-    }
-
-    return _host_batch;
-}
-
 /*
 **==============================================================================
 **
@@ -70,8 +41,6 @@ static oe_host_batch_t* _get_host_batch(void)
 */
 
 #define SOCKET_MAGIC 0x536f636b
-
-typedef oe_hostsock_args_t args_t;
 
 typedef struct _sock
 {
@@ -808,62 +777,36 @@ static int _hostsock_getpeername(
     struct oe_sockaddr* addr,
     socklen_t* addrlen)
 {
-    int64_t ret = -1;
+    int ret = -1;
     sock_t* sock = _cast_sock(sock_);
-    oe_host_batch_t* batch = _get_host_batch();
-    args_t* args = NULL;
+    socklen_t addrlen_in = 0;
 
     oe_errno = 0;
 
-    /* Check parameters. */
-    if (!sock || !batch || !addr || !addrlen)
+    if (!sock)
     {
         oe_errno = EINVAL;
         goto done;
     }
 
-    /* Input */
+    if (addrlen)
+        addrlen_in = *addrlen;
+
+    if (oe_hostsock_getpeername(
+            &ret,
+            (int)sock->host_fd,
+            (struct sockaddr*)addr,
+            addrlen_in,
+            addrlen,
+            &oe_errno) != OE_OK)
     {
-        if (!(args = oe_host_batch_calloc(batch, sizeof(args_t) + *addrlen)))
-        {
-            oe_errno = ENOMEM;
-            goto done;
-        }
-
-        args->op = OE_HOSTSOCK_OP_GETPEERNAME;
-        args->u.getpeername.ret = -1;
-        args->u.getpeername.host_fd = sock->host_fd;
-        args->u.getpeername.addrlen = *addrlen;
-        memcpy(args->buf, addr, *addrlen);
-        _fix_address_family((struct oe_sockaddr*)args->buf);
-    }
-
-    /* Call */
-    {
-        if (oe_ocall(OE_OCALL_HOSTSOCK, (uint64_t)args, NULL) != OE_OK)
-        {
-            oe_errno = EINVAL;
-            goto done;
-        }
-
-        if ((ret = args->u.getpeername.ret) == -1)
-        {
-            oe_errno = args->err;
-            goto done;
-        }
-    }
-
-    /* Output */
-    {
-        *addrlen = args->u.getpeername.addrlen;
-        memcpy(addr, args->buf, *addrlen);
+        oe_errno = EINVAL;
+        goto done;
     }
 
 done:
-    if (args)
-        oe_host_batch_free(batch);
 
-    return (int)ret;
+    return ret;
 }
 
 static int _hostsock_getsockname(
@@ -871,62 +814,36 @@ static int _hostsock_getsockname(
     struct oe_sockaddr* addr,
     socklen_t* addrlen)
 {
-    int64_t ret = -1;
+    int ret = -1;
     sock_t* sock = _cast_sock(sock_);
-    oe_host_batch_t* batch = _get_host_batch();
-    args_t* args = NULL;
+    socklen_t addrlen_in = 0;
 
     oe_errno = 0;
 
-    /* Check parameters. */
-    if (!sock || !batch || !addr || !addrlen)
+    if (!sock)
     {
         oe_errno = EINVAL;
         goto done;
     }
 
-    /* Input */
+    if (addrlen)
+        addrlen_in = *addrlen;
+
+    if (oe_hostsock_getsockname(
+            &ret,
+            (int)sock->host_fd,
+            (struct sockaddr*)addr,
+            addrlen_in,
+            addrlen,
+            &oe_errno) != OE_OK)
     {
-        if (!(args = oe_host_batch_calloc(batch, sizeof(args_t) + *addrlen)))
-        {
-            oe_errno = ENOMEM;
-            goto done;
-        }
-
-        args->op = OE_HOSTSOCK_OP_GETSOCKNAME;
-        args->u.getsockname.ret = -1;
-        args->u.getsockname.host_fd = sock->host_fd;
-        args->u.getsockname.addrlen = *addrlen;
-        memcpy(args->buf, addr, *addrlen);
-        _fix_address_family((struct oe_sockaddr*)args->buf);
-    }
-
-    /* Call */
-    {
-        if (oe_ocall(OE_OCALL_HOSTSOCK, (uint64_t)args, NULL) != OE_OK)
-        {
-            oe_errno = EINVAL;
-            goto done;
-        }
-
-        if ((ret = args->u.getsockname.ret) == -1)
-        {
-            oe_errno = args->err;
-            goto done;
-        }
-    }
-
-    /* Output */
-    {
-        *addrlen = args->u.getsockname.addrlen;
-        memcpy(addr, args->buf, *addrlen);
+        oe_errno = EINVAL;
+        goto done;
     }
 
 done:
-    if (args)
-        oe_host_batch_free(batch);
 
-    return (int)ret;
+    return ret;
 }
 
 static ssize_t _hostsock_read(oe_device_t* sock_, void* buf, size_t count)
@@ -973,54 +890,26 @@ static int _hostsock_shutdown_device(oe_device_t* sock_)
 {
     int ret = -1;
     sock_t* sock = _cast_sock(sock_);
-    oe_host_batch_t* batch = _get_host_batch();
-    args_t* args = NULL;
 
     oe_errno = 0;
 
-    /* Check parameters. */
-    if (!sock_ || !batch)
+    if (!sock_)
     {
         oe_errno = EINVAL;
         goto done;
     }
 
-    /* Input */
+    if (oe_hostsock_shutdown_device(&ret, (int)sock->host_fd, &oe_errno) !=
+        OE_OK)
     {
-        if (!(args = oe_host_batch_calloc(batch, sizeof(args_t))))
-        {
-            oe_errno = ENOMEM;
-            goto done;
-        }
-
-        args->op = OE_HOSTSOCK_OP_SHUTDOWN_DEVICE;
-        args->u.shutdown_device.ret = -1;
-        args->u.shutdown_device.host_fd = sock->host_fd;
+        oe_errno = EINVAL;
+        goto done;
     }
 
-    /* Call */
-    {
-        if (oe_ocall(OE_OCALL_HOSTSOCK, (uint64_t)args, NULL) != OE_OK)
-        {
-            oe_errno = EINVAL;
-            goto done;
-        }
-
-        if (args->u.shutdown_device.ret != 0)
-        {
-            oe_errno = args->err;
-            goto done;
-        }
-    }
-
-    /* Release the sock_ object. */
-    oe_free(sock);
-
-    ret = 0;
+    if (ret != -1)
+        oe_free(sock);
 
 done:
-    if (args)
-        oe_host_batch_free(batch);
 
     return ret;
 }
