@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <openenclave/host.h>
 #include <openenclave/internal/calls.h>
+#include <openenclave/internal/defs.h>
 #include <openenclave/internal/epoll.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -27,30 +28,18 @@ static void* epoll_wait_thread(void* arg_)
 {
     int ret = 0;
     wait_args_t* args = (wait_args_t*)arg_;
+    int retval;
 
     ret = epoll_wait(args->epfd, args->events, args->maxevents, -1);
 
     if (ret >= 0)
     {
         size_t num_notifications = (size_t)ret;
-        struct oe_device_notifications notifications[num_notifications + 1];
         struct epoll_event* ev = args->events;
-        int i = 0;
+        struct oe_device_notifications* notifications =
+            (struct oe_device_notifications*)ev;
 
-        for (; i < ret; i++)
-        {
-            notifications[i] = ((struct oe_device_notifications*)ev)[i];
-
-#if 1
-            printf(
-                "notification[%d] = events: %d data: %ld\n",
-                i,
-                ev[i].events,
-                ev[i].data.u64);
-#endif
-        }
-
-        int retval;
+        OE_STATIC_ASSERT(sizeof(notifications[0]) == sizeof(ev[0]));
 
         if (oe_polling_notify(
                 (oe_enclave_t*)args->enclaveid,

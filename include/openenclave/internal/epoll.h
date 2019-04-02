@@ -2,9 +2,9 @@
 /* Copyright (c) Microsoft Corporation. All rights reserved. */
 /* Licensed under the MIT License. */
 
-#ifndef __OE_EPOLL_H__
-#define __OE_EPOLL_H__
-#pragma once
+#ifndef _OE_EPOLL_H
+#define _OE_EPOLL_H
+
 #include <openenclave/internal/device.h>
 
 OE_EXTERNC_BEGIN
@@ -38,6 +38,7 @@ oe_device_t* oe_epoll_get_epoll(void);
 
 int oe_register_epoll_device(void);
 
+OE_PACK_BEGIN
 struct oe_device_notifications
 {
     uint32_t event_mask; // oe_epoll_event.event
@@ -50,7 +51,8 @@ struct oe_device_notifications
                 list_idx; // On the host side we set this into the event data
         };
     };
-} EPOLL_PACKED;
+};
+OE_PACK_END
 
 struct oe_device_notification_args
 {
@@ -110,4 +112,4 @@ void oe_handle_hostepoll_ocall(void* args_);
 
 OE_EXTERNC_END
 
-#endif
+#endif /* _OE_EPOLL_H */
