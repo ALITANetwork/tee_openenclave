@@ -2473,7 +2473,17 @@ done:
 oe_result_t oe_hostsock_recvmsg(
     ssize_t* _retval,
     int sockfd,
-    struct msghdr* msg,
+    void* msg_name,
+    socklen_t msg_namelen_in,
+    socklen_t* msg_namelen_out,
+    struct iovec* msg_iov,
+    size_t msg_iovlen_in,
+    size_t* msg_iovlen_out,
+    const void* msg_control,
+    size_t msg_controllen_in,
+    size_t* msg_controllen_out,
+    int msg_flags_in,
+    int* msg_flags,
     int flags,
     int* err)
 {
@@ -2501,17 +2511,40 @@ oe_result_t oe_hostsock_recvmsg(
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.sockfd = sockfd;
-    _args.msg = (struct msghdr*)msg;
+    _args.msg_name = (void*)msg_name;
+    _args.msg_namelen_in = msg_namelen_in;
+    _args.msg_namelen_out = (socklen_t*)msg_namelen_out;
+    _args.msg_iov = (struct iovec*)msg_iov;
+    _args.msg_iovlen_in = msg_iovlen_in;
+    _args.msg_iovlen_out = (size_t*)msg_iovlen_out;
+    _args.msg_control = (void*)msg_control;
+    _args.msg_controllen_in = msg_controllen_in;
+    _args.msg_controllen_out = (size_t*)msg_controllen_out;
+    _args.msg_flags_in = msg_flags_in;
+    _args.msg_flags = (int*)msg_flags;
     _args.flags = flags;
     _args.err = (int*)err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_recvmsg_args_t));
+    if (msg_name)
+        OE_ADD_SIZE(_input_buffer_size, _args.msg_namelen_in);
+    if (msg_iov)
+        OE_ADD_SIZE(
+            _input_buffer_size, (_args.msg_iovlen_in * sizeof(struct iovec)));
+    if (msg_control)
+        OE_ADD_SIZE(_input_buffer_size, _args.msg_controllen_in);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_recvmsg_args_t));
-    if (msg)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(struct msghdr)));
+    if (msg_namelen_out)
+        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(socklen_t)));
+    if (msg_iovlen_out)
+        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(size_t)));
+    if (msg_controllen_out)
+        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(size_t)));
+    if (msg_flags)
+        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
     if (err)
         OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
@@ -2531,6 +2564,10 @@ oe_result_t oe_hostsock_recvmsg(
     /* Serialize buffer inputs (in and in-out parameters) */
     *(uint8_t**)&_pargs_in = _input_buffer;
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
+    OE_WRITE_IN_PARAM(msg_name, _args.msg_namelen_in);
+    OE_WRITE_IN_PARAM(msg_iov, (_args.msg_iovlen_in * sizeof(struct iovec)));
+    OE_WRITE_IN_PARAM(msg_control, _args.msg_controllen_in);
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
@@ -2562,7 +2599,10 @@ oe_result_t oe_hostsock_recvmsg(
 
     /* Unmarshal return value and out, in-out parameters */
     *_retval = _pargs_out->_retval;
-    OE_READ_OUT_PARAM(msg, (size_t)((1 * sizeof(struct msghdr))));
+    OE_READ_OUT_PARAM(msg_namelen_out, (size_t)((1 * sizeof(socklen_t))));
+    OE_READ_OUT_PARAM(msg_iovlen_out, (size_t)((1 * sizeof(size_t))));
+    OE_READ_OUT_PARAM(msg_controllen_out, (size_t)((1 * sizeof(size_t))));
+    OE_READ_OUT_PARAM(msg_flags, (size_t)((1 * sizeof(int))));
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;

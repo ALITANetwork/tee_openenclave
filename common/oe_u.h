@@ -73,7 +73,17 @@ int oe_hostsock_bind(
 int oe_hostsock_listen(int sockfd, int backlog, int* err);
 ssize_t oe_hostsock_recvmsg(
     int sockfd,
-    struct msghdr* msg,
+    void* msg_name,
+    socklen_t msg_namelen_in,
+    socklen_t* msg_namelen_out,
+    struct iovec* msg_iov,
+    size_t msg_iovlen_in,
+    size_t* msg_iovlen_out,
+    const void* msg_control,
+    size_t msg_controllen_in,
+    size_t* msg_controllen_out,
+    int msg_flags_in,
+    int* msg_flags,
     int flags,
     int* err);
 ssize_t oe_hostsock_sendmsg(

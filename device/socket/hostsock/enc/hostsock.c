@@ -61,65 +61,6 @@ static oe_host_batch_t* _get_host_batch(void)
     return _host_batch;
 }
 
-static ssize_t _copy_iov(
-    struct oe_msghdr* dst,
-    const struct oe_msghdr* src,
-    ssize_t bytes_available)
-
-{
-    ssize_t required = -1;
-    size_t iovidx = 0;
-    uint8_t* pbuf = (uint8_t*)dst;
-
-    pbuf += src->msg_namelen;
-    pbuf += sizeof(struct oe_iovec) * src->msg_iovlen;
-    for (iovidx = 0; iovidx < src->msg_iovlen; iovidx++)
-    {
-        pbuf += src->msg_iov[iovidx].iov_len;
-    }
-    pbuf += src->msg_controllen;
-
-    required = (pbuf - (uint8_t*)dst);
-    if (!dst)
-    {
-        return (ssize_t)required;
-    }
-
-    if ((ssize_t)required > bytes_available)
-    {
-        return -1;
-    }
-
-    pbuf = (uint8_t*)dst;
-    dst->msg_namelen = src->msg_namelen;
-    dst->msg_name = pbuf;
-    memcpy(dst->msg_name, src->msg_name, src->msg_namelen);
-    pbuf += src->msg_namelen;
-
-    dst->msg_iovlen = src->msg_iovlen;
-    pbuf += sizeof(struct oe_iovec) * src->msg_iovlen;
-
-    for (iovidx = 0; iovidx < src->msg_iovlen; iovidx++)
-    {
-        dst->msg_iov[iovidx].iov_base = pbuf;
-        dst->msg_iov[iovidx].iov_len = src->msg_iov[iovidx].iov_len;
-        memcpy(
-            dst->msg_iov[iovidx].iov_base,
-            src->msg_iov[iovidx].iov_base,
-            src->msg_iov[iovidx].iov_len);
-        pbuf += src->msg_iov[iovidx].iov_len;
-    }
-
-    dst->msg_controllen = src->msg_controllen;
-    dst->msg_control = pbuf;
-    memcpy(dst->msg_control, src->msg_control, src->msg_controllen);
-    pbuf += dst->msg_controllen;
-
-    dst->msg_flags = src->msg_flags;
-
-    return required;
-}
-
 /*
 **==============================================================================
 **
@@ -561,8 +502,6 @@ static ssize_t _hostsock_recvmsg(
 {
     ssize_t ret = -1;
     sock_t* sock = _cast_sock(sock_);
-    struct oe_msghdr* buf = NULL;
-    ssize_t required;
 
     oe_errno = 0;
 
@@ -572,37 +511,28 @@ static ssize_t _hostsock_recvmsg(
         goto done;
     }
 
-    /* Perform a deep copy of the 'msg' parameter. */
-    {
-        required = _copy_iov(NULL, msg, 0);
-
-        if (!(buf = oe_host_calloc(1, (size_t)required)))
-        {
-            oe_errno = ENOMEM;
-            goto done;
-        }
-
-        _copy_iov(buf, msg, required);
-    }
-
     if (oe_hostsock_recvmsg(
-            &ret, (int)sock->host_fd, (struct msghdr*)buf, flags, &oe_errno) !=
-        OE_OK)
-    {
-        oe_errno = EINVAL;
-        goto done;
-    }
-
-    if (_copy_iov(msg, buf, required) < 0)
+            &ret,
+            (int)sock->host_fd,
+            msg->msg_name,
+            msg->msg_namelen,
+            &msg->msg_namelen,
+            (struct iovec*)msg->msg_iov,
+            msg->msg_iovlen,
+            &msg->msg_iovlen,
+            msg->msg_control,
+            msg->msg_controllen,
+            &msg->msg_controllen,
+            msg->msg_flags,
+            &msg->msg_flags,
+            flags,
+            &oe_errno) != OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
     }
 
 done:
-
-    if (buf)
-        oe_host_free(buf);
 
     return ret;
 }

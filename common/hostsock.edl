@@ -46,18 +46,21 @@ enclave {
             [out, count=1] int* err);
 
         ssize_t oe_hostsock_recvmsg(
-            int sockfd,
-            [out, count=1] struct msghdr* msg,
+            int sockfd, 
+            [in, size=msg_namelen_in] void* msg_name,
+            socklen_t msg_namelen_in,
+            [out, count=1] socklen_t* msg_namelen_out,
+            [in, count=msg_iovlen_in] struct iovec* msg_iov,
+            size_t msg_iovlen_in,
+            [out, count=1] size_t* msg_iovlen_out,
+            [in, size=msg_controllen_in] const void* msg_control,
+            size_t msg_controllen_in,
+            [out, count=1] size_t* msg_controllen_out,
+            int msg_flags_in,
+            [out, count=1] int* msg_flags_out,
             int flags,
             [out, count=1] int* err);
 
-/*
-        ssize_t oe_hostsock_sendmsg(
-            int sockfd, 
-            [in, count=1] const struct msghdr* msg, 
-            int flags,
-            [out, count=1] int* err);
-*/
         ssize_t oe_hostsock_sendmsg(
             int sockfd, 
             [in, size=msg_namelen] const void* msg_name,

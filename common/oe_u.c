@@ -1244,15 +1244,35 @@ void ocall_oe_hostsock_recvmsg(
         goto done;
     }
     /* Set in and in-out pointers */
+    OE_SET_IN_POINTER(msg_name, pargs_in->msg_namelen_in);
+    OE_SET_IN_POINTER(
+        msg_iov, (pargs_in->msg_iovlen_in * sizeof(struct iovec)));
+    OE_SET_IN_POINTER(msg_control, pargs_in->msg_controllen_in);
 
     /* Set out and in-out pointers. In-out parameters are copied to output
      * buffer. */
-    OE_SET_OUT_POINTER(msg, (1 * sizeof(struct msghdr)));
+    OE_SET_OUT_POINTER(msg_namelen_out, (1 * sizeof(socklen_t)));
+    OE_SET_OUT_POINTER(msg_iovlen_out, (1 * sizeof(size_t)));
+    OE_SET_OUT_POINTER(msg_controllen_out, (1 * sizeof(size_t)));
+    OE_SET_OUT_POINTER(msg_flags, (1 * sizeof(int)));
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostsock_recvmsg(
-        pargs_in->sockfd, pargs_in->msg, pargs_in->flags, pargs_in->err);
+        pargs_in->sockfd,
+        pargs_in->msg_name,
+        pargs_in->msg_namelen_in,
+        pargs_in->msg_namelen_out,
+        pargs_in->msg_iov,
+        pargs_in->msg_iovlen_in,
+        pargs_in->msg_iovlen_out,
+        (const void*)pargs_in->msg_control,
+        pargs_in->msg_controllen_in,
+        pargs_in->msg_controllen_out,
+        pargs_in->msg_flags_in,
+        pargs_in->msg_flags,
+        pargs_in->flags,
+        pargs_in->err);
 
     /* Success. */
     _result = OE_OK;

@@ -296,16 +296,56 @@ int oe_hostsock_listen(int sockfd, int backlog, int* err)
     return ret;
 }
 
-ssize_t oe_hostsock_recvmsg(int sockfd, struct msghdr* msg, int flags, int* err)
+ssize_t oe_hostsock_recvmsg(
+    int sockfd,
+    void* msg_name,
+    socklen_t msg_namelen_in,
+    socklen_t* msg_namelen_out,
+    struct iovec* msg_iov,
+    size_t msg_iovlen_in,
+    size_t* msg_iovlen_out,
+    const void* msg_control,
+    size_t msg_controllen_in,
+    size_t* msg_controllen_out,
+    int msg_flags_in,
+    int* msg_flags_out,
+    int flags,
+    int* err)
 {
-    ssize_t ret = recvmsg(sockfd, msg, flags);
+    ssize_t ret = -1;
+    struct msghdr msg = {
+        .msg_name = (void*)msg_name,
+        .msg_namelen = msg_namelen_in,
+        .msg_iov = (struct iovec*)msg_iov,
+        .msg_iovlen = msg_iovlen_in,
+        .msg_control = (void*)msg_control,
+        .msg_controllen = msg_controllen_in,
+        .msg_flags = msg_flags_in,
+    };
+
+    ret = sendmsg(sockfd, &msg, flags);
 
     if (ret == -1)
     {
         if (err)
             *err = errno;
+
+        goto done;
     }
 
+    if (msg_namelen_out)
+        *msg_namelen_out = msg.msg_namelen;
+
+    if (msg_iovlen_out)
+        *msg_iovlen_out = msg.msg_iovlen;
+
+    if (msg_controllen_out)
+        *msg_controllen_out = msg.msg_controllen;
+
+    if (msg_flags_out)
+        *msg_flags_out = msg.msg_flags;
+
+done:
     return ret;
 }
 
