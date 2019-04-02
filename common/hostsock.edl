@@ -46,14 +46,27 @@ enclave {
             [out, count=1] int* err);
 
         ssize_t oe_hostsock_recvmsg(
-            int sockfd, 
-            [out, count=1] struct msghdr* msg, 
+            int sockfd,
+            [out, count=1] struct msghdr* msg,
             int flags,
             [out, count=1] int* err);
 
+/*
         ssize_t oe_hostsock_sendmsg(
             int sockfd, 
             [in, count=1] const struct msghdr* msg, 
+            int flags,
+            [out, count=1] int* err);
+*/
+        ssize_t oe_hostsock_sendmsg(
+            int sockfd, 
+            [in, size=msg_namelen] const void* msg_name,
+            socklen_t msg_namelen,
+            [in, count=msg_iovlen] const struct iovec* msg_iov,
+            size_t msg_iovlen,
+            [in, size=msg_controllen] const void* msg_control,
+            size_t msg_controllen,
+            int msg_flags,
             int flags,
             [out, count=1] int* err);
 
@@ -86,7 +99,7 @@ enclave {
             [in, size=len] const void* buf, 
             size_t len,
             int flags,
-            [in, size=addrlen] const struct sockaddr* src_addr, 
+            [in, size=addrlen] const struct sockaddr* dest_addr, 
             socklen_t addrlen,
             [out, count=1] int* err);
 
@@ -108,15 +121,16 @@ enclave {
             int level, 
             int optname,
             [in, size=optlen] const void* optval, 
-            size_t optlen,
+            socklen_t optlen,
             [out, count=1] int* err);
 
         int oe_hostsock_getsockopt(
             int sockfd, 
             int level, 
             int optname,
-            [user_check] void* optval, 
-            [out, size=1] size_t* optlen,
+            [in, size=optlen_in] void* optval, 
+            socklen_t optlen_in,
+            [out, size=1] socklen_t* optlen_out,
             [out, count=1] int* err);
 
         int oe_hostsock_getsockname(

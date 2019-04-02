@@ -311,11 +311,29 @@ ssize_t oe_hostsock_recvmsg(int sockfd, struct msghdr* msg, int flags, int* err)
 
 ssize_t oe_hostsock_sendmsg(
     int sockfd,
-    const struct msghdr* msg,
+    const void* msg_name,
+    socklen_t msg_namelen,
+    const struct iovec* msg_iov,
+    size_t msg_iovlen,
+    const void* msg_control,
+    size_t msg_controllen,
+    int msg_flags,
     int flags,
     int* err)
 {
-    ssize_t ret = sendmsg(sockfd, msg, flags);
+    ssize_t ret = -1;
+
+    struct msghdr msg = {
+        .msg_name = (void*)msg_name,
+        .msg_namelen = msg_namelen,
+        .msg_iov = (struct iovec*)msg_iov,
+        .msg_iovlen = msg_iovlen,
+        .msg_control = (void*)msg_control,
+        .msg_controllen = msg_controllen,
+        .msg_flags = msg_flags,
+    };
+
+    ret = sendmsg(sockfd, &msg, flags);
 
     if (ret == -1)
     {
@@ -390,7 +408,15 @@ ssize_t oe_hostsock_sendto(
     socklen_t addrlen,
     int* err)
 {
-    /* ATTN */ return 0;
+    ssize_t ret = sendto(sockfd, buf, len, flags, src_addr, addrlen);
+
+    if (ret == -1)
+    {
+        if (err)
+            *err = errno;
+    }
+
+    return ret;
 }
 
 int oe_hostsock_shutdown(int sockfd, int how, int* err)
@@ -437,10 +463,22 @@ int oe_hostsock_setsockopt(
     int level,
     int optname,
     const void* optval,
-    size_t optlen,
+    socklen_t optlen,
     int* err)
 {
-    /* ATTN */ return 0;
+    int ret = -1;
+
+    errno = 0;
+
+    ret = setsockopt(sockfd, level, optname, optval, optlen);
+
+    if (ret == -1)
+    {
+        if (err)
+            *err = errno;
+    }
+
+    return ret;
 }
 
 int oe_hostsock_getsockopt(
@@ -448,10 +486,24 @@ int oe_hostsock_getsockopt(
     int level,
     int optname,
     void* optval,
-    size_t* optlen,
+    socklen_t optlen_in,
+    socklen_t* optlen,
     int* err)
 {
-    /* ATTN */ return 0;
+    int ret;
+
+    if (optlen)
+        *optlen = optlen_in;
+
+    ret = getsockopt(sockfd, level, optname, optval, optlen);
+
+    if (ret == -1)
+    {
+        if (err)
+            *err = errno;
+    }
+
+    return ret;
 }
 
 int oe_hostsock_getsockname(

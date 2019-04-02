@@ -2575,7 +2575,13 @@ done:
 oe_result_t oe_hostsock_sendmsg(
     ssize_t* _retval,
     int sockfd,
-    const struct msghdr* msg,
+    const void* msg_name,
+    socklen_t msg_namelen,
+    const struct iovec* msg_iov,
+    size_t msg_iovlen,
+    const void* msg_control,
+    size_t msg_controllen,
+    int msg_flags,
     int flags,
     int* err)
 {
@@ -2603,14 +2609,25 @@ oe_result_t oe_hostsock_sendmsg(
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.sockfd = sockfd;
-    _args.msg = (struct msghdr*)msg;
+    _args.msg_name = (void*)msg_name;
+    _args.msg_namelen = msg_namelen;
+    _args.msg_iov = (struct iovec*)msg_iov;
+    _args.msg_iovlen = msg_iovlen;
+    _args.msg_control = (void*)msg_control;
+    _args.msg_controllen = msg_controllen;
+    _args.msg_flags = msg_flags;
     _args.flags = flags;
     _args.err = (int*)err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_sendmsg_args_t));
-    if (msg)
-        OE_ADD_SIZE(_input_buffer_size, (1 * sizeof(struct msghdr)));
+    if (msg_name)
+        OE_ADD_SIZE(_input_buffer_size, _args.msg_namelen);
+    if (msg_iov)
+        OE_ADD_SIZE(
+            _input_buffer_size, (_args.msg_iovlen * sizeof(struct iovec)));
+    if (msg_control)
+        OE_ADD_SIZE(_input_buffer_size, _args.msg_controllen);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_sendmsg_args_t));
@@ -2634,7 +2651,9 @@ oe_result_t oe_hostsock_sendmsg(
     *(uint8_t**)&_pargs_in = _input_buffer;
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
-    OE_WRITE_IN_PARAM(msg, (1 * sizeof(struct msghdr)));
+    OE_WRITE_IN_PARAM(msg_name, _args.msg_namelen);
+    OE_WRITE_IN_PARAM(msg_iov, (_args.msg_iovlen * sizeof(struct iovec)));
+    OE_WRITE_IN_PARAM(msg_control, _args.msg_controllen);
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
@@ -2714,6 +2733,8 @@ oe_result_t oe_hostsock_recv(
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_recv_args_t));
+    if (buf)
+        OE_ADD_SIZE(_input_buffer_size, _args.len);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_recv_args_t));
@@ -2738,6 +2759,8 @@ oe_result_t oe_hostsock_recv(
     /* Serialize buffer inputs (in and in-out parameters) */
     *(uint8_t**)&_pargs_in = _input_buffer;
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
+    OE_WRITE_IN_OUT_PARAM(buf, _args.len);
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
@@ -2769,7 +2792,7 @@ oe_result_t oe_hostsock_recv(
 
     /* Unmarshal return value and out, in-out parameters */
     *_retval = _pargs_out->_retval;
-    OE_READ_OUT_PARAM(buf, (size_t)(_args.len));
+    OE_READ_IN_OUT_PARAM(buf, (size_t)(_args.len));
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
@@ -3010,7 +3033,7 @@ oe_result_t oe_hostsock_sendto(
     const void* buf,
     size_t len,
     int flags,
-    const struct sockaddr* src_addr,
+    const struct sockaddr* dest_addr,
     socklen_t addrlen,
     int* err)
 {
@@ -3041,7 +3064,7 @@ oe_result_t oe_hostsock_sendto(
     _args.buf = (void*)buf;
     _args.len = len;
     _args.flags = flags;
-    _args.src_addr = (struct sockaddr*)src_addr;
+    _args.dest_addr = (struct sockaddr*)dest_addr;
     _args.addrlen = addrlen;
     _args.err = (int*)err;
 
@@ -3049,7 +3072,7 @@ oe_result_t oe_hostsock_sendto(
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_sendto_args_t));
     if (buf)
         OE_ADD_SIZE(_input_buffer_size, _args.len);
-    if (src_addr)
+    if (dest_addr)
         OE_ADD_SIZE(_input_buffer_size, _args.addrlen);
 
     /* Compute output buffer size. Include out and in-out parameters. */
@@ -3075,7 +3098,7 @@ oe_result_t oe_hostsock_sendto(
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(buf, _args.len);
-    OE_WRITE_IN_PARAM(src_addr, _args.addrlen);
+    OE_WRITE_IN_PARAM(dest_addr, _args.addrlen);
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
@@ -3399,7 +3422,7 @@ oe_result_t oe_hostsock_setsockopt(
     int level,
     int optname,
     const void* optval,
-    size_t optlen,
+    socklen_t optlen,
     int* err)
 {
     oe_result_t _result = OE_FAILURE;
@@ -3506,7 +3529,8 @@ oe_result_t oe_hostsock_getsockopt(
     int level,
     int optname,
     void* optval,
-    size_t* optlen,
+    socklen_t optlen_in,
+    socklen_t* optlen_out,
     int* err)
 {
     oe_result_t _result = OE_FAILURE;
@@ -3536,15 +3560,18 @@ oe_result_t oe_hostsock_getsockopt(
     _args.level = level;
     _args.optname = optname;
     _args.optval = (void*)optval;
-    _args.optlen = (size_t*)optlen;
+    _args.optlen_in = optlen_in;
+    _args.optlen_out = (socklen_t*)optlen_out;
     _args.err = (int*)err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_getsockopt_args_t));
+    if (optval)
+        OE_ADD_SIZE(_input_buffer_size, _args.optlen_in);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_getsockopt_args_t));
-    if (optlen)
+    if (optlen_out)
         OE_ADD_SIZE(_output_buffer_size, 1);
     if (err)
         OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
@@ -3565,6 +3592,8 @@ oe_result_t oe_hostsock_getsockopt(
     /* Serialize buffer inputs (in and in-out parameters) */
     *(uint8_t**)&_pargs_in = _input_buffer;
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
+    OE_WRITE_IN_PARAM(optval, _args.optlen_in);
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
@@ -3596,7 +3625,7 @@ oe_result_t oe_hostsock_getsockopt(
 
     /* Unmarshal return value and out, in-out parameters */
     *_retval = _pargs_out->_retval;
-    OE_READ_OUT_PARAM(optlen, (size_t)(1));
+    OE_READ_OUT_PARAM(optlen_out, (size_t)(1));
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;

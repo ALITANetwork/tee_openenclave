@@ -1291,7 +1291,9 @@ void ocall_oe_hostsock_sendmsg(
         goto done;
     }
     /* Set in and in-out pointers */
-    OE_SET_IN_POINTER(msg, (1 * sizeof(struct msghdr)));
+    OE_SET_IN_POINTER(msg_name, pargs_in->msg_namelen);
+    OE_SET_IN_POINTER(msg_iov, (pargs_in->msg_iovlen * sizeof(struct iovec)));
+    OE_SET_IN_POINTER(msg_control, pargs_in->msg_controllen);
 
     /* Set out and in-out pointers. In-out parameters are copied to output
      * buffer. */
@@ -1300,7 +1302,13 @@ void ocall_oe_hostsock_sendmsg(
     /* Call user function */
     pargs_out->_retval = oe_hostsock_sendmsg(
         pargs_in->sockfd,
-        (const struct msghdr*)pargs_in->msg,
+        (const void*)pargs_in->msg_name,
+        pargs_in->msg_namelen,
+        (const struct iovec*)pargs_in->msg_iov,
+        pargs_in->msg_iovlen,
+        (const void*)pargs_in->msg_control,
+        pargs_in->msg_controllen,
+        pargs_in->msg_flags,
         pargs_in->flags,
         pargs_in->err);
 
@@ -1340,10 +1348,11 @@ void ocall_oe_hostsock_recv(
         goto done;
     }
     /* Set in and in-out pointers */
+    OE_SET_IN_OUT_POINTER(buf, pargs_in->len);
 
     /* Set out and in-out pointers. In-out parameters are copied to output
      * buffer. */
-    OE_SET_OUT_POINTER(buf, pargs_in->len);
+    OE_COPY_AND_SET_IN_OUT_POINTER(buf, pargs_in->len);
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
@@ -1499,7 +1508,7 @@ void ocall_oe_hostsock_sendto(
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(buf, pargs_in->len);
-    OE_SET_IN_POINTER(src_addr, pargs_in->addrlen);
+    OE_SET_IN_POINTER(dest_addr, pargs_in->addrlen);
 
     /* Set out and in-out pointers. In-out parameters are copied to output
      * buffer. */
@@ -1511,7 +1520,7 @@ void ocall_oe_hostsock_sendto(
         (const void*)pargs_in->buf,
         pargs_in->len,
         pargs_in->flags,
-        (const struct sockaddr*)pargs_in->src_addr,
+        (const struct sockaddr*)pargs_in->dest_addr,
         pargs_in->addrlen,
         pargs_in->err);
 
@@ -1738,10 +1747,11 @@ void ocall_oe_hostsock_getsockopt(
         goto done;
     }
     /* Set in and in-out pointers */
+    OE_SET_IN_POINTER(optval, pargs_in->optlen_in);
 
     /* Set out and in-out pointers. In-out parameters are copied to output
      * buffer. */
-    OE_SET_OUT_POINTER(optlen, 1);
+    OE_SET_OUT_POINTER(optlen_out, 1);
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
@@ -1750,7 +1760,8 @@ void ocall_oe_hostsock_getsockopt(
         pargs_in->level,
         pargs_in->optname,
         pargs_in->optval,
-        pargs_in->optlen,
+        pargs_in->optlen_in,
+        pargs_in->optlen_out,
         pargs_in->err);
 
     /* Success. */

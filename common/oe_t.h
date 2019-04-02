@@ -123,7 +123,13 @@ oe_result_t oe_hostsock_recvmsg(
 oe_result_t oe_hostsock_sendmsg(
     ssize_t* _retval,
     int sockfd,
-    const struct msghdr* msg,
+    const void* msg_name,
+    socklen_t msg_namelen,
+    const struct iovec* msg_iov,
+    size_t msg_iovlen,
+    const void* msg_control,
+    size_t msg_controllen,
+    int msg_flags,
     int flags,
     int* err);
 oe_result_t oe_hostsock_recv(
@@ -156,7 +162,7 @@ oe_result_t oe_hostsock_sendto(
     const void* buf,
     size_t len,
     int flags,
-    const struct sockaddr* src_addr,
+    const struct sockaddr* dest_addr,
     socklen_t addrlen,
     int* err);
 oe_result_t oe_hostsock_shutdown(int* _retval, int sockfd, int how, int* err);
@@ -168,7 +174,7 @@ oe_result_t oe_hostsock_setsockopt(
     int level,
     int optname,
     const void* optval,
-    size_t optlen,
+    socklen_t optlen,
     int* err);
 oe_result_t oe_hostsock_getsockopt(
     int* _retval,
@@ -176,7 +182,8 @@ oe_result_t oe_hostsock_getsockopt(
     int level,
     int optname,
     void* optval,
-    size_t* optlen,
+    socklen_t optlen_in,
+    socklen_t* optlen_out,
     int* err);
 oe_result_t oe_hostsock_getsockname(
     int* _retval,

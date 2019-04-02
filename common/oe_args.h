@@ -294,7 +294,13 @@ typedef struct _oe_hostsock_sendmsg_args_t
 {
     ssize_t _retval;
     int sockfd;
-    struct msghdr* msg;
+    void* msg_name;
+    socklen_t msg_namelen;
+    struct iovec* msg_iov;
+    size_t msg_iovlen;
+    void* msg_control;
+    size_t msg_controllen;
+    int msg_flags;
     int flags;
     int* err;
     oe_result_t _result;
@@ -343,7 +349,7 @@ typedef struct _oe_hostsock_sendto_args_t
     void* buf;
     size_t len;
     int flags;
-    struct sockaddr* src_addr;
+    struct sockaddr* dest_addr;
     socklen_t addrlen;
     int* err;
     oe_result_t _result;
@@ -381,7 +387,7 @@ typedef struct _oe_hostsock_setsockopt_args_t
     int level;
     int optname;
     void* optval;
-    size_t optlen;
+    socklen_t optlen;
     int* err;
     oe_result_t _result;
 } oe_hostsock_setsockopt_args_t;
@@ -393,7 +399,8 @@ typedef struct _oe_hostsock_getsockopt_args_t
     int level;
     int optname;
     void* optval;
-    size_t* optlen;
+    socklen_t optlen_in;
+    socklen_t* optlen_out;
     int* err;
     oe_result_t _result;
 } oe_hostsock_getsockopt_args_t;
