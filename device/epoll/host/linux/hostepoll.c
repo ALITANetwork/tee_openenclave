@@ -13,19 +13,23 @@
 #include <sys/epoll.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "../../common/epollargs.h"
+#include "../../../../common/oe_u.h"
+
+typedef struct _wait_args
+{
+    int64_t enclaveid;
+    int epfd;
+    int maxevents;
+    struct epoll_event events[];
+} wait_args_t;
 
 static void* epoll_wait_thread(void* arg_)
 {
     int ret = 0;
-    struct _oe_epoll_args* args = (struct _oe_epoll_args*)arg_;
+    wait_args_t* args = (wait_args_t*)arg_;
 
-    ret = epoll_wait(
-        (int)args->u.wait.epoll_fd,
-        (struct epoll_event*)args->buf,
-        (int)args->u.wait.maxevents,
-        /*(int)args->u.wait.timeout*/ -1);
-    printf("timeout = %d\n", args->u.wait.timeout);
+    ret = epoll_wait(args->epfd, args->events, args->maxevents, -1);
+
     if (ret >= 0)
     {
         struct oe_device_notification_args* notify_arg =
@@ -37,8 +41,9 @@ static void* epoll_wait_thread(void* arg_)
         notify_arg->num_notifications = (size_t)ret;
         struct oe_device_notifications* notifications =
             (struct oe_device_notifications*)(notify_arg + 1);
-        struct epoll_event* ev = (struct epoll_event*)(args->buf);
+        struct epoll_event* ev = args->events;
         int i = 0;
+
         for (; i < ret; i++)
         {
             notifications[i] = ((struct oe_device_notifications*)ev)[i];
@@ -52,7 +57,7 @@ static void* epoll_wait_thread(void* arg_)
 
         // We come back on timeout as well.
         oe_result_t result = oe_ecall(
-            (struct _oe_enclave*)(args->u.wait.enclaveid),
+            (struct _oe_enclave*)(args->enclaveid),
             OE_ECALL_DEVICE_NOTIFICATION,
             (uint64_t)notify_arg,
             NULL);
@@ -66,119 +71,147 @@ done:
     return NULL;
 }
 
-void oe_handle_hostepoll_ocall(void* args_)
+OE_INLINE void _set_err(int* err, int num)
 {
-    oe_epoll_args_t* args = (oe_epoll_args_t*)args_;
+    if (err)
+        *err = num;
+}
 
-    /* ATTN: handle errno propagation. */
+int oe_polling_epoll_create1(int flags, int* err)
+{
+    int ret = epoll_create1(flags);
 
-    if (!args)
-        return;
+    if (ret == -1)
+        _set_err(err, errno);
 
-    args->err = 0;
-    switch (args->op)
+    return ret;
+}
+
+int oe_polling_epoll_wait(
+    int64_t enclaveid,
+    int epfd,
+    struct epoll_event* events,
+    size_t maxevents,
+    int timeout,
+    int* err)
+{
+    int ret = -1;
+    size_t eventsize;
+    pthread_t thread = 0;
+    wait_args_t* args = NULL;
+
+    (void)events;
+    (void)timeout;
+
+    /* ATTN: how does this work without using the events parameter. */
+
+    eventsize = sizeof(struct oe_epoll_event) * maxevents;
+
+    if (!(args = calloc(1, sizeof(wait_args_t) + eventsize)))
     {
-        case OE_EPOLL_OP_NONE:
-        {
-            break;
-        }
-        case OE_EPOLL_OP_CREATE:
-        {
-            printf("host epoll create\n");
-            args->u.create.ret = epoll_create1(args->u.create.flags);
-            break;
-        }
-        case OE_EPOLL_OP_CLOSE:
-        {
-            args->u.close.ret = close((int)args->u.close.host_fd);
-            break;
-        }
-        case OE_EPOLL_OP_ADD:
-        {
-            union _oe_ev_data ev_data = {
-                .event_list_idx = (uint32_t)args->u.ctl_add.list_idx,
-                .epoll_enclave_fd = (uint32_t)args->u.ctl_add.epoll_enclave_fd};
-
-            struct epoll_event ev = {
-                .events = args->u.ctl_add.event_mask,
-                .data.u64 = ev_data.data,
-            };
-
-            args->u.ctl_add.ret = epoll_ctl(
-                (int)args->u.ctl_add.epoll_fd,
-                EPOLL_CTL_ADD,
-                (int)args->u.ctl_add.host_fd,
-                &ev);
-            break;
-        }
-        case OE_EPOLL_OP_MOD:
-        {
-            union _oe_ev_data ev_data = {
-                .event_list_idx = (uint32_t)args->u.ctl_mod.list_idx,
-                .epoll_enclave_fd = (uint32_t)args->u.ctl_mod.epoll_fd,
-            };
-
-            struct epoll_event ev = {
-                .events = args->u.ctl_mod.event_mask,
-                .data.u64 = ev_data.data,
-            };
-
-            args->u.ctl_mod.ret = epoll_ctl(
-                (int)args->u.ctl_mod.epoll_fd,
-                EPOLL_CTL_MOD,
-                (int)args->u.ctl_mod.host_fd,
-                &ev);
-            break;
-        }
-        case OE_EPOLL_OP_DEL:
-        {
-            args->u.ctl_del.ret = epoll_ctl(
-                (int)args->u.ctl_del.epoll_fd,
-                EPOLL_CTL_DEL,
-                (int)args->u.ctl_del.host_fd,
-                NULL);
-
-            // If in windows, delete auxiliary data, such as WSASocketEvents so
-            // as not to leak handles.
-            break;
-        }
-        case OE_EPOLL_OP_WAIT:
-        {
-            pthread_t wait_thread_id =
-                0; // we lose the wait thread when we exit the func,
-                   // but the thread will die on its own
-            // copy args then spawn pthread to do the waiting. That way we can
-            // ecall with notification. the thread args are freed by the thread
-            // func
-
-            size_t eventsize = (args->u.wait.maxevents < 0)
-                                   ? 0
-                                   : sizeof(struct oe_epoll_event) *
-                                         (size_t)args->u.wait.maxevents;
-
-            struct _oe_epoll_args* thread_args =
-                (struct _oe_epoll_args*)calloc(1, sizeof(args) + eventsize);
-            memcpy(thread_args, args, sizeof(args) + eventsize);
-
-            if (pthread_create(
-                    &wait_thread_id, NULL, epoll_wait_thread, thread_args) < 0)
-            {
-                // Complain and return
-                args->u.wait.ret = -1;
-            }
-            args->u.wait.ret = 0;
-            break;
-        }
-        case OE_EPOLL_OP_SHUTDOWN_DEVICE:
-        {
-            // 2do
-            break;
-        }
-        default:
-        {
-            // Invalid
-            break;
-        }
+        _set_err(err, ENOMEM);
+        goto done;
     }
-    args->err = errno;
+
+    args->enclaveid = enclaveid;
+    args->epfd = epfd;
+    args->maxevents = (int)maxevents;
+
+    // We lose the wait thread when we exit the func, but the thread will die
+    // on its own copy args then spawn pthread to do the waiting. That way we
+    // can ecall with notification. the thread args are freed by the thread
+    // func.
+    if (pthread_create(&thread, NULL, epoll_wait_thread, args) < 0)
+    {
+        _set_err(err, EINVAL);
+        goto done;
+    }
+
+    ret = 0;
+
+done:
+    return ret;
+}
+
+int oe_polling_epoll_ctl_add(
+    int epfd,
+    int fd,
+    unsigned int event_mask,
+    int list_idx,
+    int epoll_enclave_fd,
+    int* err)
+{
+    int ret = -1;
+
+    oe_ev_data_t ev_data = {
+        .event_list_idx = (uint32_t)list_idx,
+        .epoll_enclave_fd = (uint32_t)epoll_enclave_fd,
+    };
+
+    struct epoll_event ev = {
+        .events = event_mask,
+        .data.u64 = ev_data.data,
+    };
+
+    ret = epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev);
+
+    if (ret == -1)
+        _set_err(err, errno);
+
+    return ret;
+}
+
+int oe_polling_epoll_ctl_del(int epfd, int fd, int* err)
+{
+    int ret = epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
+
+    if (ret == -1)
+        _set_err(err, errno);
+
+    return ret;
+}
+
+int oe_polling_epoll_ctl_mod(
+    int epfd,
+    int fd,
+    unsigned int event_mask,
+    int list_idx,
+    int enclave_fd,
+    int* err)
+{
+    oe_ev_data_t ev_data = {
+        .event_list_idx = (uint32_t)list_idx,
+        .epoll_enclave_fd = (uint32_t)enclave_fd,
+    };
+
+    struct epoll_event ev = {
+        .events = event_mask,
+        .data.u64 = ev_data.data,
+    };
+
+    int ret = epoll_ctl(epfd, EPOLL_CTL_MOD, fd, &ev);
+
+    if (ret == -1)
+        _set_err(err, errno);
+
+    return ret;
+}
+
+int oe_polling_epoll_close(int fd, int* err)
+{
+    int ret = close(fd);
+
+    if (ret == -1)
+        _set_err(err, errno);
+
+    return ret;
+}
+
+int oe_polling_shutdown_device(int fd, int* err)
+{
+    (void)fd;
+    (void)err;
+
+    /* ATTN: implement this */
+    return -1;
 }

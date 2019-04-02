@@ -12,176 +12,179 @@
 
 OE_EXTERNC_BEGIN
 
-oe_result_t oe_create_oe_enclave(const char* path,
-                                 oe_enclave_type_t type,
-                                 uint32_t flags,
-                                 const void* config,
-                                 uint32_t config_size,
-                                 oe_enclave_t** enclave);
+oe_result_t oe_create_oe_enclave(
+    const char* path,
+    oe_enclave_type_t type,
+    uint32_t flags,
+    const void* config,
+    uint32_t config_size,
+    oe_enclave_t** enclave);
 
 /* List of ecalls */
 
-oe_result_t public_root_ecall(
-        oe_enclave_t* enclave);
+oe_result_t public_root_ecall(oe_enclave_t* enclave);
 
 /* List of ocalls */
 
-int oe_hostfs_open(const char* pathname,
-        int flags,
-        mode_t mode,
-        int* err);
-ssize_t oe_hostfs_read(int fd,
-        void* buf,
-        size_t count,
-        int* err);
-ssize_t oe_hostfs_write(int fd,
-        const void* buf,
-        size_t count,
-        int* err);
-off_t oe_hostfs_lseek(int fd,
-        off_t offset,
-        int whence,
-        int* err);
-int oe_hostfs_close(int fd,
-        int* err);
-int oe_hostfs_dup(int oldfd,
-        int* err);
-void* oe_hostfs_opendir(const char* name,
-        int* err);
-int oe_hostfs_readdir(void* dirp,
-        struct oe_hostfs_dirent_struct* ent,
-        int* err);
+int oe_hostfs_open(const char* pathname, int flags, mode_t mode, int* err);
+ssize_t oe_hostfs_read(int fd, void* buf, size_t count, int* err);
+ssize_t oe_hostfs_write(int fd, const void* buf, size_t count, int* err);
+off_t oe_hostfs_lseek(int fd, off_t offset, int whence, int* err);
+int oe_hostfs_close(int fd, int* err);
+int oe_hostfs_dup(int oldfd, int* err);
+void* oe_hostfs_opendir(const char* name, int* err);
+int oe_hostfs_readdir(
+    void* dirp,
+    struct oe_hostfs_dirent_struct* ent,
+    int* err);
 void oe_hostfs_rewinddir(void* dirp);
-int oe_hostfs_closedir(void* dirp,
-        int* err);
-int oe_hostfs_stat(const char* pathname,
-        struct oe_hostfs_stat_struct* buf,
-        int* err);
-int oe_hostfs_access(const char* pathname,
-        int mode,
-        int* err);
-int oe_hostfs_link(const char* oldpath,
-        const char* newpath,
-        int* err);
-int oe_hostfs_unlink(const char* pathname,
-        int* err);
-int oe_hostfs_rename(const char* oldpath,
-        const char* newpath,
-        int* err);
-int oe_hostfs_truncate(const char* path,
-        off_t length,
-        int* err);
-int oe_hostfs_mkdir(const char* pathname,
-        mode_t mode,
-        int* err);
-int oe_hostfs_rmdir(const char* pathname,
-        int* err);
-int oe_hostsock_socket(int domain,
-        int type,
-        int protocol,
-        int* err);
-int oe_hostsock_socketpair(int domain,
-        int type,
-        int protocol,
-        int sv[2],
-        int* err);
-int oe_hostsock_connect(int sockfd,
-        const struct sockaddr* addr,
-        socklen_t addrlen,
-        int* err);
-int oe_hostsock_accept(int sockfd,
-        struct sockaddr* addr,
-        socklen_t addrlen_in,
-        socklen_t* addrlen_out,
-        int* err);
-int oe_hostsock_bind(int sockfd,
-        const struct sockaddr* addr,
-        socklen_t addrlen,
-        int* err);
-int oe_hostsock_listen(int sockfd,
-        int backlog,
-        int* err);
-ssize_t oe_hostsock_recvmsg(int sockfd,
-        void* msg_name,
-        socklen_t msg_namelen_in,
-        socklen_t* msg_namelen_out,
-        struct iovec* msg_iov,
-        size_t msg_iovlen_in,
-        size_t* msg_iovlen_out,
-        const void* msg_control,
-        size_t msg_controllen_in,
-        size_t* msg_controllen_out,
-        int msg_flags_in,
-        int* msg_flags_out,
-        int flags,
-        int* err);
-ssize_t oe_hostsock_sendmsg(int sockfd,
-        const void* msg_name,
-        socklen_t msg_namelen,
-        const struct iovec* msg_iov,
-        size_t msg_iovlen,
-        const void* msg_control,
-        size_t msg_controllen,
-        int msg_flags,
-        int flags,
-        int* err);
-ssize_t oe_hostsock_recv(int sockfd,
-        void* buf,
-        size_t len,
-        int flags,
-        int* err);
-ssize_t oe_hostsock_recvfrom(int sockfd,
-        void* buf,
-        size_t len,
-        int flags,
-        struct sockaddr* src_addr,
-        socklen_t addrlen_in,
-        socklen_t* addrlen_out,
-        int* err);
-ssize_t oe_hostsock_send(int sockfd,
-        const void* buf,
-        size_t len,
-        int flags,
-        int* err);
-ssize_t oe_hostsock_sendto(int sockfd,
-        const void* buf,
-        size_t len,
-        int flags,
-        const struct sockaddr* dest_addr,
-        socklen_t addrlen,
-        int* err);
-int oe_hostsock_shutdown(int sockfd,
-        int how,
-        int* err);
-int oe_hostsock_close(int fd,
-        int* err);
-int oe_hostsock_dup(int oldfd,
-        int* err);
-int oe_hostsock_setsockopt(int sockfd,
-        int level,
-        int optname,
-        const void* optval,
-        socklen_t optlen,
-        int* err);
-int oe_hostsock_getsockopt(int sockfd,
-        int level,
-        int optname,
-        void* optval,
-        socklen_t optlen_in,
-        socklen_t* optlen_out,
-        int* err);
-int oe_hostsock_getsockname(int sockfd,
-        struct sockaddr* addr,
-        socklen_t addrlen_in,
-        socklen_t* addrlen_out,
-        int* err);
-int oe_hostsock_getpeername(int sockfd,
-        struct sockaddr* addr,
-        socklen_t addrlen_in,
-        socklen_t* addrlen_out,
-        int* err);
-int oe_hostsock_shutdown_device(int sockfd,
-        int* err);
+int oe_hostfs_closedir(void* dirp, int* err);
+int oe_hostfs_stat(
+    const char* pathname,
+    struct oe_hostfs_stat_struct* buf,
+    int* err);
+int oe_hostfs_access(const char* pathname, int mode, int* err);
+int oe_hostfs_link(const char* oldpath, const char* newpath, int* err);
+int oe_hostfs_unlink(const char* pathname, int* err);
+int oe_hostfs_rename(const char* oldpath, const char* newpath, int* err);
+int oe_hostfs_truncate(const char* path, off_t length, int* err);
+int oe_hostfs_mkdir(const char* pathname, mode_t mode, int* err);
+int oe_hostfs_rmdir(const char* pathname, int* err);
+int oe_hostsock_socket(int domain, int type, int protocol, int* err);
+int oe_hostsock_socketpair(
+    int domain,
+    int type,
+    int protocol,
+    int sv[2],
+    int* err);
+int oe_hostsock_connect(
+    int sockfd,
+    const struct sockaddr* addr,
+    socklen_t addrlen,
+    int* err);
+int oe_hostsock_accept(
+    int sockfd,
+    struct sockaddr* addr,
+    socklen_t addrlen_in,
+    socklen_t* addrlen_out,
+    int* err);
+int oe_hostsock_bind(
+    int sockfd,
+    const struct sockaddr* addr,
+    socklen_t addrlen,
+    int* err);
+int oe_hostsock_listen(int sockfd, int backlog, int* err);
+ssize_t oe_hostsock_recvmsg(
+    int sockfd,
+    void* msg_name,
+    socklen_t msg_namelen_in,
+    socklen_t* msg_namelen_out,
+    struct iovec* msg_iov,
+    size_t msg_iovlen_in,
+    size_t* msg_iovlen_out,
+    const void* msg_control,
+    size_t msg_controllen_in,
+    size_t* msg_controllen_out,
+    int msg_flags_in,
+    int* msg_flags_out,
+    int flags,
+    int* err);
+ssize_t oe_hostsock_sendmsg(
+    int sockfd,
+    const void* msg_name,
+    socklen_t msg_namelen,
+    const struct iovec* msg_iov,
+    size_t msg_iovlen,
+    const void* msg_control,
+    size_t msg_controllen,
+    int msg_flags,
+    int flags,
+    int* err);
+ssize_t oe_hostsock_recv(
+    int sockfd,
+    void* buf,
+    size_t len,
+    int flags,
+    int* err);
+ssize_t oe_hostsock_recvfrom(
+    int sockfd,
+    void* buf,
+    size_t len,
+    int flags,
+    struct sockaddr* src_addr,
+    socklen_t addrlen_in,
+    socklen_t* addrlen_out,
+    int* err);
+ssize_t oe_hostsock_send(
+    int sockfd,
+    const void* buf,
+    size_t len,
+    int flags,
+    int* err);
+ssize_t oe_hostsock_sendto(
+    int sockfd,
+    const void* buf,
+    size_t len,
+    int flags,
+    const struct sockaddr* dest_addr,
+    socklen_t addrlen,
+    int* err);
+int oe_hostsock_shutdown(int sockfd, int how, int* err);
+int oe_hostsock_close(int fd, int* err);
+int oe_hostsock_dup(int oldfd, int* err);
+int oe_hostsock_setsockopt(
+    int sockfd,
+    int level,
+    int optname,
+    const void* optval,
+    socklen_t optlen,
+    int* err);
+int oe_hostsock_getsockopt(
+    int sockfd,
+    int level,
+    int optname,
+    void* optval,
+    socklen_t optlen_in,
+    socklen_t* optlen_out,
+    int* err);
+int oe_hostsock_getsockname(
+    int sockfd,
+    struct sockaddr* addr,
+    socklen_t addrlen_in,
+    socklen_t* addrlen_out,
+    int* err);
+int oe_hostsock_getpeername(
+    int sockfd,
+    struct sockaddr* addr,
+    socklen_t addrlen_in,
+    socklen_t* addrlen_out,
+    int* err);
+int oe_hostsock_shutdown_device(int sockfd, int* err);
+int oe_polling_epoll_create1(int flags, int* err);
+int oe_polling_epoll_wait(
+    int64_t enclaveid,
+    int epfd,
+    struct epoll_event* events,
+    size_t maxevents,
+    int timeout,
+    int* err);
+int oe_polling_epoll_ctl_add(
+    int epfd,
+    int fd,
+    unsigned int event_mask,
+    int list_idx,
+    int epoll_enclave_fd,
+    int* err);
+int oe_polling_epoll_ctl_del(int epfd, int fd, int* err);
+int oe_polling_epoll_ctl_mod(
+    int epfd,
+    int fd,
+    unsigned int event_mask,
+    int list_idx,
+    int epoll_enclave_fd,
+    int* err);
+int oe_polling_epoll_close(int fd, int* err);
+int oe_polling_shutdown_device(int fd, int* err);
 
 OE_EXTERNC_END
 

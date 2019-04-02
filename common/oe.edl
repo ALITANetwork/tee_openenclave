@@ -5,6 +5,7 @@ enclave {
 
     from "hostfs.edl" import *;
     from "hostsock.edl" import *;
+    from "polling.edl" import *;
 
     trusted {
 

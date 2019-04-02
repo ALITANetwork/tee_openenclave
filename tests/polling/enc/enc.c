@@ -13,6 +13,7 @@
 #include <openenclave/internal/epoll.h>
 #include <openenclave/internal/fs.h>
 
+#include <assert.h>
 #include <epoll_test_t.h>
 #include <stdio.h>
 #include <string.h>
@@ -129,6 +130,7 @@ int ecall_epoll_test(size_t buff_len, char* recv_buff)
         /*while*/ if ((nfds = oe_epoll_wait(epoll_fd, events, 20, 30000)) < 0)
         {
             printf("error.\n");
+            assert("oe_epoll_wait() failed" == NULL);
         }
         else
         {

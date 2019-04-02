@@ -79,6 +79,15 @@ typedef union oe_epoll_data {
     uint64_t u64;
 } oe_epoll_data_t;
 
+typedef union _oe_ev_data {
+    struct
+    {
+        uint32_t epoll_enclave_fd;
+        uint32_t event_list_idx;
+    };
+    uint64_t data;
+} oe_ev_data_t;
+
 struct oe_epoll_event
 {
     uint32_t events;      /* Epoll events */
