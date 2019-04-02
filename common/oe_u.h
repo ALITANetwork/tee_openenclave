@@ -23,6 +23,11 @@ oe_result_t oe_create_oe_enclave(
 /* List of ecalls */
 
 oe_result_t public_root_ecall(oe_enclave_t* enclave);
+oe_result_t oe_polling_notify(
+    oe_enclave_t* enclave,
+    int* _retval,
+    struct oe_device_notifications* notifications,
+    size_t num_notifications);
 
 /* List of ocalls */
 

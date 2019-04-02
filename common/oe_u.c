@@ -96,6 +96,103 @@ done:
     return _result;
 }
 
+oe_result_t oe_polling_notify(
+    oe_enclave_t* enclave,
+    int* _retval,
+    struct oe_device_notifications* notifications,
+    size_t num_notifications)
+{
+    oe_result_t _result = OE_FAILURE;
+
+    /* Marshalling struct */
+    oe_polling_notify_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+
+    /* Marshalling buffer and sizes */
+    size_t _input_buffer_size = 0;
+    size_t _output_buffer_size = 0;
+    size_t _total_buffer_size = 0;
+    uint8_t* _buffer = NULL;
+    uint8_t* _input_buffer = NULL;
+    uint8_t* _output_buffer = NULL;
+    size_t _input_buffer_offset = 0;
+    size_t _output_buffer_offset = 0;
+    size_t _output_bytes_written = 0;
+
+    /* Fill marshalling struct */
+    memset(&_args, 0, sizeof(_args));
+    _args.notifications = (struct oe_device_notifications*)notifications;
+    _args.num_notifications = num_notifications;
+
+    /* Compute input buffer size. Include in and in-out parameters. */
+    OE_ADD_SIZE(_input_buffer_size, sizeof(oe_polling_notify_args_t));
+    if (notifications)
+        OE_ADD_SIZE(
+            _input_buffer_size,
+            (_args.num_notifications * sizeof(struct oe_device_notifications)));
+
+    /* Compute output buffer size. Include out and in-out parameters. */
+    OE_ADD_SIZE(_output_buffer_size, sizeof(oe_polling_notify_args_t));
+
+    /* Allocate marshalling buffer */
+    _total_buffer_size = _input_buffer_size;
+    OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
+
+    _buffer = (uint8_t*)malloc(_total_buffer_size);
+    _input_buffer = _buffer;
+    _output_buffer = _buffer + _input_buffer_size;
+    if (_buffer == NULL)
+    {
+        _result = OE_OUT_OF_MEMORY;
+        goto done;
+    }
+
+    /* Serialize buffer inputs (in and in-out parameters) */
+    *(uint8_t**)&_pargs_in = _input_buffer;
+    OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
+    OE_WRITE_IN_PARAM(
+        notifications,
+        (_args.num_notifications * sizeof(struct oe_device_notifications)));
+
+    /* Copy args structure (now filled) to input buffer */
+    memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
+
+    /* Call enclave function */
+    if ((_result = oe_call_enclave_function(
+             enclave,
+             fcn_id_oe_polling_notify,
+             _input_buffer,
+             _input_buffer_size,
+             _output_buffer,
+             _output_buffer_size,
+             &_output_bytes_written)) != OE_OK)
+        goto done;
+
+    /* Set up output arg struct pointer */
+    *(uint8_t**)&_pargs_out = _output_buffer;
+    OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
+
+    /* Check if the call succeeded */
+    if ((_result = _pargs_out->_result) != OE_OK)
+        goto done;
+
+    /* Currently exactly _output_buffer_size bytes must be written */
+    if (_output_bytes_written != _output_buffer_size)
+    {
+        _result = OE_FAILURE;
+        goto done;
+    }
+
+    /* Unmarshal return value and out, in-out parameters */
+    *_retval = _pargs_out->_retval;
+
+    _result = OE_OK;
+done:
+    if (_buffer)
+        free(_buffer);
+    return _result;
+}
+
 /* ocall functions */
 
 void ocall_oe_hostfs_open(

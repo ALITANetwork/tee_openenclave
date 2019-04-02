@@ -53,6 +53,14 @@ typedef struct _public_root_ecall_args_t
     oe_result_t _result;
 } public_root_ecall_args_t;
 
+typedef struct _oe_polling_notify_args_t
+{
+    int _retval;
+    struct oe_device_notifications* notifications;
+    size_t num_notifications;
+    oe_result_t _result;
+} oe_polling_notify_args_t;
+
 typedef struct _oe_hostfs_open_args_t
 {
     int _retval;
@@ -521,6 +529,7 @@ typedef struct _oe_polling_shutdown_device_args_t
 enum
 {
     fcn_id_public_root_ecall = 0,
+    fcn_id_oe_polling_notify = 1,
     fcn_id_trusted_call_id_max = OE_ENUM_MAX
 };
 

@@ -32,15 +32,8 @@ static void* epoll_wait_thread(void* arg_)
 
     if (ret >= 0)
     {
-        struct oe_device_notification_args* notify_arg =
-            (struct oe_device_notification_args*)calloc(
-                1,
-                sizeof(struct oe_device_notification_args) +
-                    sizeof(struct oe_device_notifications) * (size_t)ret);
-
-        notify_arg->num_notifications = (size_t)ret;
-        struct oe_device_notifications* notifications =
-            (struct oe_device_notifications*)(notify_arg + 1);
+        size_t num_notifications = (size_t)ret;
+        struct oe_device_notifications notifications[num_notifications + 1];
         struct epoll_event* ev = args->events;
         int i = 0;
 
@@ -48,23 +41,28 @@ static void* epoll_wait_thread(void* arg_)
         {
             notifications[i] = ((struct oe_device_notifications*)ev)[i];
 
+#if 1
             printf(
                 "notification[%d] = events: %d data: %ld\n",
                 i,
                 ev[i].events,
                 ev[i].data.u64);
+#endif
         }
 
-        // We come back on timeout as well.
-        oe_result_t result = oe_ecall(
-            (struct _oe_enclave*)(args->enclaveid),
-            OE_ECALL_DEVICE_NOTIFICATION,
-            (uint64_t)notify_arg,
-            NULL);
-        if (result != OE_OK)
+        int retval;
+
+        if (oe_polling_notify(
+                (oe_enclave_t*)args->enclaveid,
+                &retval,
+                notifications,
+                num_notifications) != OE_OK)
         {
             goto done;
         }
+
+        if (retval != 0)
+            goto done;
     }
 
 done:

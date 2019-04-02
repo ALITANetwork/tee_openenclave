@@ -241,6 +241,10 @@ done:
 extern const oe_ecall_func_t __oe_ecalls_table[];
 extern const size_t __oe_ecalls_table_size;
 
+/* Internal ecalls table. */
+extern const oe_ecall_func_t __oe_internal_ecalls_table[];
+extern const size_t __oe_internal_ecalls_table_size;
+
 /**
  * This is the preferred way to call enclave functions.
  */
@@ -286,10 +290,20 @@ static oe_result_t _handle_call_enclave_function(uint64_t arg_in)
         args.input_buffer_size, args.output_buffer_size, &buffer_size));
 
     // Fetch matching function.
-    if (args.function_id >= __oe_ecalls_table_size)
-        OE_RAISE(OE_NOT_FOUND);
+    if (args.is_internal_call)
+    {
+        if (args.function_id >= __oe_internal_ecalls_table_size)
+            OE_RAISE(OE_NOT_FOUND);
 
-    func = __oe_ecalls_table[args.function_id];
+        func = __oe_internal_ecalls_table[args.function_id];
+    }
+    else
+    {
+        if (args.function_id >= __oe_ecalls_table_size)
+            OE_RAISE(OE_NOT_FOUND);
+
+        func = __oe_ecalls_table[args.function_id];
+    }
 
     if (func == NULL)
         OE_RAISE(OE_NOT_FOUND);
@@ -461,10 +475,6 @@ static void _handle_ecall(
             _handle_oelog_init(arg_in);
             break;
         }
-        case OE_ECALL_DEVICE_NOTIFICATION:
-        {
-            _handle_oe_device_notification(arg_in);
-        }
         case OE_ECALL_GET_PUBLIC_KEY_BY_POLICY:
         {
             oe_handle_get_public_key_by_policy(arg_in);
@@ -603,7 +613,7 @@ done:
 */
 
 static oe_result_t _call_host_function(
-    bool call_internal_host_function,
+    bool is_internal_call,
     size_t function_id,
     const void* input_buffer,
     size_t input_buffer_size,
@@ -628,7 +638,7 @@ static oe_result_t _call_host_function(
         }
 
         args->function_id = function_id;
-        args->call_internal_host_function = call_internal_host_function;
+        args->is_internal_call = is_internal_call;
         args->input_buffer = input_buffer;
         args->input_buffer_size = input_buffer_size;
         args->output_buffer = output_buffer;

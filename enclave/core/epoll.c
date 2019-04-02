@@ -12,6 +12,7 @@
 #include <openenclave/internal/fs.h>
 #include <openenclave/internal/print.h>
 #include <openenclave/internal/epoll.h>
+#include "../../common/oe_t.h"
 
 int oe_get_epoll_events(
     uint64_t epfd,
@@ -461,42 +462,24 @@ int oe_get_epoll_events(
 // of handle notification calls in rapid succesion. This could raise needless
 // synchronisaion issues. Instead, we send the list and notify the list, the
 // push the doorbell
-oe_result_t _handle_oe_device_notification(uint64_t arg)
+int oe_polling_notify(
+    struct oe_device_notifications* notifications,
+    size_t num_notifications)
 {
-    oe_result_t result = OE_FAILURE;
-    struct oe_device_notification_args* pargs =
-        (struct oe_device_notification_args*)arg;
-    uint64_t num_notifications;
+    int ret = -1;
 
-    if (pargs == NULL)
+    if (oe_post_device_notifications((int)num_notifications, notifications) < 0)
     {
-        result = OE_INVALID_PARAMETER;
-        goto done;
-    }
-    num_notifications = pargs->num_notifications;
-    if (!oe_is_outside_enclave(
-            (void*)pargs,
-            sizeof(struct oe_device_notification_args) +
-                (sizeof(struct oe_device_notifications) * num_notifications)))
-    {
-        result = OE_INVALID_PARAMETER;
-        goto done;
-    }
-
-    if (oe_post_device_notifications(
-            (int)pargs->num_notifications,
-            (struct oe_device_notifications*)(pargs + 1)) < 0)
-    {
-        result = OE_INVALID_PARAMETER;
         goto done;
     }
 
     /* push the doorbell */
     oe_broadcast_device_notification();
 
-    result = OE_OK;
+    ret = 0;
+
 done:
-    return result;
+    return ret;
 }
 
 void oe_signal_device_notification(oe_device_t* pdevice, uint32_t event_mask)

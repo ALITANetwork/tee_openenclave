@@ -6,6 +6,14 @@ enclave {
     include "openenclave/bits/defs.h"
     include "openenclave/bits/types.h"
 
+    trusted {
+
+        public int oe_polling_notify(
+            [in, count=num_notifications]
+            struct oe_device_notifications* notifications,
+            size_t num_notifications);
+    };
+
     untrusted {
 
         int oe_polling_epoll_create1(

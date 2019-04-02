@@ -78,7 +78,6 @@ typedef enum _oe_func
     OE_ECALL_GET_SGX_REPORT,
     OE_ECALL_VIRTUAL_EXCEPTION_HANDLER,
     OE_ECALL_LOG_INIT,
-    OE_ECALL_DEVICE_NOTIFICATION,
     OE_ECALL_GET_PUBLIC_KEY_BY_POLICY,
     OE_ECALL_GET_PUBLIC_KEY,
 
@@ -200,6 +199,9 @@ OE_INLINE uint16_t oe_get_result_from_call_arg1(uint64_t arg)
 
 typedef struct _oe_call_enclave_function_args
 {
+    /* If true, then call the internal enclave function with the above id. */
+    bool is_internal_call;
+
     uint64_t function_id;
     const void* input_buffer;
     size_t input_buffer_size;
@@ -208,6 +210,26 @@ typedef struct _oe_call_enclave_function_args
     size_t output_bytes_written;
     oe_result_t result;
 } oe_call_enclave_function_args_t;
+
+/*
+**==============================================================================
+**
+** oe_call_internal_enclave_function()
+**
+**     This function is nearly identical to oe_call_enclave_function(), but it
+**     employs the 'internal' ocall table on this enclave side.
+**
+**==============================================================================
+*/
+
+oe_result_t oe_call_internal_enclave_function(
+    oe_enclave_t* enclave,
+    uint32_t function_id,
+    const void* input_buffer,
+    size_t input_buffer_size,
+    void* output_buffer,
+    size_t output_buffer_size,
+    size_t* output_bytes_written);
 
 /*
 **==============================================================================
@@ -222,7 +244,7 @@ typedef struct _oe_call_host_function_args
     uint64_t function_id;
 
     /* If true, then call the internal host function with the above id. */
-    bool call_internal_host_function;
+    bool is_internal_call;
 
     const void* input_buffer;
     size_t input_buffer_size;

@@ -61,9 +61,62 @@ done:
         pargs_out->_result = _result;
 }
 
+void ecall_oe_polling_notify(
+    uint8_t* input_buffer,
+    size_t input_buffer_size,
+    uint8_t* output_buffer,
+    size_t output_buffer_size,
+    size_t* output_bytes_written)
+{
+    oe_result_t _result = OE_FAILURE;
+
+    /* Prepare parameters */
+    oe_polling_notify_args_t* pargs_in =
+        (oe_polling_notify_args_t*)input_buffer;
+    oe_polling_notify_args_t* pargs_out =
+        (oe_polling_notify_args_t*)output_buffer;
+
+    size_t input_buffer_offset = 0;
+    size_t output_buffer_offset = 0;
+    OE_ADD_SIZE(input_buffer_offset, sizeof(*pargs_in));
+    OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
+
+    /* Make sure input and output buffers lie within the enclave */
+    if (!input_buffer || !oe_is_within_enclave(input_buffer, input_buffer_size))
+        goto done;
+
+    if (!output_buffer ||
+        !oe_is_within_enclave(output_buffer, output_buffer_size))
+        goto done;
+
+    /* Set in and in-out pointers */
+    OE_SET_IN_POINTER(
+        notifications,
+        (pargs_in->num_notifications * sizeof(struct oe_device_notifications)));
+
+    /* Set out and in-out pointers. In-out parameters are copied to output
+     * buffer. */
+
+    /* lfence after checks */
+    oe_lfence();
+
+    /* Call user function */
+    pargs_out->_retval =
+        oe_polling_notify(pargs_in->notifications, pargs_in->num_notifications);
+
+    /* Success. */
+    _result = OE_OK;
+    *output_bytes_written = output_buffer_offset;
+
+done:
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+        pargs_out->_result = _result;
+}
+
 /****** ECALL function table  *************/
 oe_ecall_func_t __oe_ecalls_table[] = {
     (oe_ecall_func_t)ecall_public_root_ecall,
+    (oe_ecall_func_t)ecall_oe_polling_notify,
 };
 
 size_t __oe_ecalls_table_size = OE_COUNTOF(__oe_ecalls_table);
