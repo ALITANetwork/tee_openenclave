@@ -12,21 +12,19 @@
 
 OE_EXTERNC_BEGIN
 
+
+
 /****** ECALL function wrappers  *************/
 void ecall_public_root_ecall(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
 
     /* Prepare parameters */
-    public_root_ecall_args_t* pargs_in =
-        (public_root_ecall_args_t*)input_buffer;
-    public_root_ecall_args_t* pargs_out =
-        (public_root_ecall_args_t*)output_buffer;
+    public_root_ecall_args_t* pargs_in = (public_root_ecall_args_t*) input_buffer;
+    public_root_ecall_args_t* pargs_out = (public_root_ecall_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -37,45 +35,47 @@ void ecall_public_root_ecall(
     if (!input_buffer || !oe_is_within_enclave(input_buffer, input_buffer_size))
         goto done;
 
-    if (!output_buffer ||
-        !oe_is_within_enclave(output_buffer, output_buffer_size))
+    if (!output_buffer || !oe_is_within_enclave(output_buffer, output_buffer_size))
         goto done;
 
     /* Set in and in-out pointers */
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
 
     /* lfence after checks */
     oe_lfence();
 
     /* Call user function */
-    public_root_ecall();
+    public_root_ecall(
+        );
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
+
+
 /****** ECALL function table  *************/
 oe_ecall_func_t __oe_ecalls_table[] = {
-    (oe_ecall_func_t)ecall_public_root_ecall,
+    (oe_ecall_func_t) ecall_public_root_ecall,
 };
 
 size_t __oe_ecalls_table_size = OE_COUNTOF(__oe_ecalls_table);
 
+
 /* ocall wrappers */
 
 oe_result_t oe_hostfs_open(
-    int* _retval,
-    const char* pathname,
-    int flags,
-    mode_t mode,
-    int* err)
+        int* _retval,
+        const char* pathname,
+        int flags,
+        mode_t mode,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -84,10 +84,10 @@ oe_result_t oe_hostfs_open(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_open_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_open_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -100,37 +100,34 @@ oe_result_t oe_hostfs_open(
 
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
-    _args.pathname = (char*)pathname;
+    _args.pathname = (char*) pathname;
     _args.pathname_len = (pathname) ? (strlen(pathname) + 1) : 0;
     _args.flags = flags;
     _args.mode = mode;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_open_args_t));
-    if (pathname)
-        OE_ADD_SIZE(_input_buffer_size, _args.pathname_len * sizeof(char));
+    if (pathname) OE_ADD_SIZE(_input_buffer_size, _args.pathname_len * sizeof(char));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_open_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(pathname, _args.pathname_len * sizeof(char));
@@ -139,26 +136,23 @@ oe_result_t oe_hostfs_open(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_open,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_open,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -168,18 +162,18 @@ oe_result_t oe_hostfs_open(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostfs_read(
-    ssize_t* _retval,
-    int fd,
-    void* buf,
-    size_t count,
-    int* err)
+        ssize_t* _retval,
+        int fd,
+        void* buf,
+        size_t count,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -188,10 +182,10 @@ oe_result_t oe_hostfs_read(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_read_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_read_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -205,61 +199,56 @@ oe_result_t oe_hostfs_read(
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.fd = fd;
-    _args.buf = (void*)buf;
+    _args.buf = (void*) buf;
     _args.count = count;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_read_args_t));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_read_args_t));
-    if (buf)
-        OE_ADD_SIZE(_output_buffer_size, _args.count);
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (buf) OE_ADD_SIZE(_output_buffer_size, _args.count);
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_read,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_read,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -270,18 +259,18 @@ oe_result_t oe_hostfs_read(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostfs_write(
-    ssize_t* _retval,
-    int fd,
-    const void* buf,
-    size_t count,
-    int* err)
+        ssize_t* _retval,
+        int fd,
+        const void* buf,
+        size_t count,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -290,10 +279,10 @@ oe_result_t oe_hostfs_write(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_write_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_write_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -307,35 +296,32 @@ oe_result_t oe_hostfs_write(
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.fd = fd;
-    _args.buf = (void*)buf;
+    _args.buf = (void*) buf;
     _args.count = count;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_write_args_t));
-    if (buf)
-        OE_ADD_SIZE(_input_buffer_size, _args.count);
+    if (buf) OE_ADD_SIZE(_input_buffer_size, _args.count);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_write_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(buf, _args.count);
@@ -344,26 +330,23 @@ oe_result_t oe_hostfs_write(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_write,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_write,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -373,18 +356,18 @@ oe_result_t oe_hostfs_write(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostfs_lseek(
-    off_t* _retval,
-    int fd,
-    off_t offset,
-    int whence,
-    int* err)
+        off_t* _retval,
+        int fd,
+        off_t offset,
+        int whence,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -393,10 +376,10 @@ oe_result_t oe_hostfs_lseek(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_lseek_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_lseek_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -412,57 +395,53 @@ oe_result_t oe_hostfs_lseek(
     _args.fd = fd;
     _args.offset = offset;
     _args.whence = whence;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_lseek_args_t));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_lseek_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_lseek,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_lseek,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -472,13 +451,16 @@ oe_result_t oe_hostfs_lseek(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
-oe_result_t oe_hostfs_close(int* _retval, int fd, int* err)
+oe_result_t oe_hostfs_close(
+        int* _retval,
+        int fd,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -487,10 +469,10 @@ oe_result_t oe_hostfs_close(int* _retval, int fd, int* err)
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_close_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_close_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -504,57 +486,53 @@ oe_result_t oe_hostfs_close(int* _retval, int fd, int* err)
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.fd = fd;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_close_args_t));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_close_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_close,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_close,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -564,13 +542,16 @@ oe_result_t oe_hostfs_close(int* _retval, int fd, int* err)
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
-oe_result_t oe_hostfs_dup(int* _retval, int oldfd, int* err)
+oe_result_t oe_hostfs_dup(
+        int* _retval,
+        int oldfd,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -579,10 +560,10 @@ oe_result_t oe_hostfs_dup(int* _retval, int oldfd, int* err)
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_dup_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_dup_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -596,57 +577,53 @@ oe_result_t oe_hostfs_dup(int* _retval, int oldfd, int* err)
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.oldfd = oldfd;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_dup_args_t));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_dup_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_dup,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_dup,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -656,13 +633,16 @@ oe_result_t oe_hostfs_dup(int* _retval, int oldfd, int* err)
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
-oe_result_t oe_hostfs_opendir(void** _retval, const char* name, int* err)
+oe_result_t oe_hostfs_opendir(
+        void** _retval,
+        const char* name,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -671,10 +651,10 @@ oe_result_t oe_hostfs_opendir(void** _retval, const char* name, int* err)
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_opendir_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_opendir_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -687,35 +667,32 @@ oe_result_t oe_hostfs_opendir(void** _retval, const char* name, int* err)
 
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
-    _args.name = (char*)name;
+    _args.name = (char*) name;
     _args.name_len = (name) ? (strlen(name) + 1) : 0;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_opendir_args_t));
-    if (name)
-        OE_ADD_SIZE(_input_buffer_size, _args.name_len * sizeof(char));
+    if (name) OE_ADD_SIZE(_input_buffer_size, _args.name_len * sizeof(char));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_opendir_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(name, _args.name_len * sizeof(char));
@@ -724,26 +701,23 @@ oe_result_t oe_hostfs_opendir(void** _retval, const char* name, int* err)
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_opendir,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_opendir,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -753,17 +727,17 @@ oe_result_t oe_hostfs_opendir(void** _retval, const char* name, int* err)
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostfs_readdir(
-    int* _retval,
-    void* dirp,
-    struct oe_hostfs_dirent_struct* ent,
-    int* err)
+        int* _retval,
+        void* dirp,
+        struct oe_hostfs_dirent_struct* ent,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -772,10 +746,10 @@ oe_result_t oe_hostfs_readdir(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_readdir_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_readdir_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -788,80 +762,74 @@ oe_result_t oe_hostfs_readdir(
 
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
-    _args.dirp = (void*)dirp;
-    _args.ent = (struct oe_hostfs_dirent_struct*)ent;
-    _args.err = (int*)err;
+    _args.dirp = (void*) dirp;
+    _args.ent = (struct oe_hostfs_dirent_struct*) ent;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_readdir_args_t));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_readdir_args_t));
-    if (ent)
-        OE_ADD_SIZE(
-            _output_buffer_size, (1 * sizeof(struct oe_hostfs_dirent_struct)));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (ent) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(struct oe_hostfs_dirent_struct)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_readdir,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_readdir,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
 
     /* Unmarshal return value and out, in-out parameters */
     *_retval = _pargs_out->_retval;
-    OE_READ_OUT_PARAM(
-        ent, (size_t)((1 * sizeof(struct oe_hostfs_dirent_struct))));
+    OE_READ_OUT_PARAM(ent, (size_t)((1 * sizeof(struct oe_hostfs_dirent_struct))));
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
-oe_result_t oe_hostfs_rewinddir(void* dirp)
+oe_result_t oe_hostfs_rewinddir(
+        void* dirp)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -870,10 +838,10 @@ oe_result_t oe_hostfs_rewinddir(void* dirp)
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_rewinddir_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_rewinddir_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -886,7 +854,7 @@ oe_result_t oe_hostfs_rewinddir(void* dirp)
 
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
-    _args.dirp = (void*)dirp;
+    _args.dirp = (void*) dirp;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_rewinddir_args_t));
@@ -898,43 +866,40 @@ oe_result_t oe_hostfs_rewinddir(void* dirp)
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_rewinddir,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_rewinddir,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -942,13 +907,16 @@ oe_result_t oe_hostfs_rewinddir(void* dirp)
     /* Unmarshal return value and out, in-out parameters */
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
-oe_result_t oe_hostfs_closedir(int* _retval, void* dirp, int* err)
+oe_result_t oe_hostfs_closedir(
+        int* _retval,
+        void* dirp,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -957,10 +925,10 @@ oe_result_t oe_hostfs_closedir(int* _retval, void* dirp, int* err)
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_closedir_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_closedir_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -973,58 +941,54 @@ oe_result_t oe_hostfs_closedir(int* _retval, void* dirp, int* err)
 
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
-    _args.dirp = (void*)dirp;
-    _args.err = (int*)err;
+    _args.dirp = (void*) dirp;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_closedir_args_t));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_closedir_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_closedir,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_closedir,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -1034,17 +998,17 @@ oe_result_t oe_hostfs_closedir(int* _retval, void* dirp, int* err)
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostfs_stat(
-    int* _retval,
-    const char* pathname,
-    struct oe_hostfs_stat_struct* buf,
-    int* err)
+        int* _retval,
+        const char* pathname,
+        struct oe_hostfs_stat_struct* buf,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -1053,10 +1017,10 @@ oe_result_t oe_hostfs_stat(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_stat_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_stat_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -1069,39 +1033,34 @@ oe_result_t oe_hostfs_stat(
 
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
-    _args.pathname = (char*)pathname;
+    _args.pathname = (char*) pathname;
     _args.pathname_len = (pathname) ? (strlen(pathname) + 1) : 0;
-    _args.buf = (struct oe_hostfs_stat_struct*)buf;
-    _args.err = (int*)err;
+    _args.buf = (struct oe_hostfs_stat_struct*) buf;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_stat_args_t));
-    if (pathname)
-        OE_ADD_SIZE(_input_buffer_size, _args.pathname_len * sizeof(char));
+    if (pathname) OE_ADD_SIZE(_input_buffer_size, _args.pathname_len * sizeof(char));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_stat_args_t));
-    if (buf)
-        OE_ADD_SIZE(
-            _output_buffer_size, (1 * sizeof(struct oe_hostfs_stat_struct)));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (buf) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(struct oe_hostfs_stat_struct)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(pathname, _args.pathname_len * sizeof(char));
@@ -1110,48 +1069,44 @@ oe_result_t oe_hostfs_stat(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_stat,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_stat,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
 
     /* Unmarshal return value and out, in-out parameters */
     *_retval = _pargs_out->_retval;
-    OE_READ_OUT_PARAM(
-        buf, (size_t)((1 * sizeof(struct oe_hostfs_stat_struct))));
+    OE_READ_OUT_PARAM(buf, (size_t)((1 * sizeof(struct oe_hostfs_stat_struct))));
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostfs_access(
-    int* _retval,
-    const char* pathname,
-    int mode,
-    int* err)
+        int* _retval,
+        const char* pathname,
+        int mode,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -1160,10 +1115,10 @@ oe_result_t oe_hostfs_access(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_access_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_access_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -1176,36 +1131,33 @@ oe_result_t oe_hostfs_access(
 
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
-    _args.pathname = (char*)pathname;
+    _args.pathname = (char*) pathname;
     _args.pathname_len = (pathname) ? (strlen(pathname) + 1) : 0;
     _args.mode = mode;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_access_args_t));
-    if (pathname)
-        OE_ADD_SIZE(_input_buffer_size, _args.pathname_len * sizeof(char));
+    if (pathname) OE_ADD_SIZE(_input_buffer_size, _args.pathname_len * sizeof(char));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_access_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(pathname, _args.pathname_len * sizeof(char));
@@ -1214,26 +1166,23 @@ oe_result_t oe_hostfs_access(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_access,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_access,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -1243,17 +1192,17 @@ oe_result_t oe_hostfs_access(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostfs_link(
-    int* _retval,
-    const char* oldpath,
-    const char* newpath,
-    int* err)
+        int* _retval,
+        const char* oldpath,
+        const char* newpath,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -1262,10 +1211,10 @@ oe_result_t oe_hostfs_link(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_link_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_link_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -1278,39 +1227,35 @@ oe_result_t oe_hostfs_link(
 
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
-    _args.oldpath = (char*)oldpath;
+    _args.oldpath = (char*) oldpath;
     _args.oldpath_len = (oldpath) ? (strlen(oldpath) + 1) : 0;
-    _args.newpath = (char*)newpath;
+    _args.newpath = (char*) newpath;
     _args.newpath_len = (newpath) ? (strlen(newpath) + 1) : 0;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_link_args_t));
-    if (oldpath)
-        OE_ADD_SIZE(_input_buffer_size, _args.oldpath_len * sizeof(char));
-    if (newpath)
-        OE_ADD_SIZE(_input_buffer_size, _args.newpath_len * sizeof(char));
+    if (oldpath) OE_ADD_SIZE(_input_buffer_size, _args.oldpath_len * sizeof(char));
+    if (newpath) OE_ADD_SIZE(_input_buffer_size, _args.newpath_len * sizeof(char));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_link_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(oldpath, _args.oldpath_len * sizeof(char));
@@ -1320,26 +1265,23 @@ oe_result_t oe_hostfs_link(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_link,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_link,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -1349,13 +1291,16 @@ oe_result_t oe_hostfs_link(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
-oe_result_t oe_hostfs_unlink(int* _retval, const char* pathname, int* err)
+oe_result_t oe_hostfs_unlink(
+        int* _retval,
+        const char* pathname,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -1364,10 +1309,10 @@ oe_result_t oe_hostfs_unlink(int* _retval, const char* pathname, int* err)
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_unlink_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_unlink_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -1380,35 +1325,32 @@ oe_result_t oe_hostfs_unlink(int* _retval, const char* pathname, int* err)
 
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
-    _args.pathname = (char*)pathname;
+    _args.pathname = (char*) pathname;
     _args.pathname_len = (pathname) ? (strlen(pathname) + 1) : 0;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_unlink_args_t));
-    if (pathname)
-        OE_ADD_SIZE(_input_buffer_size, _args.pathname_len * sizeof(char));
+    if (pathname) OE_ADD_SIZE(_input_buffer_size, _args.pathname_len * sizeof(char));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_unlink_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(pathname, _args.pathname_len * sizeof(char));
@@ -1417,26 +1359,23 @@ oe_result_t oe_hostfs_unlink(int* _retval, const char* pathname, int* err)
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_unlink,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_unlink,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -1446,17 +1385,17 @@ oe_result_t oe_hostfs_unlink(int* _retval, const char* pathname, int* err)
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostfs_rename(
-    int* _retval,
-    const char* oldpath,
-    const char* newpath,
-    int* err)
+        int* _retval,
+        const char* oldpath,
+        const char* newpath,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -1465,10 +1404,10 @@ oe_result_t oe_hostfs_rename(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_rename_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_rename_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -1481,39 +1420,35 @@ oe_result_t oe_hostfs_rename(
 
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
-    _args.oldpath = (char*)oldpath;
+    _args.oldpath = (char*) oldpath;
     _args.oldpath_len = (oldpath) ? (strlen(oldpath) + 1) : 0;
-    _args.newpath = (char*)newpath;
+    _args.newpath = (char*) newpath;
     _args.newpath_len = (newpath) ? (strlen(newpath) + 1) : 0;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_rename_args_t));
-    if (oldpath)
-        OE_ADD_SIZE(_input_buffer_size, _args.oldpath_len * sizeof(char));
-    if (newpath)
-        OE_ADD_SIZE(_input_buffer_size, _args.newpath_len * sizeof(char));
+    if (oldpath) OE_ADD_SIZE(_input_buffer_size, _args.oldpath_len * sizeof(char));
+    if (newpath) OE_ADD_SIZE(_input_buffer_size, _args.newpath_len * sizeof(char));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_rename_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(oldpath, _args.oldpath_len * sizeof(char));
@@ -1523,26 +1458,23 @@ oe_result_t oe_hostfs_rename(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_rename,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_rename,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -1552,17 +1484,17 @@ oe_result_t oe_hostfs_rename(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostfs_truncate(
-    int* _retval,
-    const char* path,
-    off_t length,
-    int* err)
+        int* _retval,
+        const char* path,
+        off_t length,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -1571,10 +1503,10 @@ oe_result_t oe_hostfs_truncate(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_truncate_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_truncate_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -1587,36 +1519,33 @@ oe_result_t oe_hostfs_truncate(
 
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
-    _args.path = (char*)path;
+    _args.path = (char*) path;
     _args.path_len = (path) ? (strlen(path) + 1) : 0;
     _args.length = length;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_truncate_args_t));
-    if (path)
-        OE_ADD_SIZE(_input_buffer_size, _args.path_len * sizeof(char));
+    if (path) OE_ADD_SIZE(_input_buffer_size, _args.path_len * sizeof(char));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_truncate_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(path, _args.path_len * sizeof(char));
@@ -1625,26 +1554,23 @@ oe_result_t oe_hostfs_truncate(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_truncate,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_truncate,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -1654,17 +1580,17 @@ oe_result_t oe_hostfs_truncate(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostfs_mkdir(
-    int* _retval,
-    const char* pathname,
-    mode_t mode,
-    int* err)
+        int* _retval,
+        const char* pathname,
+        mode_t mode,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -1673,10 +1599,10 @@ oe_result_t oe_hostfs_mkdir(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_mkdir_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_mkdir_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -1689,36 +1615,33 @@ oe_result_t oe_hostfs_mkdir(
 
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
-    _args.pathname = (char*)pathname;
+    _args.pathname = (char*) pathname;
     _args.pathname_len = (pathname) ? (strlen(pathname) + 1) : 0;
     _args.mode = mode;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_mkdir_args_t));
-    if (pathname)
-        OE_ADD_SIZE(_input_buffer_size, _args.pathname_len * sizeof(char));
+    if (pathname) OE_ADD_SIZE(_input_buffer_size, _args.pathname_len * sizeof(char));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_mkdir_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(pathname, _args.pathname_len * sizeof(char));
@@ -1727,26 +1650,23 @@ oe_result_t oe_hostfs_mkdir(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_mkdir,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_mkdir,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -1756,13 +1676,16 @@ oe_result_t oe_hostfs_mkdir(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
-oe_result_t oe_hostfs_rmdir(int* _retval, const char* pathname, int* err)
+oe_result_t oe_hostfs_rmdir(
+        int* _retval,
+        const char* pathname,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -1771,10 +1694,10 @@ oe_result_t oe_hostfs_rmdir(int* _retval, const char* pathname, int* err)
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostfs_rmdir_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostfs_rmdir_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -1787,35 +1710,32 @@ oe_result_t oe_hostfs_rmdir(int* _retval, const char* pathname, int* err)
 
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
-    _args.pathname = (char*)pathname;
+    _args.pathname = (char*) pathname;
     _args.pathname_len = (pathname) ? (strlen(pathname) + 1) : 0;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostfs_rmdir_args_t));
-    if (pathname)
-        OE_ADD_SIZE(_input_buffer_size, _args.pathname_len * sizeof(char));
+    if (pathname) OE_ADD_SIZE(_input_buffer_size, _args.pathname_len * sizeof(char));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostfs_rmdir_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(pathname, _args.pathname_len * sizeof(char));
@@ -1824,26 +1744,23 @@ oe_result_t oe_hostfs_rmdir(int* _retval, const char* pathname, int* err)
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostfs_rmdir,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostfs_rmdir,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -1853,18 +1770,18 @@ oe_result_t oe_hostfs_rmdir(int* _retval, const char* pathname, int* err)
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostsock_socket(
-    int* _retval,
-    int domain,
-    int type,
-    int protocol,
-    int* err)
+        int* _retval,
+        int domain,
+        int type,
+        int protocol,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -1873,10 +1790,10 @@ oe_result_t oe_hostsock_socket(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_socket_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_socket_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -1892,57 +1809,53 @@ oe_result_t oe_hostsock_socket(
     _args.domain = domain;
     _args.type = type;
     _args.protocol = protocol;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_socket_args_t));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_socket_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_socket,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_socket,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -1952,19 +1865,19 @@ oe_result_t oe_hostsock_socket(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostsock_socketpair(
-    int* _retval,
-    int domain,
-    int type,
-    int protocol,
-    int sv[2],
-    int* err)
+        int* _retval,
+        int domain,
+        int type,
+        int protocol,
+        int sv[2],
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -1973,10 +1886,10 @@ oe_result_t oe_hostsock_socketpair(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_socketpair_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_socketpair_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -1992,34 +1905,31 @@ oe_result_t oe_hostsock_socketpair(
     _args.domain = domain;
     _args.type = type;
     _args.protocol = protocol;
-    _args.sv = (int*)sv;
-    _args.err = (int*)err;
+    _args.sv = (int*) sv;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_socketpair_args_t));
-    if (sv)
-        OE_ADD_SIZE(_input_buffer_size, sizeof(int[2]));
+    if (sv) OE_ADD_SIZE(_input_buffer_size, sizeof(int[2]));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_socketpair_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(sv, sizeof(int[2]));
@@ -2028,26 +1938,23 @@ oe_result_t oe_hostsock_socketpair(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_socketpair,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_socketpair,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -2057,18 +1964,18 @@ oe_result_t oe_hostsock_socketpair(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostsock_connect(
-    int* _retval,
-    int sockfd,
-    const struct sockaddr* addr,
-    socklen_t addrlen,
-    int* err)
+        int* _retval,
+        int sockfd,
+        const struct sockaddr* addr,
+        socklen_t addrlen,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -2077,10 +1984,10 @@ oe_result_t oe_hostsock_connect(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_connect_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_connect_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -2094,35 +2001,32 @@ oe_result_t oe_hostsock_connect(
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.sockfd = sockfd;
-    _args.addr = (struct sockaddr*)addr;
+    _args.addr = (struct sockaddr*) addr;
     _args.addrlen = addrlen;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_connect_args_t));
-    if (addr)
-        OE_ADD_SIZE(_input_buffer_size, _args.addrlen);
+    if (addr) OE_ADD_SIZE(_input_buffer_size, _args.addrlen);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_connect_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(addr, _args.addrlen);
@@ -2131,26 +2035,23 @@ oe_result_t oe_hostsock_connect(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_connect,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_connect,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -2160,19 +2061,19 @@ oe_result_t oe_hostsock_connect(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostsock_accept(
-    int* _retval,
-    int sockfd,
-    struct sockaddr* addr,
-    socklen_t addrlen_in,
-    socklen_t* addrlen_out,
-    int* err)
+        int* _retval,
+        int sockfd,
+        struct sockaddr* addr,
+        socklen_t addrlen_in,
+        socklen_t* addrlen_out,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -2181,10 +2082,10 @@ oe_result_t oe_hostsock_accept(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_accept_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_accept_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -2198,40 +2099,35 @@ oe_result_t oe_hostsock_accept(
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.sockfd = sockfd;
-    _args.addr = (struct sockaddr*)addr;
+    _args.addr = (struct sockaddr*) addr;
     _args.addrlen_in = addrlen_in;
-    _args.addrlen_out = (socklen_t*)addrlen_out;
-    _args.err = (int*)err;
+    _args.addrlen_out = (socklen_t*) addrlen_out;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_accept_args_t));
-    if (addr)
-        OE_ADD_SIZE(_input_buffer_size, _args.addrlen_in);
+    if (addr) OE_ADD_SIZE(_input_buffer_size, _args.addrlen_in);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_accept_args_t));
-    if (addr)
-        OE_ADD_SIZE(_output_buffer_size, _args.addrlen_in);
-    if (addrlen_out)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(socklen_t)));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (addr) OE_ADD_SIZE(_output_buffer_size, _args.addrlen_in);
+    if (addrlen_out) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(socklen_t)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_OUT_PARAM(addr, _args.addrlen_in);
@@ -2240,26 +2136,23 @@ oe_result_t oe_hostsock_accept(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_accept,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_accept,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -2271,18 +2164,18 @@ oe_result_t oe_hostsock_accept(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostsock_bind(
-    int* _retval,
-    int sockfd,
-    const struct sockaddr* addr,
-    socklen_t addrlen,
-    int* err)
+        int* _retval,
+        int sockfd,
+        const struct sockaddr* addr,
+        socklen_t addrlen,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -2291,10 +2184,10 @@ oe_result_t oe_hostsock_bind(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_bind_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_bind_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -2308,35 +2201,32 @@ oe_result_t oe_hostsock_bind(
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.sockfd = sockfd;
-    _args.addr = (struct sockaddr*)addr;
+    _args.addr = (struct sockaddr*) addr;
     _args.addrlen = addrlen;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_bind_args_t));
-    if (addr)
-        OE_ADD_SIZE(_input_buffer_size, _args.addrlen);
+    if (addr) OE_ADD_SIZE(_input_buffer_size, _args.addrlen);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_bind_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(addr, _args.addrlen);
@@ -2345,26 +2235,23 @@ oe_result_t oe_hostsock_bind(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_bind,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_bind,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -2374,13 +2261,17 @@ oe_result_t oe_hostsock_bind(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
-oe_result_t oe_hostsock_listen(int* _retval, int sockfd, int backlog, int* err)
+oe_result_t oe_hostsock_listen(
+        int* _retval,
+        int sockfd,
+        int backlog,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -2389,10 +2280,10 @@ oe_result_t oe_hostsock_listen(int* _retval, int sockfd, int backlog, int* err)
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_listen_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_listen_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -2407,57 +2298,53 @@ oe_result_t oe_hostsock_listen(int* _retval, int sockfd, int backlog, int* err)
     memset(&_args, 0, sizeof(_args));
     _args.sockfd = sockfd;
     _args.backlog = backlog;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_listen_args_t));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_listen_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_listen,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_listen,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -2467,28 +2354,28 @@ oe_result_t oe_hostsock_listen(int* _retval, int sockfd, int backlog, int* err)
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostsock_recvmsg(
-    ssize_t* _retval,
-    int sockfd,
-    void* msg_name,
-    socklen_t msg_namelen_in,
-    socklen_t* msg_namelen_out,
-    struct iovec* msg_iov,
-    size_t msg_iovlen_in,
-    size_t* msg_iovlen_out,
-    const void* msg_control,
-    size_t msg_controllen_in,
-    size_t* msg_controllen_out,
-    int msg_flags_in,
-    int* msg_flags_out,
-    int flags,
-    int* err)
+        ssize_t* _retval,
+        int sockfd,
+        void* msg_name,
+        socklen_t msg_namelen_in,
+        socklen_t* msg_namelen_out,
+        struct iovec* msg_iov,
+        size_t msg_iovlen_in,
+        size_t* msg_iovlen_out,
+        const void* msg_control,
+        size_t msg_controllen_in,
+        size_t* msg_controllen_out,
+        int msg_flags_in,
+        int* msg_flags_out,
+        int flags,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -2497,10 +2384,10 @@ oe_result_t oe_hostsock_recvmsg(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_recvmsg_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_recvmsg_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -2514,58 +2401,48 @@ oe_result_t oe_hostsock_recvmsg(
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.sockfd = sockfd;
-    _args.msg_name = (void*)msg_name;
+    _args.msg_name = (void*) msg_name;
     _args.msg_namelen_in = msg_namelen_in;
-    _args.msg_namelen_out = (socklen_t*)msg_namelen_out;
-    _args.msg_iov = (struct iovec*)msg_iov;
+    _args.msg_namelen_out = (socklen_t*) msg_namelen_out;
+    _args.msg_iov = (struct iovec*) msg_iov;
     _args.msg_iovlen_in = msg_iovlen_in;
-    _args.msg_iovlen_out = (size_t*)msg_iovlen_out;
-    _args.msg_control = (void*)msg_control;
+    _args.msg_iovlen_out = (size_t*) msg_iovlen_out;
+    _args.msg_control = (void*) msg_control;
     _args.msg_controllen_in = msg_controllen_in;
-    _args.msg_controllen_out = (size_t*)msg_controllen_out;
+    _args.msg_controllen_out = (size_t*) msg_controllen_out;
     _args.msg_flags_in = msg_flags_in;
-    _args.msg_flags_out = (int*)msg_flags_out;
+    _args.msg_flags_out = (int*) msg_flags_out;
     _args.flags = flags;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_recvmsg_args_t));
-    if (msg_name)
-        OE_ADD_SIZE(_input_buffer_size, _args.msg_namelen_in);
-    if (msg_iov)
-        OE_ADD_SIZE(
-            _input_buffer_size, (_args.msg_iovlen_in * sizeof(struct iovec)));
-    if (msg_control)
-        OE_ADD_SIZE(_input_buffer_size, _args.msg_controllen_in);
+    if (msg_name) OE_ADD_SIZE(_input_buffer_size, _args.msg_namelen_in);
+    if (msg_iov) OE_ADD_SIZE(_input_buffer_size, (_args.msg_iovlen_in * sizeof(struct iovec)));
+    if (msg_control) OE_ADD_SIZE(_input_buffer_size, _args.msg_controllen_in);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_recvmsg_args_t));
-    if (msg_namelen_out)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(socklen_t)));
-    if (msg_iovlen_out)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(size_t)));
-    if (msg_controllen_out)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(size_t)));
-    if (msg_flags_out)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (msg_namelen_out) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(socklen_t)));
+    if (msg_iovlen_out) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(size_t)));
+    if (msg_controllen_out) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(size_t)));
+    if (msg_flags_out) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(msg_name, _args.msg_namelen_in);
@@ -2576,26 +2453,23 @@ oe_result_t oe_hostsock_recvmsg(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_recvmsg,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_recvmsg,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -2609,24 +2483,24 @@ oe_result_t oe_hostsock_recvmsg(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostsock_sendmsg(
-    ssize_t* _retval,
-    int sockfd,
-    const void* msg_name,
-    socklen_t msg_namelen,
-    const struct iovec* msg_iov,
-    size_t msg_iovlen,
-    const void* msg_control,
-    size_t msg_controllen,
-    int msg_flags,
-    int flags,
-    int* err)
+        ssize_t* _retval,
+        int sockfd,
+        const void* msg_name,
+        socklen_t msg_namelen,
+        const struct iovec* msg_iov,
+        size_t msg_iovlen,
+        const void* msg_control,
+        size_t msg_controllen,
+        int msg_flags,
+        int flags,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -2635,10 +2509,10 @@ oe_result_t oe_hostsock_sendmsg(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_sendmsg_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_sendmsg_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -2652,46 +2526,40 @@ oe_result_t oe_hostsock_sendmsg(
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.sockfd = sockfd;
-    _args.msg_name = (void*)msg_name;
+    _args.msg_name = (void*) msg_name;
     _args.msg_namelen = msg_namelen;
-    _args.msg_iov = (struct iovec*)msg_iov;
+    _args.msg_iov = (struct iovec*) msg_iov;
     _args.msg_iovlen = msg_iovlen;
-    _args.msg_control = (void*)msg_control;
+    _args.msg_control = (void*) msg_control;
     _args.msg_controllen = msg_controllen;
     _args.msg_flags = msg_flags;
     _args.flags = flags;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_sendmsg_args_t));
-    if (msg_name)
-        OE_ADD_SIZE(_input_buffer_size, _args.msg_namelen);
-    if (msg_iov)
-        OE_ADD_SIZE(
-            _input_buffer_size, (_args.msg_iovlen * sizeof(struct iovec)));
-    if (msg_control)
-        OE_ADD_SIZE(_input_buffer_size, _args.msg_controllen);
+    if (msg_name) OE_ADD_SIZE(_input_buffer_size, _args.msg_namelen);
+    if (msg_iov) OE_ADD_SIZE(_input_buffer_size, (_args.msg_iovlen * sizeof(struct iovec)));
+    if (msg_control) OE_ADD_SIZE(_input_buffer_size, _args.msg_controllen);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_sendmsg_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(msg_name, _args.msg_namelen);
@@ -2702,26 +2570,23 @@ oe_result_t oe_hostsock_sendmsg(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_sendmsg,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_sendmsg,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -2731,19 +2596,19 @@ oe_result_t oe_hostsock_sendmsg(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostsock_recv(
-    ssize_t* _retval,
-    int sockfd,
-    void* buf,
-    size_t len,
-    int flags,
-    int* err)
+        ssize_t* _retval,
+        int sockfd,
+        void* buf,
+        size_t len,
+        int flags,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -2752,10 +2617,10 @@ oe_result_t oe_hostsock_recv(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_recv_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_recv_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -2769,38 +2634,34 @@ oe_result_t oe_hostsock_recv(
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.sockfd = sockfd;
-    _args.buf = (void*)buf;
+    _args.buf = (void*) buf;
     _args.len = len;
     _args.flags = flags;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_recv_args_t));
-    if (buf)
-        OE_ADD_SIZE(_input_buffer_size, _args.len);
+    if (buf) OE_ADD_SIZE(_input_buffer_size, _args.len);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_recv_args_t));
-    if (buf)
-        OE_ADD_SIZE(_output_buffer_size, _args.len);
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (buf) OE_ADD_SIZE(_output_buffer_size, _args.len);
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_OUT_PARAM(buf, _args.len);
@@ -2809,26 +2670,23 @@ oe_result_t oe_hostsock_recv(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_recv,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_recv,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -2839,22 +2697,22 @@ oe_result_t oe_hostsock_recv(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostsock_recvfrom(
-    ssize_t* _retval,
-    int sockfd,
-    void* buf,
-    size_t len,
-    int flags,
-    struct sockaddr* src_addr,
-    socklen_t addrlen_in,
-    socklen_t* addrlen_out,
-    int* err)
+        ssize_t* _retval,
+        int sockfd,
+        void* buf,
+        size_t len,
+        int flags,
+        struct sockaddr* src_addr,
+        socklen_t addrlen_in,
+        socklen_t* addrlen_out,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -2863,10 +2721,10 @@ oe_result_t oe_hostsock_recvfrom(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_recvfrom_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_recvfrom_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -2880,45 +2738,39 @@ oe_result_t oe_hostsock_recvfrom(
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.sockfd = sockfd;
-    _args.buf = (void*)buf;
+    _args.buf = (void*) buf;
     _args.len = len;
     _args.flags = flags;
-    _args.src_addr = (struct sockaddr*)src_addr;
+    _args.src_addr = (struct sockaddr*) src_addr;
     _args.addrlen_in = addrlen_in;
-    _args.addrlen_out = (socklen_t*)addrlen_out;
-    _args.err = (int*)err;
+    _args.addrlen_out = (socklen_t*) addrlen_out;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_recvfrom_args_t));
-    if (src_addr)
-        OE_ADD_SIZE(_input_buffer_size, _args.addrlen_in);
+    if (src_addr) OE_ADD_SIZE(_input_buffer_size, _args.addrlen_in);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_recvfrom_args_t));
-    if (buf)
-        OE_ADD_SIZE(_output_buffer_size, _args.len);
-    if (src_addr)
-        OE_ADD_SIZE(_output_buffer_size, _args.addrlen_in);
-    if (addrlen_out)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(socklen_t)));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (buf) OE_ADD_SIZE(_output_buffer_size, _args.len);
+    if (src_addr) OE_ADD_SIZE(_output_buffer_size, _args.addrlen_in);
+    if (addrlen_out) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(socklen_t)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_OUT_PARAM(src_addr, _args.addrlen_in);
@@ -2927,26 +2779,23 @@ oe_result_t oe_hostsock_recvfrom(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_recvfrom,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_recvfrom,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -2959,19 +2808,19 @@ oe_result_t oe_hostsock_recvfrom(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostsock_send(
-    ssize_t* _retval,
-    int sockfd,
-    const void* buf,
-    size_t len,
-    int flags,
-    int* err)
+        ssize_t* _retval,
+        int sockfd,
+        const void* buf,
+        size_t len,
+        int flags,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -2980,10 +2829,10 @@ oe_result_t oe_hostsock_send(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_send_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_send_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -2997,36 +2846,33 @@ oe_result_t oe_hostsock_send(
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.sockfd = sockfd;
-    _args.buf = (void*)buf;
+    _args.buf = (void*) buf;
     _args.len = len;
     _args.flags = flags;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_send_args_t));
-    if (buf)
-        OE_ADD_SIZE(_input_buffer_size, _args.len);
+    if (buf) OE_ADD_SIZE(_input_buffer_size, _args.len);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_send_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(buf, _args.len);
@@ -3035,26 +2881,23 @@ oe_result_t oe_hostsock_send(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_send,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_send,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -3064,21 +2907,21 @@ oe_result_t oe_hostsock_send(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostsock_sendto(
-    ssize_t* _retval,
-    int sockfd,
-    const void* buf,
-    size_t len,
-    int flags,
-    const struct sockaddr* dest_addr,
-    socklen_t addrlen,
-    int* err)
+        ssize_t* _retval,
+        int sockfd,
+        const void* buf,
+        size_t len,
+        int flags,
+        const struct sockaddr* dest_addr,
+        socklen_t addrlen,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -3087,10 +2930,10 @@ oe_result_t oe_hostsock_sendto(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_sendto_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_sendto_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -3104,40 +2947,36 @@ oe_result_t oe_hostsock_sendto(
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.sockfd = sockfd;
-    _args.buf = (void*)buf;
+    _args.buf = (void*) buf;
     _args.len = len;
     _args.flags = flags;
-    _args.dest_addr = (struct sockaddr*)dest_addr;
+    _args.dest_addr = (struct sockaddr*) dest_addr;
     _args.addrlen = addrlen;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_sendto_args_t));
-    if (buf)
-        OE_ADD_SIZE(_input_buffer_size, _args.len);
-    if (dest_addr)
-        OE_ADD_SIZE(_input_buffer_size, _args.addrlen);
+    if (buf) OE_ADD_SIZE(_input_buffer_size, _args.len);
+    if (dest_addr) OE_ADD_SIZE(_input_buffer_size, _args.addrlen);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_sendto_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(buf, _args.len);
@@ -3147,26 +2986,23 @@ oe_result_t oe_hostsock_sendto(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_sendto,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_sendto,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -3176,13 +3012,17 @@ oe_result_t oe_hostsock_sendto(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
-oe_result_t oe_hostsock_shutdown(int* _retval, int sockfd, int how, int* err)
+oe_result_t oe_hostsock_shutdown(
+        int* _retval,
+        int sockfd,
+        int how,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -3191,10 +3031,10 @@ oe_result_t oe_hostsock_shutdown(int* _retval, int sockfd, int how, int* err)
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_shutdown_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_shutdown_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -3209,57 +3049,53 @@ oe_result_t oe_hostsock_shutdown(int* _retval, int sockfd, int how, int* err)
     memset(&_args, 0, sizeof(_args));
     _args.sockfd = sockfd;
     _args.how = how;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_shutdown_args_t));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_shutdown_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_shutdown,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_shutdown,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -3269,13 +3105,16 @@ oe_result_t oe_hostsock_shutdown(int* _retval, int sockfd, int how, int* err)
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
-oe_result_t oe_hostsock_close(int* _retval, int fd, int* err)
+oe_result_t oe_hostsock_close(
+        int* _retval,
+        int fd,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -3284,10 +3123,10 @@ oe_result_t oe_hostsock_close(int* _retval, int fd, int* err)
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_close_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_close_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -3301,57 +3140,53 @@ oe_result_t oe_hostsock_close(int* _retval, int fd, int* err)
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.fd = fd;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_close_args_t));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_close_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_close,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_close,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -3361,13 +3196,16 @@ oe_result_t oe_hostsock_close(int* _retval, int fd, int* err)
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
-oe_result_t oe_hostsock_dup(int* _retval, int oldfd, int* err)
+oe_result_t oe_hostsock_dup(
+        int* _retval,
+        int oldfd,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -3376,10 +3214,10 @@ oe_result_t oe_hostsock_dup(int* _retval, int oldfd, int* err)
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_dup_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_dup_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -3393,57 +3231,53 @@ oe_result_t oe_hostsock_dup(int* _retval, int oldfd, int* err)
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.oldfd = oldfd;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_dup_args_t));
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_dup_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_dup,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_dup,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -3453,20 +3287,20 @@ oe_result_t oe_hostsock_dup(int* _retval, int oldfd, int* err)
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostsock_setsockopt(
-    int* _retval,
-    int sockfd,
-    int level,
-    int optname,
-    const void* optval,
-    socklen_t optlen,
-    int* err)
+        int* _retval,
+        int sockfd,
+        int level,
+        int optname,
+        const void* optval,
+        socklen_t optlen,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -3475,10 +3309,10 @@ oe_result_t oe_hostsock_setsockopt(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_setsockopt_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_setsockopt_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -3494,35 +3328,32 @@ oe_result_t oe_hostsock_setsockopt(
     _args.sockfd = sockfd;
     _args.level = level;
     _args.optname = optname;
-    _args.optval = (void*)optval;
+    _args.optval = (void*) optval;
     _args.optlen = optlen;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_setsockopt_args_t));
-    if (optval)
-        OE_ADD_SIZE(_input_buffer_size, _args.optlen);
+    if (optval) OE_ADD_SIZE(_input_buffer_size, _args.optlen);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_setsockopt_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(optval, _args.optlen);
@@ -3531,26 +3362,23 @@ oe_result_t oe_hostsock_setsockopt(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_setsockopt,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_setsockopt,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -3560,21 +3388,21 @@ oe_result_t oe_hostsock_setsockopt(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostsock_getsockopt(
-    int* _retval,
-    int sockfd,
-    int level,
-    int optname,
-    void* optval,
-    socklen_t optlen_in,
-    socklen_t* optlen_out,
-    int* err)
+        int* _retval,
+        int sockfd,
+        int level,
+        int optname,
+        void* optval,
+        socklen_t optlen_in,
+        socklen_t* optlen_out,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -3583,10 +3411,10 @@ oe_result_t oe_hostsock_getsockopt(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_getsockopt_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_getsockopt_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -3602,38 +3430,34 @@ oe_result_t oe_hostsock_getsockopt(
     _args.sockfd = sockfd;
     _args.level = level;
     _args.optname = optname;
-    _args.optval = (void*)optval;
+    _args.optval = (void*) optval;
     _args.optlen_in = optlen_in;
-    _args.optlen_out = (socklen_t*)optlen_out;
-    _args.err = (int*)err;
+    _args.optlen_out = (socklen_t*) optlen_out;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_getsockopt_args_t));
-    if (optval)
-        OE_ADD_SIZE(_input_buffer_size, _args.optlen_in);
+    if (optval) OE_ADD_SIZE(_input_buffer_size, _args.optlen_in);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_getsockopt_args_t));
-    if (optlen_out)
-        OE_ADD_SIZE(_output_buffer_size, 1);
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (optlen_out) OE_ADD_SIZE(_output_buffer_size, 1);
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_PARAM(optval, _args.optlen_in);
@@ -3642,26 +3466,23 @@ oe_result_t oe_hostsock_getsockopt(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_getsockopt,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_getsockopt,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -3672,19 +3493,19 @@ oe_result_t oe_hostsock_getsockopt(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostsock_getsockname(
-    int* _retval,
-    int sockfd,
-    struct sockaddr* addr,
-    socklen_t addrlen_in,
-    socklen_t* addrlen_out,
-    int* err)
+        int* _retval,
+        int sockfd,
+        struct sockaddr* addr,
+        socklen_t addrlen_in,
+        socklen_t* addrlen_out,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -3693,10 +3514,10 @@ oe_result_t oe_hostsock_getsockname(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_getsockname_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_getsockname_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -3710,40 +3531,35 @@ oe_result_t oe_hostsock_getsockname(
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.sockfd = sockfd;
-    _args.addr = (struct sockaddr*)addr;
+    _args.addr = (struct sockaddr*) addr;
     _args.addrlen_in = addrlen_in;
-    _args.addrlen_out = (socklen_t*)addrlen_out;
-    _args.err = (int*)err;
+    _args.addrlen_out = (socklen_t*) addrlen_out;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_getsockname_args_t));
-    if (addr)
-        OE_ADD_SIZE(_input_buffer_size, _args.addrlen_in);
+    if (addr) OE_ADD_SIZE(_input_buffer_size, _args.addrlen_in);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_getsockname_args_t));
-    if (addr)
-        OE_ADD_SIZE(_output_buffer_size, _args.addrlen_in);
-    if (addrlen_out)
-        OE_ADD_SIZE(_output_buffer_size, 1);
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (addr) OE_ADD_SIZE(_output_buffer_size, _args.addrlen_in);
+    if (addrlen_out) OE_ADD_SIZE(_output_buffer_size, 1);
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_OUT_PARAM(addr, _args.addrlen_in);
@@ -3752,26 +3568,23 @@ oe_result_t oe_hostsock_getsockname(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_getsockname,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_getsockname,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -3783,19 +3596,19 @@ oe_result_t oe_hostsock_getsockname(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
 oe_result_t oe_hostsock_getpeername(
-    int* _retval,
-    int sockfd,
-    struct sockaddr* addr,
-    socklen_t addrlen_in,
-    socklen_t* addrlen_out,
-    int* err)
+        int* _retval,
+        int sockfd,
+        struct sockaddr* addr,
+        socklen_t addrlen_in,
+        socklen_t* addrlen_out,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -3804,10 +3617,10 @@ oe_result_t oe_hostsock_getpeername(
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_getpeername_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_getpeername_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -3821,40 +3634,35 @@ oe_result_t oe_hostsock_getpeername(
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.sockfd = sockfd;
-    _args.addr = (struct sockaddr*)addr;
+    _args.addr = (struct sockaddr*) addr;
     _args.addrlen_in = addrlen_in;
-    _args.addrlen_out = (socklen_t*)addrlen_out;
-    _args.err = (int*)err;
+    _args.addrlen_out = (socklen_t*) addrlen_out;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_getpeername_args_t));
-    if (addr)
-        OE_ADD_SIZE(_input_buffer_size, _args.addrlen_in);
+    if (addr) OE_ADD_SIZE(_input_buffer_size, _args.addrlen_in);
 
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_getpeername_args_t));
-    if (addr)
-        OE_ADD_SIZE(_output_buffer_size, _args.addrlen_in);
-    if (addrlen_out)
-        OE_ADD_SIZE(_output_buffer_size, 1);
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    if (addr) OE_ADD_SIZE(_output_buffer_size, _args.addrlen_in);
+    if (addrlen_out) OE_ADD_SIZE(_output_buffer_size, 1);
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
 
     OE_WRITE_IN_OUT_PARAM(addr, _args.addrlen_in);
@@ -3863,26 +3671,23 @@ oe_result_t oe_hostsock_getpeername(
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_getpeername,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_getpeername,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -3894,13 +3699,16 @@ oe_result_t oe_hostsock_getpeername(
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;
 }
 
-oe_result_t oe_hostsock_shutdown_device(int* _retval, int sockfd, int* err)
+oe_result_t oe_hostsock_shutdown_device(
+        int* _retval,
+        int sockfd,
+        int* err)
 {
     oe_result_t _result = OE_FAILURE;
 
@@ -3909,11 +3717,10 @@ oe_result_t oe_hostsock_shutdown_device(int* _retval, int sockfd, int* err)
     if (oe_get_enclave_status() != OE_OK)
         return oe_get_enclave_status();
 
-    /* Marshalling struct */
-    oe_hostsock_shutdown_device_args_t _args, *_pargs_in = NULL,
-                                              *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    oe_hostsock_shutdown_device_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -3927,58 +3734,53 @@ oe_result_t oe_hostsock_shutdown_device(int* _retval, int sockfd, int* err)
     /* Fill marshalling struct */
     memset(&_args, 0, sizeof(_args));
     _args.sockfd = sockfd;
-    _args.err = (int*)err;
+    _args.err = (int*) err;
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(oe_hostsock_shutdown_device_args_t));
 
     /* Compute output buffer size. Include out and in-out parameters. */
-    OE_ADD_SIZE(
-        _output_buffer_size, sizeof(oe_hostsock_shutdown_device_args_t));
-    if (err)
-        OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
+    OE_ADD_SIZE(_output_buffer_size, sizeof(oe_hostsock_shutdown_device_args_t));
+    if (err) OE_ADD_SIZE(_output_buffer_size, (1 * sizeof(int)));
 
     /* Allocate marshalling buffer */
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _buffer = (uint8_t*) oe_allocate_ocall_buffer(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call host function */
-    if ((_result = oe_call_host_function(
-             fcn_id_oe_hostsock_shutdown_device,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_host_function(
+                        fcn_id_oe_hostsock_shutdown_device,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -3988,7 +3790,7 @@ oe_result_t oe_hostsock_shutdown_device(int* _retval, int sockfd, int* err)
     OE_READ_OUT_PARAM(err, (size_t)((1 * sizeof(int))));
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         oe_free_ocall_buffer(_buffer);
     return _result;

@@ -14,14 +14,15 @@ OE_EXTERNC_BEGIN
 
 /* Wrappers for ecalls */
 
-oe_result_t public_root_ecall(oe_enclave_t* enclave)
+oe_result_t public_root_ecall(
+        oe_enclave_t* enclave)
 {
     oe_result_t _result = OE_FAILURE;
 
-    /* Marshalling struct */
-    public_root_ecall_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling struct */ 
+    public_root_ecall_args_t _args, *_pargs_in = NULL, *_pargs_out=NULL;
 
-    /* Marshalling buffer and sizes */
+    /* Marshalling buffer and sizes */ 
     size_t _input_buffer_size = 0;
     size_t _output_buffer_size = 0;
     size_t _total_buffer_size = 0;
@@ -45,44 +46,41 @@ oe_result_t public_root_ecall(oe_enclave_t* enclave)
     _total_buffer_size = _input_buffer_size;
     OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
 
-    _buffer = (uint8_t*)malloc(_total_buffer_size);
+    _buffer = (uint8_t*) malloc(_total_buffer_size);
     _input_buffer = _buffer;
     _output_buffer = _buffer + _input_buffer_size;
-    if (_buffer == NULL)
-    {
+    if (_buffer == NULL) { 
         _result = OE_OUT_OF_MEMORY;
         goto done;
     }
 
     /* Serialize buffer inputs (in and in-out parameters) */
-    *(uint8_t**)&_pargs_in = _input_buffer;
+    *(uint8_t**)&_pargs_in = _input_buffer; 
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
 
     /* Copy args structure (now filled) to input buffer */
     memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
 
     /* Call enclave function */
-    if ((_result = oe_call_enclave_function(
-             enclave,
-             fcn_id_public_root_ecall,
-             _input_buffer,
-             _input_buffer_size,
-             _output_buffer,
-             _output_buffer_size,
-             &_output_bytes_written)) != OE_OK)
+    if((_result = oe_call_enclave_function(
+                        enclave,
+                        fcn_id_public_root_ecall,
+                        _input_buffer, _input_buffer_size,
+                        _output_buffer, _output_buffer_size,
+                         &_output_bytes_written)) != OE_OK)
         goto done;
 
     /* Set up output arg struct pointer */
-    *(uint8_t**)&_pargs_out = _output_buffer;
+    *(uint8_t**)&_pargs_out = _output_buffer; 
     OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
 
     /* Check if the call succeeded */
-    if ((_result = _pargs_out->_result) != OE_OK)
+    if ((_result=_pargs_out->_result) != OE_OK)
         goto done;
 
     /* Currently exactly _output_buffer_size bytes must be written */
-    if (_output_bytes_written != _output_buffer_size)
-    {
+    if (_output_bytes_written != _output_buffer_size) {
         _result = OE_FAILURE;
         goto done;
     }
@@ -90,27 +88,28 @@ oe_result_t public_root_ecall(oe_enclave_t* enclave)
     /* Unmarshal return value and out, in-out parameters */
 
     _result = OE_OK;
-done:
+done:    
     if (_buffer)
         free(_buffer);
     return _result;
 }
 
+
+
+
 /* ocall functions */
 
 void ocall_oe_hostfs_open(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_open_args_t* pargs_in = (oe_hostfs_open_args_t*)input_buffer;
-    oe_hostfs_open_args_t* pargs_out = (oe_hostfs_open_args_t*)output_buffer;
+    oe_hostfs_open_args_t* pargs_in = (oe_hostfs_open_args_t*) input_buffer;
+    oe_hostfs_open_args_t* pargs_out = (oe_hostfs_open_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -118,47 +117,44 @@ void ocall_oe_hostfs_open(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(pathname, pargs_in->pathname_len * sizeof(char));
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostfs_open(
-        (const char*)pargs_in->pathname,
+        (const char*) pargs_in->pathname,
         pargs_in->flags,
         pargs_in->mode,
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_read(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_read_args_t* pargs_in = (oe_hostfs_read_args_t*)input_buffer;
-    oe_hostfs_read_args_t* pargs_out = (oe_hostfs_read_args_t*)output_buffer;
+    oe_hostfs_read_args_t* pargs_in = (oe_hostfs_read_args_t*) input_buffer;
+    oe_hostfs_read_args_t* pargs_out = (oe_hostfs_read_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -166,44 +162,44 @@ void ocall_oe_hostfs_read(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(buf, pargs_in->count);
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostfs_read(
-        pargs_in->fd, pargs_in->buf, pargs_in->count, pargs_in->err);
+        pargs_in->fd,
+        pargs_in->buf,
+        pargs_in->count,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_write(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_write_args_t* pargs_in = (oe_hostfs_write_args_t*)input_buffer;
-    oe_hostfs_write_args_t* pargs_out = (oe_hostfs_write_args_t*)output_buffer;
+    oe_hostfs_write_args_t* pargs_in = (oe_hostfs_write_args_t*) input_buffer;
+    oe_hostfs_write_args_t* pargs_out = (oe_hostfs_write_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -211,47 +207,44 @@ void ocall_oe_hostfs_write(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(buf, pargs_in->count);
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostfs_write(
         pargs_in->fd,
-        (const void*)pargs_in->buf,
+        (const void*) pargs_in->buf,
         pargs_in->count,
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_lseek(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_lseek_args_t* pargs_in = (oe_hostfs_lseek_args_t*)input_buffer;
-    oe_hostfs_lseek_args_t* pargs_out = (oe_hostfs_lseek_args_t*)output_buffer;
+    oe_hostfs_lseek_args_t* pargs_in = (oe_hostfs_lseek_args_t*) input_buffer;
+    oe_hostfs_lseek_args_t* pargs_out = (oe_hostfs_lseek_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -259,43 +252,43 @@ void ocall_oe_hostfs_lseek(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostfs_lseek(
-        pargs_in->fd, pargs_in->offset, pargs_in->whence, pargs_in->err);
+        pargs_in->fd,
+        pargs_in->offset,
+        pargs_in->whence,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_close(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_close_args_t* pargs_in = (oe_hostfs_close_args_t*)input_buffer;
-    oe_hostfs_close_args_t* pargs_out = (oe_hostfs_close_args_t*)output_buffer;
+    oe_hostfs_close_args_t* pargs_in = (oe_hostfs_close_args_t*) input_buffer;
+    oe_hostfs_close_args_t* pargs_out = (oe_hostfs_close_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -303,42 +296,41 @@ void ocall_oe_hostfs_close(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
-    pargs_out->_retval = oe_hostfs_close(pargs_in->fd, pargs_in->err);
+    pargs_out->_retval = oe_hostfs_close(
+        pargs_in->fd,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_dup(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_dup_args_t* pargs_in = (oe_hostfs_dup_args_t*)input_buffer;
-    oe_hostfs_dup_args_t* pargs_out = (oe_hostfs_dup_args_t*)output_buffer;
+    oe_hostfs_dup_args_t* pargs_in = (oe_hostfs_dup_args_t*) input_buffer;
+    oe_hostfs_dup_args_t* pargs_out = (oe_hostfs_dup_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -346,44 +338,41 @@ void ocall_oe_hostfs_dup(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
-    pargs_out->_retval = oe_hostfs_dup(pargs_in->oldfd, pargs_in->err);
+    pargs_out->_retval = oe_hostfs_dup(
+        pargs_in->oldfd,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_opendir(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_opendir_args_t* pargs_in =
-        (oe_hostfs_opendir_args_t*)input_buffer;
-    oe_hostfs_opendir_args_t* pargs_out =
-        (oe_hostfs_opendir_args_t*)output_buffer;
+    oe_hostfs_opendir_args_t* pargs_in = (oe_hostfs_opendir_args_t*) input_buffer;
+    oe_hostfs_opendir_args_t* pargs_out = (oe_hostfs_opendir_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -391,46 +380,42 @@ void ocall_oe_hostfs_opendir(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(name, pargs_in->name_len * sizeof(char));
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
-    pargs_out->_retval =
-        oe_hostfs_opendir((const char*)pargs_in->name, pargs_in->err);
+    pargs_out->_retval = oe_hostfs_opendir(
+        (const char*) pargs_in->name,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_readdir(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_readdir_args_t* pargs_in =
-        (oe_hostfs_readdir_args_t*)input_buffer;
-    oe_hostfs_readdir_args_t* pargs_out =
-        (oe_hostfs_readdir_args_t*)output_buffer;
+    oe_hostfs_readdir_args_t* pargs_in = (oe_hostfs_readdir_args_t*) input_buffer;
+    oe_hostfs_readdir_args_t* pargs_out = (oe_hostfs_readdir_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -438,46 +423,43 @@ void ocall_oe_hostfs_readdir(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(ent, (1 * sizeof(struct oe_hostfs_dirent_struct)));
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
-    pargs_out->_retval =
-        oe_hostfs_readdir(pargs_in->dirp, pargs_in->ent, pargs_in->err);
+    pargs_out->_retval = oe_hostfs_readdir(
+        pargs_in->dirp,
+        pargs_in->ent,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_rewinddir(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_rewinddir_args_t* pargs_in =
-        (oe_hostfs_rewinddir_args_t*)input_buffer;
-    oe_hostfs_rewinddir_args_t* pargs_out =
-        (oe_hostfs_rewinddir_args_t*)output_buffer;
+    oe_hostfs_rewinddir_args_t* pargs_in = (oe_hostfs_rewinddir_args_t*) input_buffer;
+    oe_hostfs_rewinddir_args_t* pargs_out = (oe_hostfs_rewinddir_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -485,43 +467,39 @@ void ocall_oe_hostfs_rewinddir(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
 
     /* Call user function */
-    oe_hostfs_rewinddir(pargs_in->dirp);
+    oe_hostfs_rewinddir(
+        pargs_in->dirp);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_closedir(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_closedir_args_t* pargs_in =
-        (oe_hostfs_closedir_args_t*)input_buffer;
-    oe_hostfs_closedir_args_t* pargs_out =
-        (oe_hostfs_closedir_args_t*)output_buffer;
+    oe_hostfs_closedir_args_t* pargs_in = (oe_hostfs_closedir_args_t*) input_buffer;
+    oe_hostfs_closedir_args_t* pargs_out = (oe_hostfs_closedir_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -529,42 +507,41 @@ void ocall_oe_hostfs_closedir(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
-    pargs_out->_retval = oe_hostfs_closedir(pargs_in->dirp, pargs_in->err);
+    pargs_out->_retval = oe_hostfs_closedir(
+        pargs_in->dirp,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_stat(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_stat_args_t* pargs_in = (oe_hostfs_stat_args_t*)input_buffer;
-    oe_hostfs_stat_args_t* pargs_out = (oe_hostfs_stat_args_t*)output_buffer;
+    oe_hostfs_stat_args_t* pargs_in = (oe_hostfs_stat_args_t*) input_buffer;
+    oe_hostfs_stat_args_t* pargs_out = (oe_hostfs_stat_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -572,46 +549,44 @@ void ocall_oe_hostfs_stat(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(pathname, pargs_in->pathname_len * sizeof(char));
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(buf, (1 * sizeof(struct oe_hostfs_stat_struct)));
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostfs_stat(
-        (const char*)pargs_in->pathname, pargs_in->buf, pargs_in->err);
+        (const char*) pargs_in->pathname,
+        pargs_in->buf,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_access(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_access_args_t* pargs_in = (oe_hostfs_access_args_t*)input_buffer;
-    oe_hostfs_access_args_t* pargs_out =
-        (oe_hostfs_access_args_t*)output_buffer;
+    oe_hostfs_access_args_t* pargs_in = (oe_hostfs_access_args_t*) input_buffer;
+    oe_hostfs_access_args_t* pargs_out = (oe_hostfs_access_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -619,44 +594,43 @@ void ocall_oe_hostfs_access(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(pathname, pargs_in->pathname_len * sizeof(char));
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostfs_access(
-        (const char*)pargs_in->pathname, pargs_in->mode, pargs_in->err);
+        (const char*) pargs_in->pathname,
+        pargs_in->mode,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_link(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_link_args_t* pargs_in = (oe_hostfs_link_args_t*)input_buffer;
-    oe_hostfs_link_args_t* pargs_out = (oe_hostfs_link_args_t*)output_buffer;
+    oe_hostfs_link_args_t* pargs_in = (oe_hostfs_link_args_t*) input_buffer;
+    oe_hostfs_link_args_t* pargs_out = (oe_hostfs_link_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -664,48 +638,44 @@ void ocall_oe_hostfs_link(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(oldpath, pargs_in->oldpath_len * sizeof(char));
     OE_SET_IN_POINTER(newpath, pargs_in->newpath_len * sizeof(char));
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostfs_link(
-        (const char*)pargs_in->oldpath,
-        (const char*)pargs_in->newpath,
+        (const char*) pargs_in->oldpath,
+        (const char*) pargs_in->newpath,
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_unlink(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_unlink_args_t* pargs_in = (oe_hostfs_unlink_args_t*)input_buffer;
-    oe_hostfs_unlink_args_t* pargs_out =
-        (oe_hostfs_unlink_args_t*)output_buffer;
+    oe_hostfs_unlink_args_t* pargs_in = (oe_hostfs_unlink_args_t*) input_buffer;
+    oe_hostfs_unlink_args_t* pargs_out = (oe_hostfs_unlink_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -713,45 +683,42 @@ void ocall_oe_hostfs_unlink(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(pathname, pargs_in->pathname_len * sizeof(char));
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
-    pargs_out->_retval =
-        oe_hostfs_unlink((const char*)pargs_in->pathname, pargs_in->err);
+    pargs_out->_retval = oe_hostfs_unlink(
+        (const char*) pargs_in->pathname,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_rename(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_rename_args_t* pargs_in = (oe_hostfs_rename_args_t*)input_buffer;
-    oe_hostfs_rename_args_t* pargs_out =
-        (oe_hostfs_rename_args_t*)output_buffer;
+    oe_hostfs_rename_args_t* pargs_in = (oe_hostfs_rename_args_t*) input_buffer;
+    oe_hostfs_rename_args_t* pargs_out = (oe_hostfs_rename_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -759,49 +726,44 @@ void ocall_oe_hostfs_rename(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(oldpath, pargs_in->oldpath_len * sizeof(char));
     OE_SET_IN_POINTER(newpath, pargs_in->newpath_len * sizeof(char));
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostfs_rename(
-        (const char*)pargs_in->oldpath,
-        (const char*)pargs_in->newpath,
+        (const char*) pargs_in->oldpath,
+        (const char*) pargs_in->newpath,
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_truncate(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_truncate_args_t* pargs_in =
-        (oe_hostfs_truncate_args_t*)input_buffer;
-    oe_hostfs_truncate_args_t* pargs_out =
-        (oe_hostfs_truncate_args_t*)output_buffer;
+    oe_hostfs_truncate_args_t* pargs_in = (oe_hostfs_truncate_args_t*) input_buffer;
+    oe_hostfs_truncate_args_t* pargs_out = (oe_hostfs_truncate_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -809,44 +771,43 @@ void ocall_oe_hostfs_truncate(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(path, pargs_in->path_len * sizeof(char));
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostfs_truncate(
-        (const char*)pargs_in->path, pargs_in->length, pargs_in->err);
+        (const char*) pargs_in->path,
+        pargs_in->length,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_mkdir(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_mkdir_args_t* pargs_in = (oe_hostfs_mkdir_args_t*)input_buffer;
-    oe_hostfs_mkdir_args_t* pargs_out = (oe_hostfs_mkdir_args_t*)output_buffer;
+    oe_hostfs_mkdir_args_t* pargs_in = (oe_hostfs_mkdir_args_t*) input_buffer;
+    oe_hostfs_mkdir_args_t* pargs_out = (oe_hostfs_mkdir_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -854,44 +815,43 @@ void ocall_oe_hostfs_mkdir(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(pathname, pargs_in->pathname_len * sizeof(char));
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostfs_mkdir(
-        (const char*)pargs_in->pathname, pargs_in->mode, pargs_in->err);
+        (const char*) pargs_in->pathname,
+        pargs_in->mode,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostfs_rmdir(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostfs_rmdir_args_t* pargs_in = (oe_hostfs_rmdir_args_t*)input_buffer;
-    oe_hostfs_rmdir_args_t* pargs_out = (oe_hostfs_rmdir_args_t*)output_buffer;
+    oe_hostfs_rmdir_args_t* pargs_in = (oe_hostfs_rmdir_args_t*) input_buffer;
+    oe_hostfs_rmdir_args_t* pargs_out = (oe_hostfs_rmdir_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -899,46 +859,42 @@ void ocall_oe_hostfs_rmdir(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(pathname, pargs_in->pathname_len * sizeof(char));
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
-    pargs_out->_retval =
-        oe_hostfs_rmdir((const char*)pargs_in->pathname, pargs_in->err);
+    pargs_out->_retval = oe_hostfs_rmdir(
+        (const char*) pargs_in->pathname,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_socket(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_socket_args_t* pargs_in =
-        (oe_hostsock_socket_args_t*)input_buffer;
-    oe_hostsock_socket_args_t* pargs_out =
-        (oe_hostsock_socket_args_t*)output_buffer;
+    oe_hostsock_socket_args_t* pargs_in = (oe_hostsock_socket_args_t*) input_buffer;
+    oe_hostsock_socket_args_t* pargs_out = (oe_hostsock_socket_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -946,45 +902,43 @@ void ocall_oe_hostsock_socket(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostsock_socket(
-        pargs_in->domain, pargs_in->type, pargs_in->protocol, pargs_in->err);
+        pargs_in->domain,
+        pargs_in->type,
+        pargs_in->protocol,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_socketpair(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_socketpair_args_t* pargs_in =
-        (oe_hostsock_socketpair_args_t*)input_buffer;
-    oe_hostsock_socketpair_args_t* pargs_out =
-        (oe_hostsock_socketpair_args_t*)output_buffer;
+    oe_hostsock_socketpair_args_t* pargs_in = (oe_hostsock_socketpair_args_t*) input_buffer;
+    oe_hostsock_socketpair_args_t* pargs_out = (oe_hostsock_socketpair_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -992,16 +946,15 @@ void ocall_oe_hostsock_socketpair(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(sv, sizeof(int[2]));
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
@@ -1009,33 +962,29 @@ void ocall_oe_hostsock_socketpair(
         pargs_in->domain,
         pargs_in->type,
         pargs_in->protocol,
-        *(int(*)[2])pargs_in->sv,
+        *(int (*)[2]) pargs_in->sv,
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_connect(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_connect_args_t* pargs_in =
-        (oe_hostsock_connect_args_t*)input_buffer;
-    oe_hostsock_connect_args_t* pargs_out =
-        (oe_hostsock_connect_args_t*)output_buffer;
+    oe_hostsock_connect_args_t* pargs_in = (oe_hostsock_connect_args_t*) input_buffer;
+    oe_hostsock_connect_args_t* pargs_out = (oe_hostsock_connect_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1043,49 +992,44 @@ void ocall_oe_hostsock_connect(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(addr, pargs_in->addrlen);
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostsock_connect(
         pargs_in->sockfd,
-        (const struct sockaddr*)pargs_in->addr,
+        (const struct sockaddr*) pargs_in->addr,
         pargs_in->addrlen,
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_accept(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_accept_args_t* pargs_in =
-        (oe_hostsock_accept_args_t*)input_buffer;
-    oe_hostsock_accept_args_t* pargs_out =
-        (oe_hostsock_accept_args_t*)output_buffer;
+    oe_hostsock_accept_args_t* pargs_in = (oe_hostsock_accept_args_t*) input_buffer;
+    oe_hostsock_accept_args_t* pargs_out = (oe_hostsock_accept_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1093,16 +1037,15 @@ void ocall_oe_hostsock_accept(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_OUT_POINTER(addr, pargs_in->addrlen_in);
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_COPY_AND_SET_IN_OUT_POINTER(addr, pargs_in->addrlen_in);
     OE_SET_OUT_POINTER(addrlen_out, (1 * sizeof(socklen_t)));
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
@@ -1116,28 +1059,25 @@ void ocall_oe_hostsock_accept(
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_bind(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_bind_args_t* pargs_in = (oe_hostsock_bind_args_t*)input_buffer;
-    oe_hostsock_bind_args_t* pargs_out =
-        (oe_hostsock_bind_args_t*)output_buffer;
+    oe_hostsock_bind_args_t* pargs_in = (oe_hostsock_bind_args_t*) input_buffer;
+    oe_hostsock_bind_args_t* pargs_out = (oe_hostsock_bind_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1145,49 +1085,44 @@ void ocall_oe_hostsock_bind(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(addr, pargs_in->addrlen);
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostsock_bind(
         pargs_in->sockfd,
-        (const struct sockaddr*)pargs_in->addr,
+        (const struct sockaddr*) pargs_in->addr,
         pargs_in->addrlen,
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_listen(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_listen_args_t* pargs_in =
-        (oe_hostsock_listen_args_t*)input_buffer;
-    oe_hostsock_listen_args_t* pargs_out =
-        (oe_hostsock_listen_args_t*)output_buffer;
+    oe_hostsock_listen_args_t* pargs_in = (oe_hostsock_listen_args_t*) input_buffer;
+    oe_hostsock_listen_args_t* pargs_out = (oe_hostsock_listen_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1195,45 +1130,42 @@ void ocall_oe_hostsock_listen(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
-    pargs_out->_retval =
-        oe_hostsock_listen(pargs_in->sockfd, pargs_in->backlog, pargs_in->err);
+    pargs_out->_retval = oe_hostsock_listen(
+        pargs_in->sockfd,
+        pargs_in->backlog,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_recvmsg(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_recvmsg_args_t* pargs_in =
-        (oe_hostsock_recvmsg_args_t*)input_buffer;
-    oe_hostsock_recvmsg_args_t* pargs_out =
-        (oe_hostsock_recvmsg_args_t*)output_buffer;
+    oe_hostsock_recvmsg_args_t* pargs_in = (oe_hostsock_recvmsg_args_t*) input_buffer;
+    oe_hostsock_recvmsg_args_t* pargs_out = (oe_hostsock_recvmsg_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1241,19 +1173,17 @@ void ocall_oe_hostsock_recvmsg(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(msg_name, pargs_in->msg_namelen_in);
-    OE_SET_IN_POINTER(
-        msg_iov, (pargs_in->msg_iovlen_in * sizeof(struct iovec)));
+    OE_SET_IN_POINTER(msg_iov, (pargs_in->msg_iovlen_in * sizeof(struct iovec)));
     OE_SET_IN_POINTER(msg_control, pargs_in->msg_controllen_in);
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(msg_namelen_out, (1 * sizeof(socklen_t)));
     OE_SET_OUT_POINTER(msg_iovlen_out, (1 * sizeof(size_t)));
     OE_SET_OUT_POINTER(msg_controllen_out, (1 * sizeof(size_t)));
@@ -1269,7 +1199,7 @@ void ocall_oe_hostsock_recvmsg(
         pargs_in->msg_iov,
         pargs_in->msg_iovlen_in,
         pargs_in->msg_iovlen_out,
-        (const void*)pargs_in->msg_control,
+        (const void*) pargs_in->msg_control,
         pargs_in->msg_controllen_in,
         pargs_in->msg_controllen_out,
         pargs_in->msg_flags_in,
@@ -1278,29 +1208,25 @@ void ocall_oe_hostsock_recvmsg(
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_sendmsg(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_sendmsg_args_t* pargs_in =
-        (oe_hostsock_sendmsg_args_t*)input_buffer;
-    oe_hostsock_sendmsg_args_t* pargs_out =
-        (oe_hostsock_sendmsg_args_t*)output_buffer;
+    oe_hostsock_sendmsg_args_t* pargs_in = (oe_hostsock_sendmsg_args_t*) input_buffer;
+    oe_hostsock_sendmsg_args_t* pargs_out = (oe_hostsock_sendmsg_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1308,56 +1234,52 @@ void ocall_oe_hostsock_sendmsg(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(msg_name, pargs_in->msg_namelen);
     OE_SET_IN_POINTER(msg_iov, (pargs_in->msg_iovlen * sizeof(struct iovec)));
     OE_SET_IN_POINTER(msg_control, pargs_in->msg_controllen);
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostsock_sendmsg(
         pargs_in->sockfd,
-        (const void*)pargs_in->msg_name,
+        (const void*) pargs_in->msg_name,
         pargs_in->msg_namelen,
-        (const struct iovec*)pargs_in->msg_iov,
+        (const struct iovec*) pargs_in->msg_iov,
         pargs_in->msg_iovlen,
-        (const void*)pargs_in->msg_control,
+        (const void*) pargs_in->msg_control,
         pargs_in->msg_controllen,
         pargs_in->msg_flags,
         pargs_in->flags,
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_recv(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_recv_args_t* pargs_in = (oe_hostsock_recv_args_t*)input_buffer;
-    oe_hostsock_recv_args_t* pargs_out =
-        (oe_hostsock_recv_args_t*)output_buffer;
+    oe_hostsock_recv_args_t* pargs_in = (oe_hostsock_recv_args_t*) input_buffer;
+    oe_hostsock_recv_args_t* pargs_out = (oe_hostsock_recv_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1365,16 +1287,15 @@ void ocall_oe_hostsock_recv(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_OUT_POINTER(buf, pargs_in->len);
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_COPY_AND_SET_IN_OUT_POINTER(buf, pargs_in->len);
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
@@ -1387,29 +1308,25 @@ void ocall_oe_hostsock_recv(
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_recvfrom(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_recvfrom_args_t* pargs_in =
-        (oe_hostsock_recvfrom_args_t*)input_buffer;
-    oe_hostsock_recvfrom_args_t* pargs_out =
-        (oe_hostsock_recvfrom_args_t*)output_buffer;
+    oe_hostsock_recvfrom_args_t* pargs_in = (oe_hostsock_recvfrom_args_t*) input_buffer;
+    oe_hostsock_recvfrom_args_t* pargs_out = (oe_hostsock_recvfrom_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1417,16 +1334,15 @@ void ocall_oe_hostsock_recvfrom(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_OUT_POINTER(src_addr, pargs_in->addrlen_in);
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(buf, pargs_in->len);
     OE_COPY_AND_SET_IN_OUT_POINTER(src_addr, pargs_in->addrlen_in);
     OE_SET_OUT_POINTER(addrlen_out, (1 * sizeof(socklen_t)));
@@ -1444,28 +1360,25 @@ void ocall_oe_hostsock_recvfrom(
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_send(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_send_args_t* pargs_in = (oe_hostsock_send_args_t*)input_buffer;
-    oe_hostsock_send_args_t* pargs_out =
-        (oe_hostsock_send_args_t*)output_buffer;
+    oe_hostsock_send_args_t* pargs_in = (oe_hostsock_send_args_t*) input_buffer;
+    oe_hostsock_send_args_t* pargs_out = (oe_hostsock_send_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1473,50 +1386,45 @@ void ocall_oe_hostsock_send(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(buf, pargs_in->len);
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostsock_send(
         pargs_in->sockfd,
-        (const void*)pargs_in->buf,
+        (const void*) pargs_in->buf,
         pargs_in->len,
         pargs_in->flags,
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_sendto(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_sendto_args_t* pargs_in =
-        (oe_hostsock_sendto_args_t*)input_buffer;
-    oe_hostsock_sendto_args_t* pargs_out =
-        (oe_hostsock_sendto_args_t*)output_buffer;
+    oe_hostsock_sendto_args_t* pargs_in = (oe_hostsock_sendto_args_t*) input_buffer;
+    oe_hostsock_sendto_args_t* pargs_out = (oe_hostsock_sendto_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1524,53 +1432,48 @@ void ocall_oe_hostsock_sendto(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(buf, pargs_in->len);
     OE_SET_IN_POINTER(dest_addr, pargs_in->addrlen);
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
     pargs_out->_retval = oe_hostsock_sendto(
         pargs_in->sockfd,
-        (const void*)pargs_in->buf,
+        (const void*) pargs_in->buf,
         pargs_in->len,
         pargs_in->flags,
-        (const struct sockaddr*)pargs_in->dest_addr,
+        (const struct sockaddr*) pargs_in->dest_addr,
         pargs_in->addrlen,
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_shutdown(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_shutdown_args_t* pargs_in =
-        (oe_hostsock_shutdown_args_t*)input_buffer;
-    oe_hostsock_shutdown_args_t* pargs_out =
-        (oe_hostsock_shutdown_args_t*)output_buffer;
+    oe_hostsock_shutdown_args_t* pargs_in = (oe_hostsock_shutdown_args_t*) input_buffer;
+    oe_hostsock_shutdown_args_t* pargs_out = (oe_hostsock_shutdown_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1578,45 +1481,42 @@ void ocall_oe_hostsock_shutdown(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
-    pargs_out->_retval =
-        oe_hostsock_shutdown(pargs_in->sockfd, pargs_in->how, pargs_in->err);
+    pargs_out->_retval = oe_hostsock_shutdown(
+        pargs_in->sockfd,
+        pargs_in->how,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_close(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_close_args_t* pargs_in =
-        (oe_hostsock_close_args_t*)input_buffer;
-    oe_hostsock_close_args_t* pargs_out =
-        (oe_hostsock_close_args_t*)output_buffer;
+    oe_hostsock_close_args_t* pargs_in = (oe_hostsock_close_args_t*) input_buffer;
+    oe_hostsock_close_args_t* pargs_out = (oe_hostsock_close_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1624,42 +1524,41 @@ void ocall_oe_hostsock_close(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
-    pargs_out->_retval = oe_hostsock_close(pargs_in->fd, pargs_in->err);
+    pargs_out->_retval = oe_hostsock_close(
+        pargs_in->fd,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_dup(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_dup_args_t* pargs_in = (oe_hostsock_dup_args_t*)input_buffer;
-    oe_hostsock_dup_args_t* pargs_out = (oe_hostsock_dup_args_t*)output_buffer;
+    oe_hostsock_dup_args_t* pargs_in = (oe_hostsock_dup_args_t*) input_buffer;
+    oe_hostsock_dup_args_t* pargs_out = (oe_hostsock_dup_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1667,44 +1566,41 @@ void ocall_oe_hostsock_dup(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
-    pargs_out->_retval = oe_hostsock_dup(pargs_in->oldfd, pargs_in->err);
+    pargs_out->_retval = oe_hostsock_dup(
+        pargs_in->oldfd,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_setsockopt(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_setsockopt_args_t* pargs_in =
-        (oe_hostsock_setsockopt_args_t*)input_buffer;
-    oe_hostsock_setsockopt_args_t* pargs_out =
-        (oe_hostsock_setsockopt_args_t*)output_buffer;
+    oe_hostsock_setsockopt_args_t* pargs_in = (oe_hostsock_setsockopt_args_t*) input_buffer;
+    oe_hostsock_setsockopt_args_t* pargs_out = (oe_hostsock_setsockopt_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1712,16 +1608,15 @@ void ocall_oe_hostsock_setsockopt(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(optval, pargs_in->optlen);
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
@@ -1729,34 +1624,30 @@ void ocall_oe_hostsock_setsockopt(
         pargs_in->sockfd,
         pargs_in->level,
         pargs_in->optname,
-        (const void*)pargs_in->optval,
+        (const void*) pargs_in->optval,
         pargs_in->optlen,
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_getsockopt(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_getsockopt_args_t* pargs_in =
-        (oe_hostsock_getsockopt_args_t*)input_buffer;
-    oe_hostsock_getsockopt_args_t* pargs_out =
-        (oe_hostsock_getsockopt_args_t*)output_buffer;
+    oe_hostsock_getsockopt_args_t* pargs_in = (oe_hostsock_getsockopt_args_t*) input_buffer;
+    oe_hostsock_getsockopt_args_t* pargs_out = (oe_hostsock_getsockopt_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1764,16 +1655,15 @@ void ocall_oe_hostsock_getsockopt(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_POINTER(optval, pargs_in->optlen_in);
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(optlen_out, 1);
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
@@ -1788,29 +1678,25 @@ void ocall_oe_hostsock_getsockopt(
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_getsockname(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_getsockname_args_t* pargs_in =
-        (oe_hostsock_getsockname_args_t*)input_buffer;
-    oe_hostsock_getsockname_args_t* pargs_out =
-        (oe_hostsock_getsockname_args_t*)output_buffer;
+    oe_hostsock_getsockname_args_t* pargs_in = (oe_hostsock_getsockname_args_t*) input_buffer;
+    oe_hostsock_getsockname_args_t* pargs_out = (oe_hostsock_getsockname_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1818,16 +1704,15 @@ void ocall_oe_hostsock_getsockname(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_OUT_POINTER(addr, pargs_in->addrlen_in);
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_COPY_AND_SET_IN_OUT_POINTER(addr, pargs_in->addrlen_in);
     OE_SET_OUT_POINTER(addrlen_out, 1);
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
@@ -1841,29 +1726,25 @@ void ocall_oe_hostsock_getsockname(
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_getpeername(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_getpeername_args_t* pargs_in =
-        (oe_hostsock_getpeername_args_t*)input_buffer;
-    oe_hostsock_getpeername_args_t* pargs_out =
-        (oe_hostsock_getpeername_args_t*)output_buffer;
+    oe_hostsock_getpeername_args_t* pargs_in = (oe_hostsock_getpeername_args_t*) input_buffer;
+    oe_hostsock_getpeername_args_t* pargs_out = (oe_hostsock_getpeername_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1871,16 +1752,15 @@ void ocall_oe_hostsock_getpeername(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
     OE_SET_IN_OUT_POINTER(addr, pargs_in->addrlen_in);
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_COPY_AND_SET_IN_OUT_POINTER(addr, pargs_in->addrlen_in);
     OE_SET_OUT_POINTER(addrlen_out, 1);
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
@@ -1894,29 +1774,25 @@ void ocall_oe_hostsock_getpeername(
         pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
 void ocall_oe_hostsock_shutdown_device(
-    uint8_t* input_buffer,
-    size_t input_buffer_size,
-    uint8_t* output_buffer,
-    size_t output_buffer_size,
-    size_t* output_bytes_written)
+        uint8_t* input_buffer, size_t input_buffer_size,
+        uint8_t* output_buffer, size_t output_buffer_size,
+        size_t* output_bytes_written)
 {
     oe_result_t _result = OE_FAILURE;
     OE_UNUSED(input_buffer_size);
 
     /* Prepare parameters */
-    oe_hostsock_shutdown_device_args_t* pargs_in =
-        (oe_hostsock_shutdown_device_args_t*)input_buffer;
-    oe_hostsock_shutdown_device_args_t* pargs_out =
-        (oe_hostsock_shutdown_device_args_t*)output_buffer;
+    oe_hostsock_shutdown_device_args_t* pargs_in = (oe_hostsock_shutdown_device_args_t*) input_buffer;
+    oe_hostsock_shutdown_device_args_t* pargs_out = (oe_hostsock_shutdown_device_args_t*) output_buffer;
 
     size_t input_buffer_offset = 0;
     size_t output_buffer_offset = 0;
@@ -1924,89 +1800,89 @@ void ocall_oe_hostsock_shutdown_device(
     OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
 
     /* Make sure input and output buffers are valid */
-    if (!input_buffer || !output_buffer)
-    {
+    if (!input_buffer || !output_buffer) {
         _result = OE_INVALID_PARAMETER;
         goto done;
+
     }
     /* Set in and in-out pointers */
 
-    /* Set out and in-out pointers. In-out parameters are copied to output
-     * buffer. */
+    /* Set out and in-out pointers. In-out parameters are copied to output buffer. */
     OE_SET_OUT_POINTER(err, (1 * sizeof(int)));
 
     /* Call user function */
-    pargs_out->_retval =
-        oe_hostsock_shutdown_device(pargs_in->sockfd, pargs_in->err);
+    pargs_out->_retval = oe_hostsock_shutdown_device(
+        pargs_in->sockfd,
+        pargs_in->err);
 
     /* Success. */
-    _result = OE_OK;
+    _result = OE_OK; 
     *output_bytes_written = output_buffer_offset;
 
 done:
-    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out)) 
         pargs_out->_result = _result;
 }
 
-/*ocall function table*/
-static oe_ocall_func_t __oe_ocall_function_table[] = {
-    (oe_ocall_func_t)ocall_oe_hostfs_open,
-    (oe_ocall_func_t)ocall_oe_hostfs_read,
-    (oe_ocall_func_t)ocall_oe_hostfs_write,
-    (oe_ocall_func_t)ocall_oe_hostfs_lseek,
-    (oe_ocall_func_t)ocall_oe_hostfs_close,
-    (oe_ocall_func_t)ocall_oe_hostfs_dup,
-    (oe_ocall_func_t)ocall_oe_hostfs_opendir,
-    (oe_ocall_func_t)ocall_oe_hostfs_readdir,
-    (oe_ocall_func_t)ocall_oe_hostfs_rewinddir,
-    (oe_ocall_func_t)ocall_oe_hostfs_closedir,
-    (oe_ocall_func_t)ocall_oe_hostfs_stat,
-    (oe_ocall_func_t)ocall_oe_hostfs_access,
-    (oe_ocall_func_t)ocall_oe_hostfs_link,
-    (oe_ocall_func_t)ocall_oe_hostfs_unlink,
-    (oe_ocall_func_t)ocall_oe_hostfs_rename,
-    (oe_ocall_func_t)ocall_oe_hostfs_truncate,
-    (oe_ocall_func_t)ocall_oe_hostfs_mkdir,
-    (oe_ocall_func_t)ocall_oe_hostfs_rmdir,
-    (oe_ocall_func_t)ocall_oe_hostsock_socket,
-    (oe_ocall_func_t)ocall_oe_hostsock_socketpair,
-    (oe_ocall_func_t)ocall_oe_hostsock_connect,
-    (oe_ocall_func_t)ocall_oe_hostsock_accept,
-    (oe_ocall_func_t)ocall_oe_hostsock_bind,
-    (oe_ocall_func_t)ocall_oe_hostsock_listen,
-    (oe_ocall_func_t)ocall_oe_hostsock_recvmsg,
-    (oe_ocall_func_t)ocall_oe_hostsock_sendmsg,
-    (oe_ocall_func_t)ocall_oe_hostsock_recv,
-    (oe_ocall_func_t)ocall_oe_hostsock_recvfrom,
-    (oe_ocall_func_t)ocall_oe_hostsock_send,
-    (oe_ocall_func_t)ocall_oe_hostsock_sendto,
-    (oe_ocall_func_t)ocall_oe_hostsock_shutdown,
-    (oe_ocall_func_t)ocall_oe_hostsock_close,
-    (oe_ocall_func_t)ocall_oe_hostsock_dup,
-    (oe_ocall_func_t)ocall_oe_hostsock_setsockopt,
-    (oe_ocall_func_t)ocall_oe_hostsock_getsockopt,
-    (oe_ocall_func_t)ocall_oe_hostsock_getsockname,
-    (oe_ocall_func_t)ocall_oe_hostsock_getpeername,
-    (oe_ocall_func_t)ocall_oe_hostsock_shutdown_device,
-    NULL};
 
-oe_result_t oe_create_oe_enclave(
-    const char* path,
-    oe_enclave_type_t type,
-    uint32_t flags,
-    const void* config,
-    uint32_t config_size,
-    oe_enclave_t** enclave)
+/*ocall function table*/
+static oe_ocall_func_t __oe_ocall_function_table[]= {
+    (oe_ocall_func_t) ocall_oe_hostfs_open,
+    (oe_ocall_func_t) ocall_oe_hostfs_read,
+    (oe_ocall_func_t) ocall_oe_hostfs_write,
+    (oe_ocall_func_t) ocall_oe_hostfs_lseek,
+    (oe_ocall_func_t) ocall_oe_hostfs_close,
+    (oe_ocall_func_t) ocall_oe_hostfs_dup,
+    (oe_ocall_func_t) ocall_oe_hostfs_opendir,
+    (oe_ocall_func_t) ocall_oe_hostfs_readdir,
+    (oe_ocall_func_t) ocall_oe_hostfs_rewinddir,
+    (oe_ocall_func_t) ocall_oe_hostfs_closedir,
+    (oe_ocall_func_t) ocall_oe_hostfs_stat,
+    (oe_ocall_func_t) ocall_oe_hostfs_access,
+    (oe_ocall_func_t) ocall_oe_hostfs_link,
+    (oe_ocall_func_t) ocall_oe_hostfs_unlink,
+    (oe_ocall_func_t) ocall_oe_hostfs_rename,
+    (oe_ocall_func_t) ocall_oe_hostfs_truncate,
+    (oe_ocall_func_t) ocall_oe_hostfs_mkdir,
+    (oe_ocall_func_t) ocall_oe_hostfs_rmdir,
+    (oe_ocall_func_t) ocall_oe_hostsock_socket,
+    (oe_ocall_func_t) ocall_oe_hostsock_socketpair,
+    (oe_ocall_func_t) ocall_oe_hostsock_connect,
+    (oe_ocall_func_t) ocall_oe_hostsock_accept,
+    (oe_ocall_func_t) ocall_oe_hostsock_bind,
+    (oe_ocall_func_t) ocall_oe_hostsock_listen,
+    (oe_ocall_func_t) ocall_oe_hostsock_recvmsg,
+    (oe_ocall_func_t) ocall_oe_hostsock_sendmsg,
+    (oe_ocall_func_t) ocall_oe_hostsock_recv,
+    (oe_ocall_func_t) ocall_oe_hostsock_recvfrom,
+    (oe_ocall_func_t) ocall_oe_hostsock_send,
+    (oe_ocall_func_t) ocall_oe_hostsock_sendto,
+    (oe_ocall_func_t) ocall_oe_hostsock_shutdown,
+    (oe_ocall_func_t) ocall_oe_hostsock_close,
+    (oe_ocall_func_t) ocall_oe_hostsock_dup,
+    (oe_ocall_func_t) ocall_oe_hostsock_setsockopt,
+    (oe_ocall_func_t) ocall_oe_hostsock_getsockopt,
+    (oe_ocall_func_t) ocall_oe_hostsock_getsockname,
+    (oe_ocall_func_t) ocall_oe_hostsock_getpeername,
+    (oe_ocall_func_t) ocall_oe_hostsock_shutdown_device,
+    NULL
+};
+
+oe_result_t oe_create_oe_enclave(const char* path,
+                                 oe_enclave_type_t type,
+                                 uint32_t flags,
+                                 const void* config,
+                                 uint32_t config_size,
+                                 oe_enclave_t** enclave)
 {
-    return oe_create_enclave(
-        path,
-        type,
-        flags,
-        config,
-        config_size,
-        __oe_ocall_function_table,
-        38,
-        enclave);
+    return oe_create_enclave(path,
+               type,
+               flags,
+               config,
+               config_size,
+               __oe_ocall_function_table,
+               38,
+               enclave);
 }
 
 OE_EXTERNC_END
