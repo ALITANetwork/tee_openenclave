@@ -9,6 +9,8 @@
 #define __oe_ecalls_table __oe_internal_ecalls_table
 #define oe_call_host_function oe_call_internal_host_function
 
+#include <sys/socket.h>
+
 #include "../../common/oe_t.c"
 
 void public_root_ecall(void)

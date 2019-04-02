@@ -151,19 +151,7 @@ struct oe_sockaddr_storage
 
 struct oe_msghdr
 {
-    void* msg_name;        /* Address to send to/receive from.  */
-    socklen_t msg_namelen; /* Length of address data.  */
-
-    struct oe_iovec* msg_iov; /* Vector of data to send/receive into.  */
-    size_t msg_iovlen;        /* Number of elements in the vector.  */
-
-    void* msg_control;     /* Ancillary data (eg BSD filedesc passing). */
-    size_t msg_controllen; /* Ancillary data buffer length.
-                              !! The type should be socklen_t but the
-                              definition of the linux kernel is incompatible
-                              with this.  */
-
-    int msg_flags; /* Flags on received message.  */
+#include <openenclave/corelibc/sys/bits/msghdr.h>
 };
 
 void oe_set_default_socket_devid(uint64_t devid);
@@ -352,6 +340,11 @@ struct sockaddr
 struct sockaddr_storage
 {
 #include <openenclave/corelibc/sys/bits/sockaddr_storage.h>
+};
+
+struct msghdr
+{
+#include <openenclave/corelibc/sys/bits/msghdr.h>
 };
 
 OE_INLINE int socket(int domain, int type, int protocol)

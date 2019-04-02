@@ -2,6 +2,9 @@
 // Licensed under the MIT License.
 
 #pragma GCC diagnostic ignored "-Wmissing-prototypes"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
+#include <sys/socket.h>
 
 #include "../../common/oe_u.c"
 

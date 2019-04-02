@@ -4,6 +4,7 @@
 enclave {
 
     from "hostfs.edl" import *;
+    from "hostsock.edl" import *;
 
     trusted {
 

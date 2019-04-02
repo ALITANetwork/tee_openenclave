@@ -10,7 +10,10 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "../../../../../common/oe_u.h"
 #include "../../common/hostsockargs.h"
+
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 
 void oe_handle_hostsock_ocall(void* args_)
 {
@@ -30,6 +33,7 @@ void oe_handle_hostsock_ocall(void* args_)
         {
             break;
         }
+#if 0
         case OE_HOSTSOCK_OP_SOCKET:
         {
             args->u.socket.ret = socket(
@@ -38,6 +42,7 @@ void oe_handle_hostsock_ocall(void* args_)
                 args->u.socket.protocol);
             break;
         }
+#endif
         case OE_HOSTSOCK_OP_CLOSE:
         {
             args->u.close.ret = close((int)args->u.close.host_fd);
@@ -191,4 +196,278 @@ void oe_handle_hostsock_ocall(void* args_)
         }
     }
     args->err = errno;
+}
+
+int oe_hostsock_socket(int domain, int type, int protocol, int* err)
+{
+    int ret = socket(domain, type, protocol);
+
+    if (ret == -1 && err)
+        *err = errno;
+
+    return ret;
+}
+
+int oe_hostsock_socketpair(
+    int domain,
+    int type,
+    int protocol,
+    int sv[2],
+    int* err)
+{
+    int ret = socketpair(domain, type, protocol, sv);
+
+    if (ret == -1)
+    {
+        if (err)
+            *err = errno;
+    }
+
+    return ret;
+}
+
+int oe_hostsock_connect(
+    int sockfd,
+    const struct sockaddr* addr,
+    socklen_t addrlen,
+    int* err)
+{
+    int ret = connect(sockfd, addr, addrlen);
+
+    if (ret == -1 && err)
+        *err = errno;
+
+    return ret;
+}
+
+int oe_hostsock_accept(
+    int sockfd,
+    struct sockaddr* addr,
+    socklen_t addrlen_in,
+    socklen_t* addrlen_out,
+    int* err)
+{
+    int ret = accept(sockfd, addr, &addrlen_in);
+
+    if (ret == -1)
+    {
+        if (err)
+            *err = errno;
+
+        goto done;
+    }
+
+    if (addrlen_out)
+        *addrlen_out = addrlen_in;
+
+done:
+    return ret;
+}
+
+int oe_hostsock_bind(
+    int sockfd,
+    const struct sockaddr* addr,
+    socklen_t addrlen,
+    int* err)
+{
+    int ret = bind(sockfd, addr, addrlen);
+
+    if (ret == -1)
+    {
+        if (err)
+            *err = errno;
+    }
+
+    return ret;
+}
+
+int oe_hostsock_listen(int sockfd, int backlog, int* err)
+{
+    errno = 0;
+
+    int ret = listen(sockfd, backlog);
+
+    if (ret == -1)
+    {
+        if (err)
+            *err = errno;
+    }
+
+    return ret;
+}
+
+ssize_t oe_hostsock_recvmsg(int sockfd, struct msghdr* msg, int flags, int* err)
+{
+    ssize_t ret = recvmsg(sockfd, msg, flags);
+
+    if (ret == -1)
+    {
+        if (err)
+            *err = errno;
+    }
+
+    return ret;
+}
+
+ssize_t oe_hostsock_sendmsg(
+    int sockfd,
+    const struct msghdr* msg,
+    int flags,
+    int* err)
+{
+    ssize_t ret = sendmsg(sockfd, msg, flags);
+
+    if (ret == -1)
+    {
+        if (err)
+            *err = errno;
+    }
+
+    return ret;
+}
+
+ssize_t oe_hostsock_recv(int sockfd, void* buf, size_t len, int flags, int* err)
+{
+    ssize_t ret = recv(sockfd, buf, len, flags);
+
+    if (ret == -1)
+    {
+        if (err)
+            *err = errno;
+    }
+
+    return ret;
+}
+
+ssize_t oe_hostsock_recvfrom(
+    int sockfd,
+    void* buf,
+    size_t len,
+    int flags,
+    struct sockaddr* src_addr,
+    socklen_t addrlen_in,
+    socklen_t* addrlen_out,
+    int* err)
+{
+    ssize_t ret = recvfrom(sockfd, buf, len, flags, src_addr, &addrlen_in);
+
+    if (ret == -1)
+    {
+        if (err)
+            *err = errno;
+    }
+
+    if (addrlen_out)
+        *addrlen_out = addrlen_in;
+
+    return ret;
+}
+
+ssize_t oe_hostsock_send(
+    int sockfd,
+    const void* buf,
+    size_t len,
+    int flags,
+    int* err)
+{
+    ssize_t ret = send(sockfd, buf, len, flags);
+
+    if (ret == -1)
+    {
+        if (err)
+            *err = errno;
+    }
+
+    return ret;
+}
+
+ssize_t oe_hostsock_sendto(
+    int sockfd,
+    const void* buf,
+    size_t len,
+    int flags,
+    const struct sockaddr* src_addr,
+    socklen_t addrlen,
+    int* err)
+{
+    /* ATTN */ return 0;
+}
+
+int oe_hostsock_shutdown(int sockfd, int how, int* err)
+{
+    int ret = shutdown(sockfd, how);
+
+    if (ret == -1)
+    {
+        if (err)
+            *err = errno;
+    }
+
+    return ret;
+}
+
+int oe_hostsock_close(int fd, int* err)
+{
+    int ret = close(fd);
+
+    if (ret == -1)
+    {
+        if (err)
+            *err = errno;
+    }
+
+    return ret;
+}
+
+int oe_hostsock_dup(int oldfd, int* err)
+{
+    int ret = dup(oldfd);
+
+    if (ret == -1)
+    {
+        if (err)
+            *err = errno;
+    }
+
+    return ret;
+}
+
+int oe_hostsock_setsockopt(
+    int sockfd,
+    int level,
+    int optname,
+    const void* optval,
+    size_t optlen,
+    int* err)
+{
+    /* ATTN */ return 0;
+}
+
+int oe_hostsock_getsockopt(
+    int sockfd,
+    int level,
+    int optname,
+    void* optval,
+    size_t* optlen,
+    int* err)
+{
+    /* ATTN */ return 0;
+}
+
+int oe_hostsock_getsockname(
+    int sockfd,
+    struct sockaddr* addr,
+    socklen_t* addrlen,
+    int* err)
+{
+    /* ATTN */ return 0;
+}
+
+int oe_hostsock_getpeername(
+    int sockfd,
+    struct sockaddr* addr,
+    socklen_t* addrlen,
+    int* err)
+{
+    /* ATTN */ return 0;
 }

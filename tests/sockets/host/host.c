@@ -204,7 +204,7 @@ int main(int argc, const char* argv[])
         ecall_run_client(client_enclave, &ret, test_data_rtn, &test_data_len) ==
         OE_OK);
 
-    printf("host received: %s\n", test_data_rtn);
+    printf("host received: %.*s\n", (int)test_data_len, test_data_rtn);
 
     pthread_join(server_thread_id, NULL);
     OE_TEST(oe_terminate_enclave(client_enclave) == OE_OK);
