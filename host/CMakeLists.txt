@@ -71,6 +71,7 @@ if (OE_SGX)
     sgx/sgxquote.c
     sgx/sgxsign.c
     sgx/sgxtypes.c
+    sgx/tlsverifierh.c
     sgx/traceh.c)
 
   # OS specific as well.
