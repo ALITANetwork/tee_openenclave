@@ -1,0 +1,51 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+enclave {
+
+    include "openenclave/bits/defs.h"
+    include "openenclave/bits/types.h"
+
+    untrusted {
+
+        int oe_polling_epoll_create1(
+            int flags, 
+            [out, count=1] int* err);
+
+        int oe_polling_epoll_wait(
+            int64_t enclaveid,
+            int epfd, 
+            int maxevents, 
+            int timeout,
+            [out, count=1] int* err);
+
+        int oe_polling_epoll_ctl_add(
+            int epfd,
+            int fd,
+            unsigned int event_mask,
+            int list_index,
+            int enclave_fd,
+            [out, count=1] int* err);
+
+        int oe_polling_epoll_ctl_del(
+            int epfd,
+            int fd,
+            [out, count=1] int* err);
+
+        int oe_polling_epoll_ctl_mod(
+            int epfd,
+            int fd,
+            unsigned int event_mask,
+            int list_index,
+            int enclave_fd,
+            [out, count=1] int* err);
+
+        int oe_polling_epoll_close(
+            int fd,
+            [out, count=1] int* err);
+
+        int oe_polling_shutdown_device(
+            int fd,
+            [out, count=1] int* err);
+    };
+};
