@@ -9,12 +9,6 @@
 
 OE_EXTERNC_BEGIN
 
-#ifdef __x86_64__
-#define EPOLL_PACKED __attribute__((packed))
-#else
-#define EPOLL_PACKED
-#endif
-
 enum OE_EPOLL_EVENTS
 {
     OE_EPOLLIN = 0x001,
@@ -90,11 +84,13 @@ typedef union _oe_ev_data {
     uint64_t data;
 } oe_ev_data_t;
 
+OE_PACK_BEGIN
 struct oe_epoll_event
 {
     uint32_t events;      /* Epoll events */
     oe_epoll_data_t data; /* User data variable */
-} EPOLL_PACKED;
+};
+OE_PACK_END
 
 int oe_epoll_create(int size);
 int oe_epoll_create1(int flags);
