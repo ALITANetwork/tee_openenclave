@@ -244,6 +244,12 @@ oe_result_t oe_polling_epoll_ctl_mod(
     int* err);
 oe_result_t oe_polling_epoll_close(int* _retval, int fd, int* err);
 oe_result_t oe_polling_shutdown_device(int* _retval, int fd, int* err);
+oe_result_t oe_ocall_getaddrinfo_r(
+    int* _retval,
+    const char* node,
+    const char* service,
+    const struct addrinfo* hints,
+    struct addrinfo** res);
 
 OE_EXTERNC_END
 

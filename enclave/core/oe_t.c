@@ -10,6 +10,7 @@
 #define oe_call_host_function oe_call_internal_host_function
 #define epoll_event oe_epoll_event
 
+#include <openenclave/corelibc/netdb.h>
 #include <openenclave/corelibc/sys/socket.h>
 #include <openenclave/internal/epoll.h>
 

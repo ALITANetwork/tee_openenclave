@@ -181,3 +181,22 @@ void oe_handle_hostresolver_ocall(void* args_)
     }
     args->err = errno;
 }
+
+int oe_ocall_getaddrinfo_r(
+    const char* node,
+    const char* service,
+    const struct addrinfo* hints,
+    struct addrinfo** res);
+
+int oe_ocall_getaddrinfo_r(
+    const char* node,
+    const char* service,
+    const struct addrinfo* hints,
+    struct addrinfo** res)
+{
+    (void)node;
+    (void)service;
+    (void)hints;
+    (void)res;
+    return -1;
+}

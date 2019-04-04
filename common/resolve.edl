@@ -1,0 +1,17 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+enclave {
+
+    include "openenclave/bits/defs.h"
+    include "openenclave/bits/types.h"
+
+    untrusted {
+
+        int oe_ocall_getaddrinfo_r(
+            [in, string] const char* node,
+            [in, string] const char* service,
+            [in, count=1] const struct addrinfo* hints,
+            [out] struct addrinfo** res);
+    };
+};

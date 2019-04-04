@@ -190,6 +190,11 @@ int oe_polling_epoll_ctl_mod(
     int* err);
 int oe_polling_epoll_close(int fd, int* err);
 int oe_polling_shutdown_device(int fd, int* err);
+int oe_ocall_getaddrinfo_r(
+    const char* node,
+    const char* service,
+    const struct addrinfo* hints,
+    struct addrinfo** res);
 
 OE_EXTERNC_END
 

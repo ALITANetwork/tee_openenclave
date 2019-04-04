@@ -2384,6 +2384,58 @@ done:
         pargs_out->_result = _result;
 }
 
+void ocall_oe_ocall_getaddrinfo_r(
+    uint8_t* input_buffer,
+    size_t input_buffer_size,
+    uint8_t* output_buffer,
+    size_t output_buffer_size,
+    size_t* output_bytes_written)
+{
+    oe_result_t _result = OE_FAILURE;
+    OE_UNUSED(input_buffer_size);
+
+    /* Prepare parameters */
+    oe_ocall_getaddrinfo_r_args_t* pargs_in =
+        (oe_ocall_getaddrinfo_r_args_t*)input_buffer;
+    oe_ocall_getaddrinfo_r_args_t* pargs_out =
+        (oe_ocall_getaddrinfo_r_args_t*)output_buffer;
+
+    size_t input_buffer_offset = 0;
+    size_t output_buffer_offset = 0;
+    OE_ADD_SIZE(input_buffer_offset, sizeof(*pargs_in));
+    OE_ADD_SIZE(output_buffer_offset, sizeof(*pargs_out));
+
+    /* Make sure input and output buffers are valid */
+    if (!input_buffer || !output_buffer)
+    {
+        _result = OE_INVALID_PARAMETER;
+        goto done;
+    }
+    /* Set in and in-out pointers */
+    OE_SET_IN_POINTER(node, pargs_in->node_len * sizeof(char));
+    OE_SET_IN_POINTER(service, pargs_in->service_len * sizeof(char));
+    OE_SET_IN_POINTER(hints, (1 * sizeof(struct addrinfo)));
+
+    /* Set out and in-out pointers. In-out parameters are copied to output
+     * buffer. */
+    OE_SET_OUT_POINTER(res, sizeof(struct addrinfo*));
+
+    /* Call user function */
+    pargs_out->_retval = oe_ocall_getaddrinfo_r(
+        (const char*)pargs_in->node,
+        (const char*)pargs_in->service,
+        (const struct addrinfo*)pargs_in->hints,
+        pargs_in->res);
+
+    /* Success. */
+    _result = OE_OK;
+    *output_bytes_written = output_buffer_offset;
+
+done:
+    if (pargs_out && output_buffer_size >= sizeof(*pargs_out))
+        pargs_out->_result = _result;
+}
+
 /*ocall function table*/
 static oe_ocall_func_t __oe_ocall_function_table[] = {
     (oe_ocall_func_t)ocall_oe_hostfs_open,
@@ -2431,6 +2483,7 @@ static oe_ocall_func_t __oe_ocall_function_table[] = {
     (oe_ocall_func_t)ocall_oe_polling_epoll_ctl_mod,
     (oe_ocall_func_t)ocall_oe_polling_epoll_close,
     (oe_ocall_func_t)ocall_oe_polling_shutdown_device,
+    (oe_ocall_func_t)ocall_oe_ocall_getaddrinfo_r,
     NULL};
 
 oe_result_t oe_create_oe_enclave(
@@ -2448,7 +2501,7 @@ oe_result_t oe_create_oe_enclave(
         config,
         config_size,
         __oe_ocall_function_table,
-        45,
+        46,
         enclave);
 }
 

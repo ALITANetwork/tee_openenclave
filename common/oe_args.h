@@ -525,6 +525,18 @@ typedef struct _oe_polling_shutdown_device_args_t
     oe_result_t _result;
 } oe_polling_shutdown_device_args_t;
 
+typedef struct _oe_ocall_getaddrinfo_r_args_t
+{
+    int _retval;
+    char* node;
+    size_t node_len;
+    char* service;
+    size_t service_len;
+    struct addrinfo* hints;
+    struct addrinfo** res;
+    oe_result_t _result;
+} oe_ocall_getaddrinfo_r_args_t;
+
 /* trusted function ids */
 enum
 {
@@ -581,6 +593,7 @@ enum
     fcn_id_oe_polling_epoll_ctl_mod = 42,
     fcn_id_oe_polling_epoll_close = 43,
     fcn_id_oe_polling_shutdown_device = 44,
+    fcn_id_oe_ocall_getaddrinfo_r = 45,
     fcn_id_untrusted_call_max = OE_ENUM_MAX
 };
 

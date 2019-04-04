@@ -20,6 +20,7 @@
 #include "../common/hostresolvargs.h"
 #include <openenclave/corelibc/stdlib.h>
 #include <openenclave/corelibc/string.h>
+#include "../../../common/oe_t.h"
 
 // The host resolver is not actually a device in the file descriptor sense.
 
@@ -198,6 +199,7 @@ done:
 // OE_EAI_OVERFLOW and the required size. IF the buffer is overflowed the caller
 // needs to try _hostresolv_getaddrinfo with a suitably reallocated buffer
 //
+#if 1
 static ssize_t _hostresolv_getaddrinfo_r(
     oe_resolver_t* resolv,
     const char* node,
@@ -398,6 +400,69 @@ done:
 
     return ret;
 }
+#else
+static ssize_t _hostresolv_getaddrinfo_r(
+    oe_resolver_t* resolv,
+    const char* node,
+    const char* service,
+    const struct oe_addrinfo* hints,
+    struct oe_addrinfo* res_out,
+    ssize_t* required_size)
+{
+    ssize_t ret = OE_EAI_FAIL;
+    int retval;
+    char buf[4016];
+    size_t buf_size = OE_COUNTOF(buf);
+    struct oe_addrinfo* res = NULL;
+
+    OE_UNUSED(resolv);
+
+    oe_errno = 0;
+
+    if (oe_ocall_getaddrinfo_r(
+            &retval,
+            node,
+            service,
+            (const struct addrinfo*)hints,
+            (struct addrinfo**)&res,
+            buf,
+            buf_size,
+            &buf_size,
+            &oe_errno) != OE_OK)
+    {
+        oe_errno = EINVAL;
+        goto done;
+    }
+
+    /* If caller's buffer is too small. */
+    if (buf_size > (size_t)*required_size)
+    {
+        *required_size = (ssize_t)buf_size;
+        ret = OE_EAI_OVERFLOW;
+        goto done;
+    }
+
+    /* Copy to caller's buffer. */
+    memcpy(res_out, res, buf_size);
+    *required_size = (ssize_t)buf_size;
+
+#if 0
+    /* Fix-up the pointers with the output buffer. */
+    {
+        ptrdiff_t diff = (uint8_t*)res - (uint8_t*)res_out;
+        struct oe_addrinfo* p;
+
+        for (p = res_out; p; p = p->ai_next)
+        {
+        }
+    }
+#endif
+
+done:
+
+    return ret;
+}
+#endif
 
 static int _hostresolv_shutdown(oe_resolver_t* resolv_)
 {

@@ -4737,4 +4737,115 @@ done:
     return _result;
 }
 
+oe_result_t oe_ocall_getaddrinfo_r(
+    int* _retval,
+    const char* node,
+    const char* service,
+    const struct addrinfo* hints,
+    struct addrinfo** res)
+{
+    oe_result_t _result = OE_FAILURE;
+
+    /* If the enclave is in crashing/crashed status, new OCALL should fail
+       immediately. */
+    if (oe_get_enclave_status() != OE_OK)
+        return oe_get_enclave_status();
+
+    /* Marshalling struct */
+    oe_ocall_getaddrinfo_r_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+
+    /* Marshalling buffer and sizes */
+    size_t _input_buffer_size = 0;
+    size_t _output_buffer_size = 0;
+    size_t _total_buffer_size = 0;
+    uint8_t* _buffer = NULL;
+    uint8_t* _input_buffer = NULL;
+    uint8_t* _output_buffer = NULL;
+    size_t _input_buffer_offset = 0;
+    size_t _output_buffer_offset = 0;
+    size_t _output_bytes_written = 0;
+
+    /* Fill marshalling struct */
+    memset(&_args, 0, sizeof(_args));
+    _args.node = (char*)node;
+    _args.node_len = (node) ? (strlen(node) + 1) : 0;
+    _args.service = (char*)service;
+    _args.service_len = (service) ? (strlen(service) + 1) : 0;
+    _args.hints = (struct addrinfo*)hints;
+    _args.res = (struct addrinfo**)res;
+
+    /* Compute input buffer size. Include in and in-out parameters. */
+    OE_ADD_SIZE(_input_buffer_size, sizeof(oe_ocall_getaddrinfo_r_args_t));
+    if (node)
+        OE_ADD_SIZE(_input_buffer_size, _args.node_len * sizeof(char));
+    if (service)
+        OE_ADD_SIZE(_input_buffer_size, _args.service_len * sizeof(char));
+    if (hints)
+        OE_ADD_SIZE(_input_buffer_size, (1 * sizeof(struct addrinfo)));
+
+    /* Compute output buffer size. Include out and in-out parameters. */
+    OE_ADD_SIZE(_output_buffer_size, sizeof(oe_ocall_getaddrinfo_r_args_t));
+    if (res)
+        OE_ADD_SIZE(_output_buffer_size, sizeof(struct addrinfo*));
+
+    /* Allocate marshalling buffer */
+    _total_buffer_size = _input_buffer_size;
+    OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
+
+    _buffer = (uint8_t*)oe_allocate_ocall_buffer(_total_buffer_size);
+    _input_buffer = _buffer;
+    _output_buffer = _buffer + _input_buffer_size;
+    if (_buffer == NULL)
+    {
+        _result = OE_OUT_OF_MEMORY;
+        goto done;
+    }
+
+    /* Serialize buffer inputs (in and in-out parameters) */
+    *(uint8_t**)&_pargs_in = _input_buffer;
+    OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+
+    OE_WRITE_IN_PARAM(node, _args.node_len * sizeof(char));
+    OE_WRITE_IN_PARAM(service, _args.service_len * sizeof(char));
+    OE_WRITE_IN_PARAM(hints, (1 * sizeof(struct addrinfo)));
+
+    /* Copy args structure (now filled) to input buffer */
+    memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
+
+    /* Call host function */
+    if ((_result = oe_call_host_function(
+             fcn_id_oe_ocall_getaddrinfo_r,
+             _input_buffer,
+             _input_buffer_size,
+             _output_buffer,
+             _output_buffer_size,
+             &_output_bytes_written)) != OE_OK)
+        goto done;
+
+    /* Set up output arg struct pointer */
+    *(uint8_t**)&_pargs_out = _output_buffer;
+    OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
+
+    /* Check if the call succeeded */
+    if ((_result = _pargs_out->_result) != OE_OK)
+        goto done;
+
+    /* Currently exactly _output_buffer_size bytes must be written */
+    if (_output_bytes_written != _output_buffer_size)
+    {
+        _result = OE_FAILURE;
+        goto done;
+    }
+
+    /* Unmarshal return value and out, in-out parameters */
+    *_retval = _pargs_out->_retval;
+    OE_READ_OUT_PARAM(res, (size_t)(sizeof(struct addrinfo*)));
+
+    _result = OE_OK;
+done:
+    if (_buffer)
+        oe_free_ocall_buffer(_buffer);
+    return _result;
+}
+
 OE_EXTERNC_END
