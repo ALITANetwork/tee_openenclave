@@ -70,6 +70,7 @@ extern oe_structure_t __oe_addrinfo_structure;
 int ecall_getaddrinfo(struct addrinfo** buffer)
 {
     struct oe_addrinfo* ai = NULL;
+    struct addrinfo* ai2 = NULL;
     size_t required_size;
     oe_flat_allocator_t a;
 
@@ -79,6 +80,16 @@ int ecall_getaddrinfo(struct addrinfo** buffer)
     if (oe_getaddrinfo(host, service, NULL, (struct oe_addrinfo**)&ai) != 0)
     {
         OE_TEST("oe_getaddrinfo() failed" == NULL);
+    }
+
+    if (getaddrinfo(host, service, NULL, &ai2) != 0)
+    {
+        OE_TEST("oe_getaddrinfo() failed" == NULL);
+    }
+
+    if (addrinfo_compare((struct addrinfo*)ai, (struct addrinfo*)ai2) != 0)
+    {
+        OE_TEST("addrinfo_compare() failed" == NULL);
     }
 
     addrinfo_dump((struct addrinfo*)ai);
@@ -114,6 +125,9 @@ int ecall_getaddrinfo(struct addrinfo** buffer)
     {
         OE_TEST("addrinfo_compare() failed" == NULL);
     }
+
+    oe_freeaddrinfo(ai);
+    freeaddrinfo(ai2);
 
     return 0;
 }
