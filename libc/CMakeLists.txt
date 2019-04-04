@@ -486,6 +486,7 @@ add_library(oelibc STATIC
     ${MUSLSRC}/network/gethostbyname_r.c
     ${MUSLSRC}/network/accept.c
     ${MUSLSRC}/network/bind.c
+    ${MUSLSRC}/network/inet_pton.c
     ${MUSLSRC}/network/listen.c
     ${MUSLSRC}/network/connect.c
     ${MUSLSRC}/network/shutdown.c
@@ -517,7 +518,7 @@ add_library(oelibc STATIC
      ${MUSLSRC}/prng/__seed48.c
      ${MUSLSRC}/prng/seed48.c
      ${MUSLSRC}/prng/srand48.c
-     #${MUSLSRC}/regex/fnmatch.c
+     ${MUSLSRC}/regex/fnmatch.c
      #${MUSLSRC}/regex/glob.c
      #${MUSLSRC}/regex/regcomp.c
      #${MUSLSRC}/regex/regerror.c
@@ -617,6 +618,7 @@ add_library(oelibc STATIC
      ${MUSLSRC}/stdio/sscanf.c
      ${MUSLSRC}/stdio/stderr.c
      ${MUSLSRC}/stdio/stdin.c
+     ${MUSLSRC}/stdio/tmpfile.c
      ${MUSLSRC}/stdio/__stdio_close.c
      ${MUSLSRC}/stdio/__stdio_exit.c
      ${MUSLSRC}/stdio/__stdio_read.c
@@ -734,6 +736,7 @@ add_library(oelibc STATIC
      ${MUSLSRC}/string/wmemcpy.c
      ${MUSLSRC}/string/wmemmove.c
      ${MUSLSRC}/string/wmemset.c
+     ${MUSLSRC}/temp/__randname.c
      ${MUSLSRC}/thread/__lock.c
      ${MUSLSRC}/thread/__wait.c
      ${MUSLSRC}/time/clock_gettime.c

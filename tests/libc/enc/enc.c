@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mount.h>
 #include <time.h>
 #include "libc_t.h"
 #include "mtest.h"
@@ -86,6 +87,18 @@ extern int run_tests(void);
 
 int test()
 {
+    oe_enable_feature(OE_FEATURE_HOST_FILES);
+    oe_enable_feature(OE_FEATURE_HOST_FILES);
+    oe_enable_feature(OE_FEATURE_HOST_SOCKETS);
+    oe_enable_feature(OE_FEATURE_HOST_RESOLVER);
+    oe_enable_feature(OE_FEATURE_POLLING);
+
+    if (mount("/", "/", "hostfs", 0, NULL) != 0)
+    {
+        fprintf(stderr, "mount() failed\n");
+        exit(1);
+    }
+
     return run_tests();
 }
 
