@@ -12,9 +12,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/epoll.h>
+#include <sys/poll.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "../../../../common/oe_u.h"
+#include "oe_u.h"
 
 typedef struct _wait_args
 {
@@ -55,9 +56,68 @@ static void* epoll_wait_thread(void* arg_)
     }
 
 done:
+    free(args);
     return NULL;
 }
 
+typedef struct _poll_args
+{
+    int64_t enclaveid;
+    int epfd;
+    nfds_t nfds;
+    struct pollfd fds[];
+} poll_args_t;
+
+static void* poll_wait_thread(void* arg_)
+{
+    int ret = 0;
+    poll_args_t* args = (poll_args_t*)arg_;
+    int retval;
+
+    ret = poll(args->fds, args->nfds, -1);
+    if (ret >= 0)
+    {
+        size_t num_notifications = (size_t)ret;
+        struct pollfd* ev = args->fds;
+        oe_device_notifications_t* notifications =
+            (oe_device_notifications_t*)ev;
+
+        size_t ev_idx = 0;
+        size_t notify_idx = 0;
+        for (ev_idx = 0; ev_idx < (size_t)args->nfds; ev_idx++)
+        {
+            if (ev[ev_idx].revents)
+            {
+                notifications[notify_idx].event_mask =
+                    (uint32_t)ev[ev_idx].revents;
+                notifications[notify_idx].list_idx = (uint32_t)ev_idx;
+                notifications[notify_idx].epoll_fd = (uint32_t)args->epfd;
+
+                printf(
+                    "notification[%d] = events: %d data: %ld\n",
+                    notify_idx,
+                    notifications[notify_idx].event_mask,
+                    notifications[notify_idx].data);
+            }
+        }
+
+        if (oe_polling_notify(
+                (oe_enclave_t*)args->enclaveid,
+                &retval,
+                notifications,
+                num_notifications) != OE_OK)
+        {
+            goto done;
+        }
+
+        if (retval != 0)
+            goto done;
+    }
+
+done:
+    free(args);
+    return NULL;
+}
 OE_INLINE void _set_err(int* err, int num)
 {
     if (err)
@@ -201,4 +261,55 @@ int oe_polling_shutdown_device(int fd, int* err)
 
     /* ATTN: implement this */
     return -1;
+}
+
+int oe_polling_epoll_poll(
+    int64_t enclaveid,
+    int epfd,
+    struct pollfd* fds,
+    size_t nfds,
+    int timeout,
+    int* err)
+
+{
+    int ret = -1;
+    size_t fdsize = 0;
+    pthread_t thread = 0;
+    poll_args_t* args = NULL;
+
+    (void)timeout;
+
+    /* ATTN: how does this work without using the events parameter. */
+
+    fdsize = sizeof(struct pollfd) * nfds;
+
+    if (!(args = calloc(1, sizeof(wait_args_t) + fdsize)))
+    {
+        _set_err(err, ENOMEM);
+        goto done;
+    }
+
+    args->enclaveid = enclaveid;
+    args->epfd = epfd;
+    args->nfds = nfds;
+    nfds_t fd_idx = 0;
+    for (; fd_idx < nfds; fd_idx++)
+    {
+        args->fds[fd_idx] = fds[fd_idx];
+    }
+
+    // We lose the wait thread when we exit the func, but the thread will die
+    // on its own copy args then spawn pthread to do the waiting. That way we
+    // can ecall with notification. the thread args are freed by the thread
+    // func.
+    if (pthread_create(&thread, NULL, poll_wait_thread, args) < 0)
+    {
+        _set_err(err, EINVAL);
+        goto done;
+    }
+
+    ret = 0;
+
+done:
+    return ret;
 }

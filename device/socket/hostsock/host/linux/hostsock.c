@@ -10,7 +10,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "../../../../../common/oe_u.h"
+#include "oe_u.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 

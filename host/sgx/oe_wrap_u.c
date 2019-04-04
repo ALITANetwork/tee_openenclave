@@ -8,12 +8,13 @@
 #include <openenclave/internal/calls.h>
 #include <openenclave/internal/epoll.h>
 #include <sys/epoll.h>
+#include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 
 #define oe_call_enclave_function oe_call_internal_enclave_function
 
-#include "../../common/oe_u.c"
+#include "oe_u.c"
 
 const oe_ocall_func_t* oe_get_internal_ocall_function_table(void)
 {

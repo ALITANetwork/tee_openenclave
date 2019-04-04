@@ -12,12 +12,6 @@
 #include <openenclave/internal/fs.h>
 #include <openenclave/internal/print.h>
 #include <openenclave/internal/epoll.h>
-#include "../../common/oe_t.h"
-
-int oe_get_epoll_events(
-    uint64_t epfd,
-    size_t maxevents,
-    struct oe_epoll_event* pevents);
 
 int oe_epoll_create(int size)
 {
@@ -318,7 +312,7 @@ static struct _notification_node* _new_notification()
 
 int oe_post_device_notifications(
     int num_notifications,
-    oe_device_notifications_t* notices)
+    struct _oe_device_notifications* notices)
 {
     struct _notification_node** pplist = NULL;
     struct _notification_node* pnode = NULL;
@@ -330,6 +324,12 @@ int oe_post_device_notifications(
         // complain and throw something as notices are not allowed be null
         return -1;
     }
+#if 0
+int j = 0;
+for(; j < num_notifications; j++) {
+oe_host_printf("notices[%d] = events: %x data = %lx\n", j, notices[j].event_mask, notices[j].data);
+}
+#endif
 
     oe_spin_lock(&_lock);
     locked = true;

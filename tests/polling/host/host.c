@@ -119,6 +119,16 @@ int main(int argc, const char* argv[])
 
     test_data_len = 1024;
     OE_TEST(
+        ecall_poll_test(client_enclave, &ret, test_data_len, test_data_rtn) ==
+        OE_OK);
+
+    sleep(5);
+
+    printf("poll: host received: %s\n", test_data_rtn);
+    OE_TEST(strncmp(TESTDATA, test_data_rtn, strlen(TESTDATA)) == 0);
+
+    test_data_len = 1024;
+    OE_TEST(
         ecall_epoll_test(client_enclave, &ret, test_data_len, test_data_rtn) ==
         OE_OK);
 

@@ -10,7 +10,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "../common/oe_u.h"
+#include "oe_u.h"
 
 int oe_hostfs_open(const char* pathname, int flags, mode_t mode, int* err)
 {

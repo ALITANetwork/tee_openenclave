@@ -4,6 +4,12 @@
 set(PLATFORM_SRC "")
 set(MUSL_SRC_DIR ${PROJECT_SOURCE_DIR}/3rdparty/musl/musl/src)
 
+add_custom_command(OUTPUT oe_t.h oe_t.c oe_args.h
+  DEPENDS ${CMAKE_SOURCE_DIR}/common/oe.edl
+  COMMAND oeedger8r --search-path ${CMAKE_SOURCE_DIR}/common --trusted ${CMAKE_SOURCE_DIR}/common/oe.edl)
+
+add_custom_target(oe_trusted_edl DEPENDS oe_t.h oe_t.c oe_args.h)
+
 if (OE_SGX)
     list(APPEND PLATFORM_SRC
         sgx/atexit.c
@@ -84,9 +90,9 @@ add_library(oecore STATIC
     cwd.c
     deepcopy.c
     device.c
+    oe_wrap_t.c
     epoll.c
     exit.c
-    oe_t.c
     select.c
     poll.c
     eventfd.c
@@ -117,6 +123,10 @@ add_library(oecore STATIC
     time.c
     uname.c
     ${PLATFORM_SRC})
+
+add_dependencies(oecore oe_trusted_edl)
+
+target_include_directories(oecore PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 # Suppress type conversion warnings introduced by 3rdparty code
 set_source_files_properties(${MUSL_SRC_DIR}/prng/rand.c PROPERTIES

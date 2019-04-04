@@ -12,147 +12,30 @@
 #include <openenclave/internal/print.h>
 // clang-format on
 
-#define printf oe_host_printf
-
-static uint32_t poll_eventmask_to_epoll(uint32_t poll_event)
-
-{
-    uint32_t epoll_mask = 0;
-
-    if (poll_event & POLLIN)
-    {
-        epoll_mask |= OE_EPOLLIN;
-    }
-    if (poll_event & POLLPRI)
-    {
-        epoll_mask |= OE_EPOLLPRI;
-    }
-    if (poll_event & POLLOUT)
-    {
-        epoll_mask |= OE_EPOLLOUT;
-    }
-    if (poll_event & POLLRDNORM)
-    {
-        epoll_mask |= OE_EPOLLRDNORM;
-    }
-    if (poll_event & POLLRDBAND)
-    {
-        epoll_mask |= OE_EPOLLRDBAND;
-    }
-    if (poll_event & POLLWRNORM)
-    {
-        epoll_mask |= OE_EPOLLWRNORM;
-    }
-    if (poll_event & POLLWRBAND)
-    {
-        epoll_mask |= OE_EPOLLWRBAND;
-    }
-    if (poll_event & POLLMSG)
-    {
-        epoll_mask |= OE_EPOLLMSG;
-    }
-    if (poll_event & POLLREMOVE)
-    {
-        /* ignored. but should complain */
-    }
-    if (poll_event & POLLRDHUP)
-    {
-        epoll_mask |= OE_EPOLLRDHUP;
-    }
-    if (poll_event & POLLERR)
-    {
-        epoll_mask |= OE_EPOLLERR;
-    }
-    if (poll_event & POLLHUP)
-    {
-        epoll_mask |= OE_EPOLLHUP;
-    }
-    if (poll_event & POLLNVAL)
-    {
-        /* ignored but should complain */
-    }
-
-    return epoll_mask;
-}
-
-static uint32_t epoll_eventmask_to_poll(uint32_t epoll_event)
-
-{
-    uint32_t poll_mask = 0;
-
-    if (epoll_event & OE_EPOLLIN)
-    {
-        poll_mask |= POLLIN;
-    }
-    if (epoll_event & OE_EPOLLPRI)
-    {
-        poll_mask |= POLLPRI;
-    }
-    if (epoll_event & OE_EPOLLOUT)
-    {
-        poll_mask |= POLLOUT;
-    }
-    if (epoll_event & OE_EPOLLRDNORM)
-    {
-        poll_mask |= POLLRDNORM;
-    }
-    if (epoll_event & OE_EPOLLRDBAND)
-    {
-        poll_mask |= POLLRDBAND;
-    }
-    if (epoll_event & OE_EPOLLWRNORM)
-    {
-        poll_mask |= POLLWRNORM;
-    }
-    if (epoll_event & OE_EPOLLWRBAND)
-    {
-        poll_mask |= POLLWRBAND;
-    }
-    if (epoll_event & OE_EPOLLMSG)
-    {
-        poll_mask |= POLLMSG;
-    }
-    if (epoll_event & OE_EPOLLERR)
-    {
-        poll_mask |= POLLERR;
-    }
-    if (epoll_event & OE_EPOLLHUP)
-    {
-        poll_mask |= POLLHUP;
-    }
-    if (epoll_event & OE_EPOLLRDHUP)
-    {
-        poll_mask |= POLLRDHUP;
-    }
-
-    return poll_mask;
-}
-
-// Poll is implemented in terms of epoll.
+// Poll uses much of the infrastructure from epoll.
 
 int oe_poll(struct oe_pollfd* fds, nfds_t nfds, int timeout_ms)
 {
     int retval = -1;
-    int epoll_fd = -1;
+    int epfd = -1;
     nfds_t i = 0;
     struct oe_epoll_event* rev =
         oe_malloc(sizeof(struct oe_epoll_event) * nfds);
 
-    epoll_fd = oe_epoll_create1(0);
-    if (epoll_fd < 0)
+    epfd = oe_epoll_create1(0);
+    if (epfd < 0)
     {
-        return epoll_fd;
+        return epfd;
     }
 
     for (i = 0; i < nfds; i++)
     {
         if (fds[i].fd >= 0)
         {
-            struct oe_epoll_event ev = {
-                .data.fd = fds[i].fd,
-                .events = poll_eventmask_to_epoll((uint32_t)fds[i].events)};
+            struct oe_epoll_event ev = {.data.fd = fds[i].fd,
+                                        .events = (uint32_t)fds[i].events};
 
-            retval = oe_epoll_ctl(epoll_fd, OE_EPOLL_CTL_ADD, fds[i].fd, &ev);
+            retval = oe_epoll_ctl(epfd, OE_EPOLL_CTL_ADD, fds[i].fd, &ev);
             if (retval < 0)
             {
                 goto done;
@@ -160,11 +43,55 @@ int oe_poll(struct oe_pollfd* fds, nfds_t nfds, int timeout_ms)
         }
     }
 
-    retval = oe_epoll_wait(epoll_fd, rev, (int)nfds, timeout_ms);
+    oe_device_t* pepoll = oe_get_fd_device(epfd);
+    bool has_host_wait =
+        true; // false; // 2do. We need to figure out how to wait
+
+    if (!pepoll)
+    {
+        // Log error here
+        retval = -1; // erno is already set
+        goto done;
+    }
+
+    if (pepoll->ops.epoll->poll == NULL)
+    {
+        oe_errno = EINVAL;
+        retval = -1;
+        goto done;
+    }
+
+    // Start an outboard waiter if host involved
+    // search polled device list for host involved  2Do
+    if (has_host_wait)
+    {
+        if ((retval = (*pepoll->ops.epoll->poll)(
+                 epfd, fds, (size_t)nfds, timeout_ms)) < 0)
+        {
+            oe_errno = EINVAL;
+            goto done;
+        }
+    }
+
+    // We check immedately because we might have gotten lucky and had stuff come
+    // in immediately. If so we skip the wait
+    retval = oe_get_epoll_events((uint64_t)epfd, (size_t)nfds, rev);
+
+    if (retval == 0)
+    {
+        if (oe_wait_device_notification(timeout_ms) < 0)
+        {
+            oe_errno = EPROTO;
+            goto done;
+        }
+        retval = oe_get_epoll_events((uint64_t)epfd, (size_t)nfds, rev);
+    }
+
     if (retval < 0)
     {
         goto done;
     }
+
     /* output */
     for (i = 0; i < nfds; i++)
     {
@@ -183,8 +110,7 @@ int oe_poll(struct oe_pollfd* fds, nfds_t nfds, int timeout_ms)
             }
             if (fds[i].fd == rev[j].data.fd)
             {
-                fds[i].revents =
-                    (int16_t)epoll_eventmask_to_poll(rev[j].events);
+                fds[i].revents = (int16_t)rev[j].events;
                 rev[j].data.fd = -1; /* done with this ev desc */
                 break;
             }

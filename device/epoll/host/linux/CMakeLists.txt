@@ -5,7 +5,7 @@ include(oeedl_file)
 
 add_library(oeepoll_host STATIC
     hostepoll.c
-    ${epoll_u_h})
+    ${CMAKE_BINARY_DIR}/host/oe_u.h)
 
 if(CMAKE_C_COMPILER_ID MATCHES GNU)
 target_compile_options(oeepoll_host PRIVATE -Wjump-misses-init)
@@ -16,6 +16,7 @@ endif()
 
 target_include_directories(oeepoll_host PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_BINARY_DIR}/host
     ../../../../include/
     )
 

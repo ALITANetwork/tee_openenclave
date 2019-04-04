@@ -7,6 +7,7 @@
 // enclave.h must come before socket.h
 #include <openenclave/corelibc/arpa/inet.h>
 #include <openenclave/corelibc/netinet/in.h>
+#include <openenclave/corelibc/sys/poll.h>
 #include <openenclave/corelibc/sys/select.h>
 #include <openenclave/corelibc/sys/socket.h>
 #include <openenclave/internal/device.h>
@@ -22,6 +23,7 @@ int ecall_device_init()
 {
     oe_enable_feature(OE_FEATURE_POLLING);
     oe_enable_feature(OE_FEATURE_HOST_SOCKETS);
+    oe_enable_feature(OE_FEATURE_HOST_FILES);
     return 0;
 }
 
@@ -263,6 +265,105 @@ int ecall_select_test(size_t buff_len, char* recv_buff)
 
     oe_close(sockfd);
     printf("--------------- select done -------------\n");
+    return OE_OK;
+}
+
+int ecall_poll_test(size_t buff_len, char* recv_buff)
+{
+    int sockfd = 0;
+    int file_fd = 0;
+    struct oe_sockaddr_in serv_addr = {0};
+    struct oe_pollfd pollfds[3] = {0};
+    int timeout_ms = 30000; // in millis
+
+    printf("--------------- poll -------------\n");
+    memset(recv_buff, 0, buff_len);
+    printf("create socket\n");
+    if ((sockfd = oe_socket(OE_AF_HOST, OE_SOCK_STREAM, 0)) < 0)
+    {
+        printf("\n Error : Could not create socket \n");
+        return OE_FAILURE;
+    }
+    serv_addr.sin_family = OE_AF_HOST;
+    serv_addr.sin_addr.s_addr = oe_htonl(OE_INADDR_LOOPBACK);
+    serv_addr.sin_port = oe_htons(1642);
+
+    printf("socket fd = %d\n", sockfd);
+    printf("Connecting...\n");
+    int retries = 0;
+    static const int max_retries = 4;
+    while (oe_connect(
+               sockfd, (struct oe_sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)
+    {
+        if (retries++ > max_retries)
+        {
+            printf("\n Error : Connect Failed \n");
+            oe_close(sockfd);
+            return OE_FAILURE;
+        }
+        else
+        {
+            printf("Connect Failed. Retrying \n");
+        }
+    }
+    if (sockfd >= 0)
+    {
+        pollfds[0].fd = sockfd;
+        pollfds[0].events =
+            (POLLIN | POLLPRI | POLLOUT | POLLRDNORM | POLLRDBAND | POLLWRNORM |
+             POLLWRBAND | POLLREMOVE | POLLRDHUP);
+        pollfds[0].revents = 0;
+    }
+
+    const int flags = OE_O_NONBLOCK | OE_O_RDONLY;
+    file_fd = oe_open("/tmp/test", flags, 0);
+
+    printf("polling...\n");
+    if (file_fd >= 0)
+    {
+        pollfds[0].fd = file_fd;
+        pollfds[0].events =
+            (POLLIN | POLLPRI | POLLOUT | POLLRDNORM | POLLRDBAND | POLLWRNORM |
+             POLLWRBAND | POLLREMOVE | POLLRDHUP);
+        pollfds[0].revents = 0;
+    }
+
+    int nfds = 0;
+    do
+    {
+        if ((nfds = oe_poll(pollfds, 2, timeout_ms)) < 0)
+        {
+            printf("poll error.\n");
+        }
+        else
+        {
+            printf("input from %d fds\n", nfds);
+
+            if (pollfds[0].revents &
+                (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND))
+            {
+                ssize_t n;
+                char buff[1024] = {0};
+
+                printf("read sockfd:%d\n", sockfd);
+                n = oe_read(sockfd, buff, sizeof(buff));
+                buff[n] = 0;
+                if (n > 0)
+                {
+                    memcpy(
+                        recv_buff,
+                        buff,
+                        ((size_t)n < buff_len) ? (size_t)n : buff_len);
+                    nfds = -1;
+                    break;
+                }
+            }
+        }
+
+    } while (nfds >= 0);
+
+    oe_close(sockfd);
+    printf("--------------- poll done -------------\n");
     return OE_OK;
 }
 

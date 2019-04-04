@@ -6,8 +6,8 @@ enclave {
     include "openenclave/bits/defs.h"
     include "openenclave/bits/types.h"
 
-    trusted {
 
+    trusted {
         public int oe_polling_notify(
             [in, count=num_notifications]
             struct _oe_device_notifications* notifications,
@@ -25,6 +25,14 @@ enclave {
             int epfd, 
             [out, count=maxevents] struct epoll_event* events,
             size_t maxevents,
+            int timeout,
+            [out, count=1] int* err);
+
+        int oe_polling_epoll_poll(
+            int64_t enclaveid,
+            int epfd, 
+            [in,out, count=nfds] struct pollfd* fds,
+            size_t nfds,
             int timeout,
             [out, count=1] int* err);
 

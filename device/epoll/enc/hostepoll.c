@@ -19,7 +19,8 @@
 #include <openenclave/corelibc/stdlib.h>
 #include <openenclave/corelibc/string.h>
 #include <openenclave/internal/epoll.h>
-#include "../../../common/oe_t.h"
+#include <openenclave/corelibc/sys/poll.h>
+#include "oe_t.h"
 
 /*
 **==============================================================================
@@ -550,6 +551,74 @@ done:
     return ret;
 }
 
+static int _epoll_poll(
+    int epoll_fd,
+    struct oe_pollfd* fds,
+    size_t nfds,
+    int64_t timeout)
+{
+    int ret = -1;
+    epoll_dev_t* epoll = _cast_epoll(oe_get_fd_device(epoll_fd));
+    oe_device_t* pdev = NULL;
+    struct oe_pollfd* host_fds = NULL;
+
+    /* Check parameters. */
+    if (!epoll || !fds)
+    {
+        oe_errno = EINVAL;
+        return -1;
+    }
+
+    oe_errno = 0;
+
+    if (nfds > 0)
+    {
+        if (!(host_fds = oe_calloc(1, sizeof(struct oe_pollfd) * nfds)))
+        {
+            oe_errno = ENOMEM;
+            goto done;
+        }
+
+        size_t fd_idx = 0;
+        for (; fd_idx < nfds; fd_idx++)
+        {
+            int host_fd = -1;
+            pdev = oe_get_fd_device(fds[fd_idx].fd);
+            if (pdev)
+            {
+                if (pdev->ops.base->get_host_fd != NULL)
+                {
+                    host_fd = (int)(*pdev->ops.base->get_host_fd)(pdev);
+                }
+            }
+            host_fds[fd_idx].fd =
+                host_fd; // -1 will be ignored by poll on the host side. 2do:
+                         // how to poll enclave local
+            host_fds[fd_idx].events = fds[fd_idx].events;
+            host_fds[fd_idx].revents = 0;
+        }
+    }
+
+    if (oe_polling_epoll_poll(
+            &ret,
+            (int64_t)oe_get_enclave(),
+            (int)epoll_fd,
+            (struct oe_pollfd*)host_fds,
+            nfds,
+            (int)timeout,
+            &oe_errno) != OE_OK)
+    {
+        goto done;
+    }
+
+done:
+    if (host_fds)
+    {
+        oe_free(host_fds);
+    }
+    return ret;
+}
+
 static int _epoll_close(oe_device_t* epoll_)
 {
     int ret = -1;
@@ -667,6 +736,7 @@ static oe_epoll_ops_t _ops = {
     .ctl_del = _epoll_ctl_del,
     .geteventdata = _epoll_get_event_data,
     .wait = _epoll_wait,
+    .poll = _epoll_poll,
 };
 
 static epoll_dev_t _epoll = {

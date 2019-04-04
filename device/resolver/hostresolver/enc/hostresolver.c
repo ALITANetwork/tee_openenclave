@@ -21,7 +21,7 @@
 #include <openenclave/corelibc/stdlib.h>
 #include <openenclave/corelibc/string.h>
 #include <openenclave/internal/deepcopy.h>
-#include "../../../common/oe_t.h"
+#include "oe_t.h"
 
 // The host resolver is not actually a device in the file descriptor sense.
 

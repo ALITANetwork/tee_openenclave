@@ -1,6 +1,12 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+add_custom_command(OUTPUT oe_u.h oe_u.c oe_args.h
+  DEPENDS ${CMAKE_SOURCE_DIR}/common/oe.edl
+  COMMAND oeedger8r --search-path ${CMAKE_SOURCE_DIR}/common --untrusted ${CMAKE_SOURCE_DIR}/common/oe.edl)
+
+add_custom_target(oe_untrusted_edl DEPENDS oe_u.h oe_u.c oe_args.h)
+
 # OS specific but arch agnostic files.
 if (UNIX)
   set(PLATFORM_SRC
@@ -54,7 +60,7 @@ if (OE_SGX)
     sgx/loadelf.c
     sgx/loadpe.c
     sgx/ocalls.c
-    sgx/oe_u.c
+    sgx/oe_wrap_u.c
     sgx/quote.c
     sgx/registers.c
     sgx/report.c
@@ -117,6 +123,8 @@ add_library(oehost STATIC
   crypto/sha.c
   ${PLATFORM_SRC})
 
+add_dependencies(oehost oe_untrusted_edl)
+
 target_link_libraries(oehost PUBLIC oe_includes)
 
 # TODO: Replace these with `find_package` and add as dependencies to
@@ -132,6 +140,8 @@ if (UNIX)
 endif ()
 
 find_package(Threads REQUIRED)
+
+target_include_directories(oehost PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 if (UNIX)
   target_link_libraries(oehost PRIVATE crypto dl Threads::Threads)

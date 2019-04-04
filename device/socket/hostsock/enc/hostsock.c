@@ -19,7 +19,7 @@
 #include <openenclave/corelibc/sys/uio.h>
 #include <openenclave/corelibc/sys/socket.h>
 #include <openenclave/internal/print.h>
-#include "../../../common/oe_t.h"
+#include "oe_t.h"
 
 /*
 **==============================================================================

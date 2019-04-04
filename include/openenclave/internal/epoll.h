@@ -101,6 +101,11 @@ int oe_epoll_wait(
     int maxevents,
     int timeout);
 
+int oe_get_epoll_events(
+    uint64_t epfd,
+    size_t maxevents,
+    struct oe_epoll_event* pevents);
+
 // int oe_epoll_pwait (int epfd, struct epoll_event *events, int maxevents,
 // int timeout, const sigset_t *ss);
 

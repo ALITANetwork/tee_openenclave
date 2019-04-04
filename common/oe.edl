@@ -3,6 +3,8 @@
 
 enclave {
 
+    include "openenclave/internal/epoll.h"
+
     from "hostfs.edl" import *;
     from "hostsock.edl" import *;
     from "polling.edl" import *;

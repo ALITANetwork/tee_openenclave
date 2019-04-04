@@ -13,6 +13,7 @@ extern "C"
 #endif
 
     struct oe_epoll_event;
+    struct oe_pollfd;
 
     typedef struct _oe_device oe_device_t;
 
@@ -33,6 +34,11 @@ extern "C"
         int (*wait)(
             int epoll_fd,
             struct oe_epoll_event* events,
+            size_t maxevents,
+            int64_t timeout);
+        int (*poll)(
+            int epoll_fd,
+            struct oe_pollfd* events,
             size_t maxevents,
             int64_t timeout);
 
