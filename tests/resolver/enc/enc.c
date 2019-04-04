@@ -7,6 +7,7 @@
 #include <openenclave/corelibc/arpa/inet.h>
 #include <openenclave/corelibc/netdb.h>
 #include <openenclave/corelibc/netinet/in.h>
+#include <openenclave/internal/deepcopy.h>
 #include <openenclave/internal/device.h>
 #include <openenclave/internal/hostresolver.h>
 #include <openenclave/internal/tests.h>
@@ -14,6 +15,7 @@
 #include <resolver_test_t.h>
 #include <stdio.h>
 #include <string.h>
+#include "../utils.h"
 
 size_t oe_debug_malloc_check();
 
@@ -54,111 +56,66 @@ int ecall_getnameinfo(char* buffer, size_t bufflen)
         sizeof(serv),
         0);
 
-    if (rslt != 0)
-    {
-        printf("getnameinfo failed\n");
-        return OE_FAILURE;
-    }
-    else
-    {
-        strlcpy(buffer, host, bufflen);
-        printf("getnameinfo passed\n");
-        return OE_OK; // status;
-    }
+    OE_TEST(rslt == 0);
+    OE_TEST(strcmp(host, "") != 0);
+    OE_TEST(strcmp(serv, "") != 0);
+
+    strlcpy(buffer, host, bufflen);
+
+    return 0;
 }
+
+extern oe_structure_t __oe_addrinfo_structure;
 
 int ecall_getaddrinfo(struct addrinfo** buffer)
 {
     struct oe_addrinfo* ai = NULL;
-    int status = OE_FAILURE;
+    size_t required_size;
+    oe_flat_allocator_t a;
 
     const char host[] = {"localhost"};
     const char service[] = {"telnet"};
 
-    int rslt = oe_getaddrinfo(host, service, NULL, (struct oe_addrinfo**)&ai);
-
-    if (rslt == 0)
+    if (oe_getaddrinfo(host, service, NULL, (struct oe_addrinfo**)&ai) != 0)
     {
-        struct oe_addrinfo* thisinfo = ai;
-        size_t buffer_required = (size_t)0;
-
-        // Allocate host memory and copy the chain of addrinfos
-
-        do
-        {
-            buffer_required += sizeof(struct oe_addrinfo);
-            if (thisinfo->ai_addr)
-            {
-                buffer_required += sizeof(struct oe_sockaddr);
-            }
-            if (thisinfo->ai_canonname)
-            {
-                buffer_required += strlen(thisinfo->ai_canonname) + 1;
-            }
-
-            thisinfo = thisinfo->ai_next;
-
-        } while (thisinfo != NULL);
-
-        {
-            size_t canon_namelen = 0;
-            uint8_t* bufptr = oe_host_calloc(1, buffer_required);
-            struct oe_addrinfo* retinfo = (struct oe_addrinfo*)bufptr;
-            thisinfo = ai;
-            do
-            {
-                // Set up the pointers in the destination structure to point
-                // at the buffer after the addrinfo structure.
-                struct oe_addrinfo* buf_info = (struct oe_addrinfo*)bufptr;
-                buf_info->ai_flags = thisinfo->ai_flags;
-                buf_info->ai_family = thisinfo->ai_family;
-                buf_info->ai_socktype = thisinfo->ai_socktype;
-                buf_info->ai_protocol = thisinfo->ai_protocol;
-                buf_info->ai_addrlen = thisinfo->ai_addrlen;
-                buf_info->ai_canonname = NULL;
-                buf_info->ai_addr = NULL;
-                buf_info->ai_next = NULL;
-
-                bufptr += sizeof(struct oe_addrinfo);
-                if (thisinfo->ai_addr)
-                {
-                    buf_info->ai_addr = (struct oe_sockaddr*)(bufptr);
-                    memcpy(
-                        buf_info->ai_addr,
-                        thisinfo->ai_addr,
-                        buf_info->ai_addrlen);
-                    bufptr += buf_info->ai_addrlen;
-                }
-                if (thisinfo->ai_canonname)
-                {
-                    canon_namelen = strlen(thisinfo->ai_canonname) + 1;
-                    buf_info->ai_canonname = (char*)bufptr;
-                    memcpy(
-                        buf_info->ai_canonname,
-                        thisinfo->ai_canonname,
-                        canon_namelen);
-                    bufptr += canon_namelen;
-                }
-
-                thisinfo = thisinfo->ai_next;
-                if (thisinfo)
-                {
-                    buf_info->ai_next = (struct oe_addrinfo*)bufptr;
-                }
-
-            } while (thisinfo != NULL);
-
-            printf(
-                "bufptr(end)-bufptr(start) = %ld\n",
-                bufptr - (uint8_t*)retinfo);
-            *buffer = (struct addrinfo*)retinfo;
-
-            oe_freeaddrinfo(ai);
-        }
+        OE_TEST("oe_getaddrinfo() failed" == NULL);
     }
 
-    printf("getaddrinfo rslt = %d\n", rslt);
-    return status;
+    addrinfo_dump((struct addrinfo*)ai);
+
+    /* Determine the size of the host output buffer. */
+    if (oe_deep_size(&__oe_addrinfo_structure, ai, &required_size) != 0)
+    {
+        OE_TEST("oe_deep_size() failed" == NULL);
+    }
+
+    /* Allocate host memory and initialize the flat allocator. */
+    {
+        if (!(*buffer = oe_host_calloc(1, required_size)))
+        {
+            OE_TEST("oe_host_calloc() failed" == NULL);
+        }
+
+        oe_flat_allocator_init(&a, *buffer, required_size);
+    }
+
+    /* Copy the result from enclave to host memory. */
+    if (oe_deep_copy(
+            &__oe_addrinfo_structure, ai, *buffer, oe_flat_alloc, &a) != 0)
+    {
+        OE_TEST("oe_deep_copy() failed" == NULL);
+    }
+
+    addrinfo_dump(*buffer);
+
+    int n = addrinfo_compare((struct addrinfo*)ai, *buffer);
+
+    if (n != 0)
+    {
+        OE_TEST("addrinfo_compare() failed" == NULL);
+    }
+
+    return 0;
 }
 
 OE_SET_ENCLAVE_SGX(

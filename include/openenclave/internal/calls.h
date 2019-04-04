@@ -98,7 +98,6 @@ typedef enum _oe_func
     OE_OCALL_GET_TIME,
     OE_OCALL_BACKTRACE_SYMBOLS,
     OE_OCALL_LOG,
-    OE_OCALL_HOSTRESOLVER,
     OE_OCALL_UNAME,
     /* Caution: always add new OCALL function numbers here */
 

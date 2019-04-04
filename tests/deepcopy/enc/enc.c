@@ -37,35 +37,46 @@ struct gadget
 **==============================================================================
 */
 
-static oe_field_t _widget_fields[] = {
+// clang-format off
+
+static oe_pointer_field_t _widget_fields[] = 
+{
     {
         .field_offset = OE_OFFSETOF(struct widget, str),
         .field_size = OE_SIZEOF(struct widget, str),
         .elem_size = sizeof(char),
-        .count = (size_t)-1,
+        .count_offset = OE_SIZE_MAX,
+        .count_value = OE_SIZE_MAX,
     },
 };
 
-static oe_structure_t _widget_struct = {
+static oe_structure_t _widget_struct = 
+{
     sizeof(struct widget),
     _widget_fields,
     OE_COUNTOF(_widget_fields),
 };
 
-static oe_field_t _gadget_fields[] = {
-    {.field_offset = OE_OFFSETOF(struct gadget, widgets),
-     .field_size = OE_SIZEOF(struct gadget, widgets),
-     .elem_size = sizeof(struct widget),
-     .count_offset = OE_OFFSETOF(struct gadget, num_widgets),
-     .count_size = OE_SIZEOF(struct gadget, num_widgets),
-     .structure = &_widget_struct},
+static oe_pointer_field_t _gadget_fields[] = 
+{
+    {
+        .field_offset = OE_OFFSETOF(struct gadget, widgets),
+         .field_size = OE_SIZEOF(struct gadget, widgets),
+         .elem_size = sizeof(struct widget),
+         .count_offset = OE_OFFSETOF(struct gadget, num_widgets),
+         .count_value = OE_SIZEOF(struct gadget, num_widgets),
+         .structure = &_widget_struct
+     },
 };
 
-static oe_structure_t _gadget_struct = {
+static oe_structure_t _gadget_struct = 
+{
     sizeof(struct gadget),
     _gadget_fields,
     OE_COUNTOF(_gadget_fields),
 };
+
+// clang-format on
 
 /*
 **==============================================================================

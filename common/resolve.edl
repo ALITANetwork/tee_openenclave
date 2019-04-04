@@ -8,10 +8,27 @@ enclave {
 
     untrusted {
 
-        int oe_ocall_getaddrinfo_r(
+        int oe_resolve_getaddrinfo(
             [in, string] const char* node,
             [in, string] const char* service,
             [in, count=1] const struct addrinfo* hints,
-            [out] struct addrinfo** res);
+            [out] struct addrinfo** res,
+            [out, count=1] int* err);
+
+        void oe_resolve_freeaddrinfo(
+            [user_check] struct addrinfo *res);
+
+        int oe_resolve_getnameinfo(
+            [in, size=salen] const struct sockaddr* sa, 
+            socklen_t salen,
+            [out, size=hostlen] char* host, 
+            socklen_t hostlen,
+            [out, size=servlen] char *serv, 
+            socklen_t servlen, 
+            int flags,
+            [out, count=1] int* err);
+
+        int oe_resolve_shutdown(
+            [out, count=1] int* err);
     };
 };

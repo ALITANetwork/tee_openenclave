@@ -99,7 +99,6 @@ int oe_getaddrinfo(
 }
 
 void oe_freeaddrinfo(struct oe_addrinfo* res)
-
 {
     if (res != NULL)
     {

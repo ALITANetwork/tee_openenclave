@@ -10,7 +10,7 @@
 
 OE_EXTERNC_BEGIN
 
-typedef struct _oe_field_ti oe_field_ti_t;
+typedef struct _oe_pointer_field_ti oe_pointer_field_ti_t;
 typedef struct _oe_struct_ti oe_struct_ti_t;
 typedef struct _oe_param_ti oe_param_ti_t;
 typedef struct _oe_function_ti oe_function_ti_t;
@@ -32,7 +32,7 @@ typedef struct _oe_function_ti oe_function_ti_t;
 #define OE_FLAG_STRING (1 << 12)
 #define OE_FLAG_OPT (1 << 13)
 
-struct _oe_field_ti
+struct _oe_pointer_field_ti
 {
     /* flags (OE_FLAG_*) */
     uint32_t flags;
@@ -71,7 +71,7 @@ struct _oe_struct_ti
     size_t size;
 
     /* Pointer to array of fields */
-    const oe_field_ti_t* fields;
+    const oe_pointer_field_ti_t* fields;
 
     /* Number of fields in the array */
     uint32_t nfields;

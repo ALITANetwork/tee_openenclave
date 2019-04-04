@@ -13,60 +13,61 @@ static __inline__ uint64_t _align(uint64_t x)
 static int _compute_count(
     const oe_structure_t* structure,
     const void* struct_ptr,
-    const oe_field_t* field,
+    const oe_pointer_field_t* field,
     const void* field_ptr,
-    size_t* count)
+    size_t* count_out)
 {
     int ret = -1;
+    size_t count = 0;
 
-    *count = 0;
+    *count_out = 0;
 
-    if (field->count == (size_t)-1)
+    if (field->count_offset == OE_SIZE_MAX)
     {
-        /* Handle zero terminated string case. */
+        if (field->count_value == OE_SIZE_MAX)
+        {
+            const char* str;
 
-        if (field->elem_size != sizeof(char))
-            goto done;
+            if (field->elem_size != sizeof(char))
+                goto done;
 
-        const char* s = *((const char**)field_ptr);
-
-        if (s)
-            *count = oe_strlen(s) + 1;
+            if ((str = *((const char**)field_ptr)))
+                count = oe_strlen(str) + 1;
+        }
+        else
+        {
+            count = field->count_value;
+        }
     }
-    else if (field->count)
-    {
-        /* Handle hardcoded count case. */
-        *count = field->count;
-    }
-    else if (field->count_size)
+    else
     {
         const uint8_t* p = (const uint8_t*)struct_ptr + field->count_offset;
 
         /* Handle case where count is given by another field. */
 
-        if (field->count_offset + field->count_size > structure->struct_size)
+        if (field->count_offset + field->count_value > structure->struct_size)
             goto done;
 
-        switch (field->count_size)
+        switch (field->count_value)
         {
             case sizeof(uint8_t):
             {
-                *count = *((const uint8_t*)p);
+                count = *((const uint8_t*)p);
                 break;
             }
             case sizeof(uint16_t):
             {
-                *count = *((const uint16_t*)p);
+                count = *((const uint16_t*)p);
                 break;
             }
             case sizeof(uint32_t):
             {
-                *count = *((const uint32_t*)p);
+                count = *((const uint32_t*)p);
                 break;
             }
             case sizeof(uint64_t):
             {
-                *count = *((const uint64_t*)p);
+                count = *((const uint64_t*)p);
                 break;
             }
             default:
@@ -75,13 +76,11 @@ static int _compute_count(
             }
         }
     }
-    else
-    {
-        goto done;
-    }
 
-    if (*count == 0)
+    if (count == 0)
         goto done;
+
+    *count_out = count;
 
     ret = 0;
 
@@ -107,7 +106,7 @@ int oe_deep_copy(
 
     for (size_t i = 0; i < structure->num_fields; i++)
     {
-        const oe_field_t* f = &structure->fields[i];
+        const oe_pointer_field_t* f = &structure->fields[i];
         const uint8_t* src_field = (const uint8_t*)src + f->field_offset;
         uint8_t* dest_field = (uint8_t*)dest + f->field_offset;
         size_t count;
@@ -182,7 +181,7 @@ int oe_deep_size(const oe_structure_t* structure, const void* src, size_t* size)
 
     for (size_t i = 0; i < structure->num_fields; i++)
     {
-        const oe_field_t* f = &structure->fields[i];
+        const oe_pointer_field_t* f = &structure->fields[i];
         const uint8_t* src_field = (const uint8_t*)src + f->field_offset;
         size_t count;
 

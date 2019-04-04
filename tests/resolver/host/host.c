@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include "../utils.h"
 
 #include "resolver_test_u.h"
 
@@ -46,6 +47,8 @@ int main(int argc, const char* argv[])
     OE_TEST(ecall_device_init(client_enclave, &ret) == OE_OK);
 
     OE_TEST(ecall_getaddrinfo(client_enclave, &ret, &paddrinfo) == OE_OK);
+
+    addrinfo_dump(paddrinfo);
 
     if (!paddrinfo)
     {
