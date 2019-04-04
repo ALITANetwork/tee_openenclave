@@ -87,10 +87,7 @@ int ecall_getaddrinfo(struct addrinfo** buffer)
         OE_TEST("oe_getaddrinfo() failed" == NULL);
     }
 
-    if (addrinfo_compare((struct addrinfo*)ai, (struct addrinfo*)ai2) != 0)
-    {
-        OE_TEST("addrinfo_compare() failed" == NULL);
-    }
+    OE_TEST(addrinfo_compare((struct addrinfo*)ai, ai2) == 0);
 
     addrinfo_dump((struct addrinfo*)ai);
 
