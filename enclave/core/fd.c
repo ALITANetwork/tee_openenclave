@@ -15,8 +15,9 @@ typedef struct _entry
     oe_device_t* device;
 } entry_t;
 
-static const size_t ELEMENT_SIZE = sizeof(entry_t);
-static const size_t CHUNK_SIZE = 8;
+#define ELEMENT_SIZE sizeof(entry_t)
+#define CHUNK_SIZE 8
+
 static oe_array_t _fd_arr = OE_ARRAY_INITIALIZER(ELEMENT_SIZE, CHUNK_SIZE);
 static oe_spinlock_t _lock = OE_SPINLOCK_INITIALIZER;
 static bool _initialized = false;

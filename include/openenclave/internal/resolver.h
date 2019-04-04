@@ -42,9 +42,9 @@ typedef struct _oe_resolver_ops
 } oe_resolver_ops_t;
 
 // Well known resolver ids
-static const int OE_RESOLVER_ENCLAVE_LOCAL = 0;
-static const int OE_RESOLVER_ENCLAVE_DNS = 1; //
-static const int OE_RESOLVER_HOST = 2;
+#define OE_RESOLVER_ENCLAVE_LOCAL 0
+#define OE_RESOLVER_ENCLAVE_DNS 1
+#define OE_RESOLVER_HOST 2
 
 typedef struct _oe_resolver
 {

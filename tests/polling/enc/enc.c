@@ -58,7 +58,7 @@ int ecall_epoll_test(size_t buff_len, char* recv_buff)
     int sockfd = 0;
     int file_fd = 0;
     struct oe_sockaddr_in serv_addr = {0};
-    static const int MAX_EVENTS = 20;
+#define MAX_EVENTS 20
     struct oe_epoll_event event = {0};
     struct oe_epoll_event events[MAX_EVENTS] = {{0}};
     int epoll_fd = oe_epoll_create1(0);

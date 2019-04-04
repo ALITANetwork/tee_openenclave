@@ -171,7 +171,7 @@ int oe_epoll_pwait(
 static oe_cond_t poll_notification = OE_COND_INITIALIZER;
 static oe_mutex_t poll_lock = OE_MUTEX_INITIALIZER;
 
-static const size_t NODE_CHUNK = 256;
+#define NODE_CHUNK 256
 
 struct _notification_node
 {
@@ -187,8 +187,8 @@ struct _notification_node_chunk
     struct _notification_node_chunk* pnext;
 };
 
-static const size_t ELEMENT_SIZE = sizeof(struct _notification_node*);
-static const size_t CHUNK_SIZE = 8;
+#define ELEMENT_SIZE sizeof(struct _notification_node*)
+#define CHUNK_SIZE 8
 static oe_array_t _notify_arr = OE_ARRAY_INITIALIZER(ELEMENT_SIZE, CHUNK_SIZE);
 static oe_spinlock_t _lock = OE_SPINLOCK_INITIALIZER;
 

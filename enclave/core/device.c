@@ -10,8 +10,9 @@
 #include <openenclave/internal/print.h>
 #include <openenclave/internal/thread.h>
 
-static const size_t ELEMENT_SIZE = sizeof(oe_device_t*);
-static const size_t CHUNK_SIZE = 8;
+#define ELEMENT_SIZE (sizeof(oe_device_t*))
+#define CHUNK_SIZE ((size_t)8)
+
 static oe_array_t _dev_arr = OE_ARRAY_INITIALIZER(ELEMENT_SIZE, CHUNK_SIZE);
 static oe_spinlock_t _lock = OE_SPINLOCK_INITIALIZER;
 static bool _initialized = false;
