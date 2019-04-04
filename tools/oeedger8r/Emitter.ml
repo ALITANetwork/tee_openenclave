@@ -968,8 +968,8 @@ let gen_t_h (ec: enclave_content) (ep: edger8r_params) =
 let gen_t_c (ec: enclave_content) (ep: edger8r_params) =
   let ecalls_fname = ec.file_shortnm ^ "_t.c" in
   let os = open_file ecalls_fname ep.trusted_dir in
-  fprintf os "#if defined(OE_EDGER8R_INCLUDE_PROGLOGUE)\n";
-  fprintf os "#include \"edger8r_proglogue.h\"\n";
+  fprintf os "#if defined(OE_EDGER8R_INCLUDE_PROLOGUE)\n";
+  fprintf os "#include \"edger8r_prologue.h\"\n";
   fprintf os "#endif\n\n";
   fprintf os "#include \"%s_t.h\"\n" ec.file_shortnm;
   fprintf os "#include <openenclave/edger8r/enclave.h>\n";
@@ -1041,8 +1041,8 @@ let gen_u_h (ec: enclave_content) (ep: edger8r_params) =
 let gen_u_c (ec: enclave_content) (ep: edger8r_params) =
   let ecalls_fname = ec.file_shortnm ^ "_u.c" in
   let os = open_file ecalls_fname ep.untrusted_dir in
-  fprintf os "#if defined(OE_EDGER8R_INCLUDE_PROGLOGUE)\n";
-  fprintf os "#include \"edger8r_proglogue.h\"\n";
+  fprintf os "#if defined(OE_EDGER8R_INCLUDE_PROLOGUE)\n";
+  fprintf os "#include \"edger8r_prologue.h\"\n";
   fprintf os "#endif\n\n";
   fprintf os "#include \"%s_u.h\"\n" ec.file_shortnm;
   fprintf os "#include <openenclave/edger8r/host.h>\n";

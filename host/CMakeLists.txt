@@ -1,9 +1,12 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-add_custom_command(OUTPUT oe_u.h oe_u.c oe_args.h
-  DEPENDS ${CMAKE_SOURCE_DIR}/common/oe.edl
-  COMMAND oeedger8r --search-path ${CMAKE_SOURCE_DIR}/common --untrusted ${CMAKE_SOURCE_DIR}/common/oe.edl)
+add_custom_command(
+    OUTPUT oe_u.h oe_u.c oe_args.h
+    DEPENDS ${CMAKE_SOURCE_DIR}/common/oe.edl edger8r
+    COMMAND ${CMAKE_BINARY_DIR}/tools/oeedger8r/oeedger8r
+        --search-path ${CMAKE_SOURCE_DIR}/common
+        --untrusted ${CMAKE_SOURCE_DIR}/common/oe.edl)
 
 add_custom_target(oe_untrusted_edl DEPENDS oe_u.h oe_u.c oe_args.h)
 
@@ -60,7 +63,6 @@ if (OE_SGX)
     sgx/loadelf.c
     sgx/loadpe.c
     sgx/ocalls.c
-    sgx/oe_wrap_u.c
     sgx/quote.c
     sgx/registers.c
     sgx/report.c
@@ -102,6 +104,7 @@ endif()
 
 # Combine with all other non platform dependent files.
 add_library(oehost STATIC
+  ${CMAKE_CURRENT_BINARY_DIR}/oe_u.c
   ../common/datetime.c
   ../common/kdf.c
   ../common/safecrt.c
@@ -125,7 +128,15 @@ add_library(oehost STATIC
 
 add_dependencies(oehost oe_untrusted_edl)
 
+set_property(SOURCE ${CMAKE_CURRENT_BINARY_DIR}/oe_u.c
+    PROPERTY COMPILE_DEFINITIONS
+    OE_EDGER8R_INCLUDE_PROLOGUE
+    OE_EDGER8R_INCLUDE_EPILOGUE)
+
 target_link_libraries(oehost PUBLIC oe_includes)
+
+target_include_directories(oehost PRIVATE
+    ${PROJECT_SOURCE_DIR}/host/include)
 
 # TODO: Replace these with `find_package` and add as dependencies to
 # the CMake package.

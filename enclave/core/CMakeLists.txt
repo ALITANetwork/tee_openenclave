@@ -5,8 +5,10 @@ set(PLATFORM_SRC "")
 set(MUSL_SRC_DIR ${PROJECT_SOURCE_DIR}/3rdparty/musl/musl/src)
 
 add_custom_command(OUTPUT oe_t.h oe_t.c oe_args.h
-  DEPENDS ${CMAKE_SOURCE_DIR}/common/oe.edl
-  COMMAND oeedger8r --search-path ${CMAKE_SOURCE_DIR}/common --trusted ${CMAKE_SOURCE_DIR}/common/oe.edl)
+  DEPENDS ${CMAKE_SOURCE_DIR}/common/oe.edl edger8r
+  COMMAND ${CMAKE_BINARY_DIR}/tools/oeedger8r/oeedger8r
+      --search-path ${CMAKE_SOURCE_DIR}/common
+      --trusted ${CMAKE_SOURCE_DIR}/common/oe.edl)
 
 add_custom_target(oe_trusted_edl DEPENDS oe_t.h oe_t.c oe_args.h)
 
@@ -75,6 +77,7 @@ elseif(OE_TRUSTZONE)
 endif()
 
 add_library(oecore STATIC
+    ${CMAKE_CURRENT_BINARY_DIR}/oe_t.c
     ../../common/safecrt.c
     ${MUSL_SRC_DIR}/prng/rand.c
     ${MUSL_SRC_DIR}/string/memcmp.c
@@ -90,7 +93,6 @@ add_library(oecore STATIC
     cwd.c
     deepcopy.c
     device.c
-    oe_wrap_t.c
     epoll.c
     exit.c
     select.c
@@ -127,6 +129,11 @@ add_library(oecore STATIC
 add_dependencies(oecore oe_trusted_edl)
 
 target_include_directories(oecore PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+set_property(SOURCE ${CMAKE_CURRENT_BINARY_DIR}/oe_t.c
+    PROPERTY COMPILE_DEFINITIONS
+    OE_EDGER8R_INCLUDE_PROLOGUE
+    OE_EDGER8R_INCLUDE_EPILOGUE)
 
 # Suppress type conversion warnings introduced by 3rdparty code
 set_source_files_properties(${MUSL_SRC_DIR}/prng/rand.c PROPERTIES
