@@ -3,6 +3,8 @@
 
 #include <openenclave/corelibc/netdb.h>
 
+struct sockaddr;
+
 int getnameinfo(
     const struct sockaddr* sa,
     socklen_t salen,
@@ -13,7 +15,7 @@ int getnameinfo(
     int flags)
 {
     return oe_getnameinfo(
-        (const struct oe_sockaddr) * sa,
+        (const struct oe_sockaddr*)sa,
         salen,
         host,
         hostlen,
