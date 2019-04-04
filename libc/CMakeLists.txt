@@ -67,6 +67,7 @@ add_library(oelibc STATIC
     exit.c
     freeaddrinfo.c
     getaddrinfo.c
+    getnameinfo.c
     libunwind_stubs.c
     libcex_stdio.c
     link.c
@@ -477,7 +478,6 @@ add_library(oelibc STATIC
     ${MUSLSRC}/network/setsockopt.c
     ${MUSLSRC}/network/getsockopt.c
     ${MUSLSRC}/network/gai_strerror.c
-    ${MUSLSRC}/network/getnameinfo.c
     ${MUSLSRC}/network/gethostbyaddr.c
     ${MUSLSRC}/network/gethostbyaddr_r.c
     ${MUSLSRC}/network/gethostbyname2.c
