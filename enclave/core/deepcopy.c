@@ -1,0 +1,248 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+#include <openenclave/corelibc/string.h>
+#include <openenclave/internal/deepcopy.h>
+
+static __inline__ uint64_t _align(uint64_t x)
+{
+    const uint64_t m = 16;
+    return (x + m - 1) / m * m;
+}
+
+static int _compute_count(
+    const oe_structure_t* structure,
+    const void* struct_ptr,
+    const oe_field_t* field,
+    const void* field_ptr,
+    size_t* count)
+{
+    int ret = -1;
+
+    *count = 0;
+
+    if (field->count == (size_t)-1)
+    {
+        /* Handle zero terminated string case. */
+
+        if (field->elem_size != sizeof(char))
+            goto done;
+
+        const char* s = *((const char**)field_ptr);
+
+        if (s)
+            *count = oe_strlen(s) + 1;
+    }
+    else if (field->count)
+    {
+        /* Handle hardcoded count case. */
+        *count = field->count;
+    }
+    else if (field->count_size)
+    {
+        const uint8_t* p = (const uint8_t*)struct_ptr + field->count_offset;
+
+        /* Handle case where count is given by another field. */
+
+        if (field->count_offset + field->count_size > structure->struct_size)
+            goto done;
+
+        switch (field->count_size)
+        {
+            case sizeof(uint8_t):
+            {
+                *count = *((const uint8_t*)p);
+                break;
+            }
+            case sizeof(uint16_t):
+            {
+                *count = *((const uint16_t*)p);
+                break;
+            }
+            case sizeof(uint32_t):
+            {
+                *count = *((const uint32_t*)p);
+                break;
+            }
+            case sizeof(uint64_t):
+            {
+                *count = *((const uint64_t*)p);
+                break;
+            }
+            default:
+            {
+                goto done;
+            }
+        }
+    }
+    else
+    {
+        goto done;
+    }
+
+    if (*count == 0)
+        goto done;
+
+    ret = 0;
+
+done:
+    return ret;
+}
+
+int oe_deep_copy(
+    const oe_structure_t* structure,
+    const void* src,
+    void* dest,
+    void* (*alloc)(size_t size, void* alloc_data),
+    void* alloc_data)
+{
+    int ret = -1;
+
+    if (!structure || !src || !dest || !alloc)
+        goto done;
+
+    /* Initialize the destination memory. */
+    memset(dest, 0, structure->struct_size);
+    memcpy(dest, src, structure->struct_size);
+
+    for (size_t i = 0; i < structure->num_fields; i++)
+    {
+        const oe_field_t* f = &structure->fields[i];
+        const uint8_t* src_field = (const uint8_t*)src + f->field_offset;
+        uint8_t* dest_field = (uint8_t*)dest + f->field_offset;
+        size_t count;
+
+        /* Verify that field is within structure boundaries. */
+        if (f->field_offset + f->field_size > structure->struct_size)
+            goto done;
+
+        /* Skip over null pointer fields. */
+        if (!*(void**)src_field)
+            continue;
+
+        /* Determine the count (the number of elements). */
+        if (_compute_count(structure, src, f, src_field, &count) != 0)
+            goto done;
+
+        /* Copy this array field. */
+        {
+            uint8_t* data;
+            size_t size = count * f->elem_size;
+
+            /* Allocate memory for this array. */
+            if (!(data = (*alloc)(size, alloc_data)))
+                goto done;
+
+            /* Assign the array field in the destination structure. */
+            *((void**)dest_field) = data;
+
+            const uint8_t* src_ptr = *((const uint8_t**)src_field);
+            uint8_t* dest_ptr = *((uint8_t**)dest_field);
+
+            /* Copy each element of this array. */
+            for (size_t i = 0; i < count; i++)
+            {
+                if (f->structure)
+                {
+                    if (oe_deep_copy(
+                            f->structure,
+                            src_ptr,
+                            dest_ptr,
+                            alloc,
+                            alloc_data) != 0)
+                    {
+                        goto done;
+                    }
+                }
+                else
+                {
+                    memcpy(dest_ptr, src_ptr, f->elem_size);
+                }
+
+                src_ptr += f->elem_size;
+                dest_ptr += f->elem_size;
+            }
+        }
+    }
+
+    ret = 0;
+
+done:
+    return ret;
+}
+
+int oe_deep_size(const oe_structure_t* structure, const void* src, size_t* size)
+{
+    int ret = -1;
+
+    if (!structure || !src || !size)
+        goto done;
+
+    *size = _align(structure->struct_size);
+
+    for (size_t i = 0; i < structure->num_fields; i++)
+    {
+        const oe_field_t* f = &structure->fields[i];
+        const uint8_t* src_field = (const uint8_t*)src + f->field_offset;
+        size_t count;
+
+        /* Verify that field is within structure boundaries. */
+        if (f->field_offset + f->field_size > structure->struct_size)
+            goto done;
+
+        /* Skip over null pointer fields. */
+        if (!*(void**)src_field)
+            continue;
+
+        /* Determine the count (the number of elements). */
+        if (_compute_count(structure, src, f, src_field, &count) != 0)
+            goto done;
+
+        /* Determine size of this array field and its descendents. */
+        {
+            *size += _align(count * f->elem_size);
+
+            const uint8_t* src_ptr = *((const uint8_t**)src_field);
+
+            /* Copy each element of this array. */
+            for (size_t i = 0; i < count; i++)
+            {
+                if (f->structure)
+                {
+                    size_t tmp_size;
+
+                    if (oe_deep_size(f->structure, src_ptr, &tmp_size) != 0)
+                        goto done;
+
+                    *size += _align(tmp_size);
+                }
+
+                src_ptr += f->elem_size;
+            }
+        }
+    }
+
+    ret = 0;
+
+done:
+    return ret;
+}
+
+void* oe_flat_alloc(size_t size, void* a_)
+{
+    oe_flat_allocator_t* a = (oe_flat_allocator_t*)a_;
+    void* ptr;
+
+    if (!a)
+        return NULL;
+
+    size = _align(size);
+
+    if (size > (a->capacity - a->offset))
+        return NULL;
+
+    ptr = a->data + a->offset;
+    a->offset += size;
+
+    return ptr;
+}
