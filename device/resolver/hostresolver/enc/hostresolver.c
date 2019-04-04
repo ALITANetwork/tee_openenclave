@@ -20,6 +20,7 @@
 #include "../common/hostresolvargs.h"
 #include <openenclave/corelibc/stdlib.h>
 #include <openenclave/corelibc/string.h>
+#include <openenclave/internal/deepcopy.h>
 #include "../../../common/oe_t.h"
 
 // The host resolver is not actually a device in the file descriptor sense.
@@ -193,6 +194,50 @@ done:
 
     return ret;
 }
+
+extern oe_structure_t __oe_addrinfo_structure;
+
+static oe_field_t _oe_addrinfo_fields[] = {
+    {
+        .field_offset = OE_OFFSETOF(struct oe_addrinfo, ai_addr),
+        .field_size = OE_SIZEOF(struct oe_addrinfo, ai_addr),
+        .elem_size = sizeof(uint8_t),
+        .count_offset = OE_OFFSETOF(struct oe_addrinfo, ai_addrlen),
+        .count_size = OE_SIZEOF(struct oe_addrinfo, ai_addrlen),
+    },
+    {
+        .field_offset = OE_OFFSETOF(struct oe_addrinfo, ai_next),
+        .field_size = OE_SIZEOF(struct oe_addrinfo, ai_next),
+        .elem_size = sizeof(struct oe_addrinfo),
+        .count = 1,
+    },
+    {
+        .field_offset = OE_OFFSETOF(struct oe_addrinfo, ai_canonname),
+        .field_size = OE_SIZEOF(struct oe_addrinfo, ai_canonname),
+        .elem_size = sizeof(char),
+        .count = (size_t)-1,
+    },
+};
+
+oe_structure_t __oe_addrinfo_structure = {
+    .struct_size = sizeof(struct oe_addrinfo),
+    _oe_addrinfo_fields,
+    OE_COUNTOF(_oe_addrinfo_fields),
+};
+
+#if 0
+
+           struct addrinfo {
+               int              ai_flags;
+               int              ai_family;
+               int              ai_socktype;
+               int              ai_protocol;
+               socklen_t        ai_addrlen;
+               struct sockaddr *ai_addr;
+               char            *ai_canonname;
+               struct addrinfo *ai_next;
+           };
+#endif
 
 //
 // We try return the sockaddr if it fits, but if it doesn't we return
