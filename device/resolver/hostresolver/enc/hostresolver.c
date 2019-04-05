@@ -20,12 +20,19 @@
 #include <openenclave/internal/deepcopy.h>
 #include "oe_t.h"
 
-// The host resolver is not actually a device in the file descriptor sense.
-
-extern oe_structure_t __oe_addrinfo_structure;
+/*
+**==============================================================================
+**
+** struct oe_addrinfo type information.
+**
+**==============================================================================
+*/
 
 // clang-format off
-static oe_pointer_field_t _oe_addrinfo_fields[] = 
+
+extern oe_struct_type_info_t __oe_addrinfo_sti;
+
+static oe_field_type_info_t _oe_addrinfo_ftis[] =
 {
     {
         .field_offset = OE_OFFSETOF(struct oe_addrinfo, ai_addr),
@@ -49,15 +56,14 @@ static oe_pointer_field_t _oe_addrinfo_fields[] =
         .count_value = OE_SIZE_MAX,
     },
 };
-// clang-format on
 
-// clang-format off
-oe_structure_t __oe_addrinfo_structure = 
+oe_struct_type_info_t __oe_addrinfo_sti =
 {
     .struct_size = sizeof(struct oe_addrinfo),
-    _oe_addrinfo_fields,
-    OE_COUNTOF(_oe_addrinfo_fields),
+    _oe_addrinfo_ftis,
+    OE_COUNTOF(_oe_addrinfo_ftis),
 };
+
 // clang-format on
 
 /*
@@ -67,6 +73,8 @@ oe_structure_t __oe_addrinfo_structure =
 **
 **==============================================================================
 */
+
+// The host resolver is not actually a device in the file descriptor sense.
 
 #define RESOLV_MAGIC 0x536f636b
 
@@ -139,7 +147,7 @@ static int _hostresolv_getaddrinfo_r(
     int ret = OE_EAI_FAIL;
     int retval;
     struct oe_addrinfo* res = NULL;
-    oe_structure_t* structure = &__oe_addrinfo_structure;
+    oe_struct_type_info_t* structure = &__oe_addrinfo_sti;
 
     OE_UNUSED(resolv);
 

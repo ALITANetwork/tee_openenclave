@@ -39,7 +39,7 @@ struct gadget
 
 // clang-format off
 
-static oe_pointer_field_t _widget_fields[] = 
+static oe_field_type_info_t _widget_ftis[] =
 {
     {
         .field_offset = OE_OFFSETOF(struct widget, str),
@@ -50,14 +50,14 @@ static oe_pointer_field_t _widget_fields[] =
     },
 };
 
-static oe_structure_t _widget_struct = 
+static oe_struct_type_info_t _widget_struct =
 {
     sizeof(struct widget),
-    _widget_fields,
-    OE_COUNTOF(_widget_fields),
+    _widget_ftis,
+    OE_COUNTOF(_widget_ftis),
 };
 
-static oe_pointer_field_t _gadget_fields[] = 
+static oe_field_type_info_t _gadget_ftis[] =
 {
     {
         .field_offset = OE_OFFSETOF(struct gadget, widgets),
@@ -65,15 +65,15 @@ static oe_pointer_field_t _gadget_fields[] =
          .elem_size = sizeof(struct widget),
          .count_offset = OE_OFFSETOF(struct gadget, num_widgets),
          .count_value = OE_SIZEOF(struct gadget, num_widgets),
-         .structure = &_widget_struct
+         .sti = &_widget_struct
      },
 };
 
-static oe_structure_t _gadget_struct = 
+static oe_struct_type_info_t _gadget_fti =
 {
     sizeof(struct gadget),
-    _gadget_fields,
-    OE_COUNTOF(_gadget_fields),
+    _gadget_ftis,
+    OE_COUNTOF(_gadget_ftis),
 };
 
 // clang-format on
@@ -117,18 +117,18 @@ static struct gadget _g = {
 
 int test_deepcopy(void)
 {
-    oe_structure_t* structure = &_gadget_struct;
+    oe_struct_type_info_t* sti = &_gadget_fti;
     struct gadget* g;
     size_t size = 0;
 
     /* Determine the size requirments for copying the gadget. */
-    OE_TEST(oe_deep_copy(structure, &_g, NULL, &size) == OE_BUFFER_TOO_SMALL);
+    OE_TEST(oe_deep_copy(sti, &_g, NULL, &size) == OE_BUFFER_TOO_SMALL);
 
     /* Initialize a flat allocator with stack space. */
     OE_TEST((g = calloc(1, size)));
 
     /* Peform a deep copy of the gadget. */
-    OE_TEST(oe_deep_copy(structure, &_g, g, &size) == OE_OK);
+    OE_TEST(oe_deep_copy(sti, &_g, g, &size) == OE_OK);
 
     OE_TEST(_g.value == g->value);
     OE_TEST(_g.num_widgets == g->num_widgets);

@@ -65,14 +65,14 @@ int ecall_getnameinfo(char* buffer, size_t bufflen)
     return 0;
 }
 
-extern oe_structure_t __oe_addrinfo_structure;
+extern oe_struct_type_info_t __oe_addrinfo_sti;
 
 int ecall_getaddrinfo(struct addrinfo** buffer)
 {
     struct oe_addrinfo* ai = NULL;
     struct addrinfo* ai2 = NULL;
     size_t size = 0;
-    oe_structure_t* structure = &__oe_addrinfo_structure;
+    oe_struct_type_info_t* structure = &__oe_addrinfo_sti;
 
     const char host[] = {"localhost"};
     const char serv[] = {"telnet"};

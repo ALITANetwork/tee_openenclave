@@ -44,9 +44,9 @@ static void* _alloc(size_t size, void* a_)
 }
 
 static int _compute_count(
-    const oe_structure_t* structure,
+    const oe_struct_type_info_t* sti,
     const void* struct_ptr,
-    const oe_pointer_field_t* field,
+    const oe_field_type_info_t* field,
     const void* field_ptr,
     size_t* count_out)
 {
@@ -78,7 +78,7 @@ static int _compute_count(
 
         /* Handle case where count is given by another field. */
 
-        if (field->count_offset + field->count_value > structure->struct_size)
+        if (field->count_offset + field->count_value > sti->struct_size)
             goto done;
 
         switch (field->count_value)
@@ -122,7 +122,7 @@ done:
 }
 
 static int _deep_copy(
-    const oe_structure_t* structure,
+    const oe_struct_type_info_t* sti,
     const void* src,
     void* dest,
     void* (*alloc)(size_t size, void* alloc_data),
@@ -130,22 +130,22 @@ static int _deep_copy(
 {
     int ret = -1;
 
-    if (!structure || !src || !dest || !alloc)
+    if (!sti || !src || !dest || !alloc)
         goto done;
 
     /* Initialize the destination memory. */
-    memset(dest, 0, structure->struct_size);
-    memcpy(dest, src, structure->struct_size);
+    memset(dest, 0, sti->struct_size);
+    memcpy(dest, src, sti->struct_size);
 
-    for (size_t i = 0; i < structure->num_fields; i++)
+    for (size_t i = 0; i < sti->num_fields; i++)
     {
-        const oe_pointer_field_t* f = &structure->fields[i];
+        const oe_field_type_info_t* f = &sti->fields[i];
         const uint8_t* src_field = (const uint8_t*)src + f->field_offset;
         uint8_t* dest_field = (uint8_t*)dest + f->field_offset;
         size_t count;
 
-        /* Verify that field is within structure boundaries. */
-        if (f->field_offset + f->field_size > structure->struct_size)
+        /* Verify that field is within sti boundaries. */
+        if (f->field_offset + f->field_size > sti->struct_size)
             goto done;
 
         /* Skip over null pointer fields. */
@@ -153,7 +153,7 @@ static int _deep_copy(
             continue;
 
         /* Determine the count (the number of elements). */
-        if (_compute_count(structure, src, f, src_field, &count) != 0)
+        if (_compute_count(sti, src, f, src_field, &count) != 0)
             goto done;
 
         /* Copy this array field. */
@@ -174,14 +174,10 @@ static int _deep_copy(
             /* Copy each element of this array. */
             for (size_t i = 0; i < count; i++)
             {
-                if (f->structure)
+                if (f->sti)
                 {
                     if (_deep_copy(
-                            f->structure,
-                            src_ptr,
-                            dest_ptr,
-                            alloc,
-                            alloc_data) != 0)
+                            f->sti, src_ptr, dest_ptr, alloc, alloc_data) != 0)
                     {
                         goto done;
                     }
@@ -204,25 +200,25 @@ done:
 }
 
 static int _deep_size(
-    const oe_structure_t* structure,
+    const oe_struct_type_info_t* sti,
     const void* src,
     size_t* size)
 {
     int ret = -1;
 
-    if (!structure || !src || !size)
+    if (!sti || !src || !size)
         goto done;
 
-    *size = _align(structure->struct_size);
+    *size = _align(sti->struct_size);
 
-    for (size_t i = 0; i < structure->num_fields; i++)
+    for (size_t i = 0; i < sti->num_fields; i++)
     {
-        const oe_pointer_field_t* f = &structure->fields[i];
+        const oe_field_type_info_t* f = &sti->fields[i];
         const uint8_t* src_field = (const uint8_t*)src + f->field_offset;
         size_t count;
 
         /* Verify that field is within structure boundaries. */
-        if (f->field_offset + f->field_size > structure->struct_size)
+        if (f->field_offset + f->field_size > sti->struct_size)
             goto done;
 
         /* Skip over null pointer fields. */
@@ -230,7 +226,7 @@ static int _deep_size(
             continue;
 
         /* Determine the count (the number of elements). */
-        if (_compute_count(structure, src, f, src_field, &count) != 0)
+        if (_compute_count(sti, src, f, src_field, &count) != 0)
             goto done;
 
         /* Determine size of this array field and its descendents. */
@@ -242,11 +238,11 @@ static int _deep_size(
             /* Copy each element of this array. */
             for (size_t i = 0; i < count; i++)
             {
-                if (f->structure)
+                if (f->sti)
                 {
                     size_t tmp_size;
 
-                    if (_deep_size(f->structure, src_ptr, &tmp_size) != 0)
+                    if (_deep_size(f->sti, src_ptr, &tmp_size) != 0)
                         goto done;
 
                     *size += _align(tmp_size);
@@ -264,7 +260,7 @@ done:
 }
 
 oe_result_t oe_deep_copy(
-    const oe_structure_t* structure,
+    const oe_struct_type_info_t* sti,
     const void* src,
     void* dest,
     size_t* dest_size_in_out)
@@ -275,7 +271,7 @@ oe_result_t oe_deep_copy(
     (void)dest;
 
     /* Check required parameters. */
-    if (!structure || !src || !dest_size_in_out)
+    if (!sti || !src || !dest_size_in_out)
     {
         result = OE_UNEXPECTED;
         goto done;
@@ -283,7 +279,7 @@ oe_result_t oe_deep_copy(
 
     /* Determine whether buffer is big enough. */
     {
-        if (_deep_size(structure, src, &size) != 0)
+        if (_deep_size(sti, src, &size) != 0)
         {
             result = OE_FAILURE;
             goto done;
@@ -306,9 +302,9 @@ oe_result_t oe_deep_copy(
 
         _allocator_init(&a, dest, size);
 
-        a.offset = structure->struct_size;
+        a.offset = sti->struct_size;
 
-        if (_deep_copy(structure, src, dest, _alloc, &a) != 0)
+        if (_deep_copy(sti, src, dest, _alloc, &a) != 0)
         {
             result = OE_FAILURE;
             goto done;

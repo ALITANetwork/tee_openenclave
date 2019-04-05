@@ -10,12 +10,12 @@
 
 #define OE_SIZEOF(TYPE, MEMBER) (sizeof(((((TYPE*)0)->MEMBER))))
 
-struct _oe_structure;
+struct _oe_struct_type_info;
 
 /* This structure provides type information for a pointer field within a
  * structure.
  */
-typedef struct _oe_pointer_field
+typedef struct _oe_field_type_info
 {
     /* The byte offset of this field within the structure. */
     size_t field_offset;
@@ -41,22 +41,46 @@ typedef struct _oe_pointer_field
      */
     size_t count_value;
 
-    /* The oe_structure_t type information for this field. */
-    const struct _oe_structure* structure;
+    /* The strut type information for this field. */
+    const struct _oe_struct_type_info* sti;
 
-} oe_pointer_field_t;
+} oe_field_type_info_t;
 
 /* This structure provides type information for a structure definition.
  */
-typedef struct _oe_structure
+typedef struct _oe_struct_type_info
 {
     size_t struct_size;
-    const oe_pointer_field_t* fields;
+    const oe_field_type_info_t* fields;
     size_t num_fields;
-} oe_structure_t;
+} oe_struct_type_info_t;
 
+/**
+ * Perform a deep structure copy.
+ *
+ * This function performs a deep stucture copy from **src** to **dest**. The
+ * destination must be big enough to hold the base structure plus any reachable
+ * memory objects (dynamic strings, dynamic arrays, and pointers to structs).
+ * To determine the required destination size, call this function with **dest**
+ * set to null **dest_size_in_out** set to zero.
+ *
+ * Note: this function does not handle cycles.
+ *
+ * @param sti the structure type information of **src**.
+ * @param src the source structure that will be deep copied.
+ * @param dest the destination structure that will contain the result (may be
+ *        null to determine size requirements).
+ * @param dest_size_in_out size **dest** buffer on input. The required size
+ *        on output.
+ *
+ * @return OE_OK success
+ * @return OE_FAILURE the operation failed.
+ * @return OE_BUFFER_TOO_SMALL the **dest** buffer is tool small and
+ *         **dest_size_in_out** contain the required size.
+ *
+ */
 oe_result_t oe_deep_copy(
-    const oe_structure_t* structure,
+    const oe_struct_type_info_t* sti,
     const void* src,
     void* dest,
     size_t* dest_size_in_out);
