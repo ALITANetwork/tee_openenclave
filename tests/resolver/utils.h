@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 #ifndef _TEST_RESOLVER_UTILS_H
 #define _TEST_RESOLVER_UTILS_H
 
