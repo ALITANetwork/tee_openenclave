@@ -5,7 +5,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
-#include <openenclave/internal/hostresolver.h>
+#include <openenclave/internal/resolver.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>

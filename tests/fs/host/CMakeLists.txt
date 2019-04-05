@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 
-oeedl_file(../fs.edl host gen --edl-search-dir ../../../device/edl)
+oeedl_file(../fs.edl host gen --edl-search-dir ../../../device/fs/sgxfs)
 
 add_executable(fs_host host.c ${gen})
 

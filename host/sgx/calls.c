@@ -24,7 +24,7 @@
 #include <openenclave/internal/calls.h>
 #include <openenclave/internal/epoll.h>
 #include <openenclave/internal/hostfs.h>
-#include <openenclave/internal/hostresolver.h>
+#include <openenclave/internal/resolver.h>
 #include <openenclave/internal/hostsock.h>
 #include <openenclave/internal/raise.h>
 #include <openenclave/internal/registers.h>

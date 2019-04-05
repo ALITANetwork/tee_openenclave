@@ -8,8 +8,6 @@
 #include <openenclave/corelibc/errno.h>
 #include <openenclave/corelibc/netdb.h>
 
-// typedef uint32_t socklen_t;
-
 OE_EXTERNC_BEGIN
 
 typedef struct _oe_resolver oe_resolver_t;
@@ -62,6 +60,9 @@ typedef struct _oe_resolver
 } oe_resolver_t;
 
 int oe_register_resolver(int resolver_priority, oe_resolver_t* presolver);
+
+oe_resolver_t* oe_get_hostresolver(void);
+
 OE_EXTERNC_END
 
-#endif
+#endif /* _OE_RESOLVER_H */
