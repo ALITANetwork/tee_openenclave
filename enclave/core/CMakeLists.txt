@@ -26,7 +26,6 @@ if (OE_SGX)
         sgx/features.c
         sgx/globals.c
         sgx/globals.c
-        sgx/hostbatch.c
         sgx/hostcalls.c
         sgx/hostfs.c
         sgx/hostsock.c

@@ -14,7 +14,6 @@
 #include <openenclave/internal/calls.h>
 #include <openenclave/internal/thread.h>
 #include <openenclave/internal/print.h>
-#include <openenclave/internal/hostbatch.h>
 #include <openenclave/enclave.h>
 #include <openenclave/corelibc/stdlib.h>
 #include <openenclave/corelibc/string.h>
@@ -22,15 +21,6 @@
 #include <openenclave/corelibc/sys/poll.h>
 #include "oe_t.h"
 
-/*
-**==============================================================================
-**
-** host batch:
-**
-**==============================================================================
-*/
-
-static oe_host_batch_t* _host_batch;
 static oe_spinlock_t _lock;
 
 /*

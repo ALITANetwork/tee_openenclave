@@ -14,10 +14,8 @@
 #include <openenclave/internal/calls.h>
 #include <openenclave/internal/thread.h>
 #include <openenclave/internal/print.h>
-#include <openenclave/internal/hostbatch.h>
 #include <openenclave/corelibc/stdlib.h>
 #include <openenclave/corelibc/string.h>
-//#include "../common/eventfdargs.h"
 
 void* memcpy(void* to, const void* from, size_t size);
 /*

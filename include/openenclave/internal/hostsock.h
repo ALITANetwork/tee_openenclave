@@ -22,8 +22,6 @@ oe_device_t* oe_get_hostsock_device(void);
 
 int oe_register_hostsock_device(void);
 
-void oe_handle_hostsock_ocall(void* args);
-
 OE_EXTERNC_END
 
 #endif /* _OE_INTERNAL_HOSTSOCK_H */
