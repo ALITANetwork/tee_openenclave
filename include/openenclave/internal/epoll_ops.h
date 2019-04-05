@@ -42,6 +42,11 @@ extern "C"
             size_t maxevents,
             int64_t timeout);
 
+        int (*addeventdata)(
+            int epoll_fd,
+            int enclave_fd,
+            uint32_t events,
+            uint64_t data);
         uint64_t (*geteventdata)(oe_device_t* epoll_device, uint32_t list_idx);
 
     } oe_epoll_ops_t;

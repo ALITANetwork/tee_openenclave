@@ -541,6 +541,41 @@ done:
     return ret;
 }
 
+static int _epoll_add_event_data(
+    int epoll_fd,
+    int enclave_fd,
+    uint32_t events,
+    uint64_t data)
+{
+    int ret = -1;
+    epoll_dev_t* epoll = _cast_epoll(oe_get_fd_device(epoll_fd));
+    ssize_t host_fd = -1;
+    oe_device_t* pdev = oe_get_fd_device(enclave_fd);
+
+    /* Check parameters. */
+    if (!epoll || !pdev || (enclave_fd == -1))
+    {
+        oe_errno = EINVAL;
+        return -1;
+    }
+
+    oe_errno = 0;
+    int list_idx = -1;
+
+    _epoll_event_data ev_data = {.enclave_fd = enclave_fd,
+                                 .enclave_data = data};
+
+    if (add_event_data(epoll, &ev_data, &list_idx) == NULL)
+    {
+        oe_errno = ENOMEM;
+        goto done;
+    }
+    ret = 0;
+
+done:
+    return ret;
+}
+
 static int _epoll_poll(
     int epoll_fd,
     struct oe_pollfd* fds,
@@ -593,7 +628,7 @@ static int _epoll_poll(
             &ret,
             (int64_t)oe_get_enclave(),
             (int)epoll_fd,
-            (struct pollfd*)host_fds,
+            (struct oe_pollfd*)host_fds,
             nfds,
             (int)timeout,
             &oe_errno) != OE_OK)
@@ -724,6 +759,7 @@ static oe_epoll_ops_t _ops = {
     .ctl_add = _epoll_ctl_add,
     .ctl_mod = _epoll_ctl_mod,
     .ctl_del = _epoll_ctl_del,
+    .addeventdata = _epoll_add_event_data,
     .geteventdata = _epoll_get_event_data,
     .wait = _epoll_wait,
     .poll = _epoll_poll,
