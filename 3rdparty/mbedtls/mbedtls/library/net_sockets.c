@@ -98,6 +98,7 @@ static int wsa_init_done = 0;
 #include <time.h>
 
 #include <stdint.h>
+#define MSG_PEEK      0x0002
 
 /*
  * Prepare for using the sockets interface
@@ -258,43 +259,43 @@ int mbedtls_net_bind( mbedtls_net_context *ctx, const char *bind_ip, const char 
  * Check if the requested operation would be blocking on a non-blocking socket
  * and thus 'failed' with a negative return value.
  */
-// static int net_would_block( const mbedtls_net_context *ctx )
-// {
-//     ((void) ctx);
-//     return( WSAGetLastError() == WSAEWOULDBLOCK );
-// }
-// #else
-// /*
-//  * Check if the requested operation would be blocking on a non-blocking socket
-//  * and thus 'failed' with a negative return value.
-//  *
-//  * Note: on a blocking socket this function always returns 0!
-//  */
-// static int net_would_block( const mbedtls_net_context *ctx )
-// {
-//     int err = errno;
+static int net_would_block( const mbedtls_net_context *ctx )
+{
+    ((void) ctx);
+    return( WSAGetLastError() == WSAEWOULDBLOCK );
+}
+#else
+/*
+ * Check if the requested operation would be blocking on a non-blocking socket
+ * and thus 'failed' with a negative return value.
+ *
+ * Note: on a blocking socket this function always returns 0!
+ */
+static int net_would_block( const mbedtls_net_context *ctx )
+{
+    int err = errno;
 
-//     /*
-//      * Never return 'WOULD BLOCK' on a non-blocking socket
-//      */
-//     if( ( fcntl( ctx->fd, F_GETFL ) & O_NONBLOCK ) != O_NONBLOCK )
-//     {
-//         errno = err;
-//         return( 0 );
-//     }
+    /*
+     * Never return 'WOULD BLOCK' on a non-blocking socket
+     */
+    if( ( fcntl( ctx->fd, F_GETFL ) & O_NONBLOCK ) != O_NONBLOCK )
+    {
+        errno = err;
+        return( 0 );
+    }
 
-//     switch( errno = err )
-//     {
-// #if defined EAGAIN
-//         case EAGAIN:
-// #endif
-// #if defined EWOULDBLOCK && EWOULDBLOCK != EAGAIN
-//         case EWOULDBLOCK:
-// #endif
-//             return( 1 );
-//     }
-//     return( 0 );
-// }
+    switch( errno = err )
+    {
+#if defined EAGAIN
+        case EAGAIN:
+#endif
+#if defined EWOULDBLOCK && EWOULDBLOCK != EAGAIN
+        case EWOULDBLOCK:
+#endif
+            return( 1 );
+    }
+    return( 0 );
+}
 #endif /* ( _WIN32 || _WIN32_WCE ) && !EFIX64 && !EFI32 */
 
 /*
@@ -336,11 +337,9 @@ int mbedtls_net_accept( mbedtls_net_context *bind_ctx,
     {
         /* UDP: wait for a message, but keep it in the queue */
 
-//TODO:  Need to request adding support for recvfrom	    
-//        char buf[1] = { 0 };
-
-//        ret = (int) recvfrom( bind_ctx->fd, buf, sizeof( buf ), MSG_PEEK,
-//                        (struct sockaddr *) &client_addr, &n );
+        char buf[1] = { 0 };
+        ret = (int) recvfrom( bind_ctx->fd, buf, sizeof( buf ), MSG_PEEK,
+                        (struct sockaddr *) &client_addr, &n );
         ret = 0;
 #if defined(_WIN32)
         if( ret == SOCKET_ERROR &&
@@ -354,9 +353,8 @@ int mbedtls_net_accept( mbedtls_net_context *bind_ctx,
 
     if( ret < 0 )
     {
-// //TODO: need to fix fcntl
-//        if( net_would_block( bind_ctx ) != 0 )
-//            return( MBEDTLS_ERR_SSL_WANT_READ );
+        if( net_would_block( bind_ctx ) != 0 )
+            return( MBEDTLS_ERR_SSL_WANT_READ );
 
         return( MBEDTLS_ERR_NET_ACCEPT_FAILED );
     }
@@ -421,8 +419,7 @@ int mbedtls_net_accept( mbedtls_net_context *bind_ctx,
 /*
  * Set the socket blocking or non-blocking
  */
-// TODO: bring this back!
-/*
+
 int mbedtls_net_set_block( mbedtls_net_context *ctx )
 {
 #if ( defined(_WIN32) || defined(_WIN32_WCE) ) && !defined(EFIX64) && \
@@ -444,7 +441,7 @@ int mbedtls_net_set_nonblock( mbedtls_net_context *ctx )
     return( fcntl( ctx->fd, F_SETFL, fcntl( ctx->fd, F_GETFL ) | O_NONBLOCK ) );
 #endif
 }
-*/
+
 /*
  * Portable usleep helper
  */
@@ -480,9 +477,8 @@ int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len )
 
     if( ret < 0 )
     {
-// //TODO: need to fix fcntl
-      //if( net_would_block( ctx ) != 0 )
-      //      return( MBEDTLS_ERR_SSL_WANT_READ );
+      if( net_would_block( ctx ) != 0 )
+            return( MBEDTLS_ERR_SSL_WANT_READ );
 
 #if ( defined(_WIN32) || defined(_WIN32_WCE) ) && !defined(EFIX64) && \
     !defined(EFI32)
@@ -561,8 +557,8 @@ int mbedtls_net_send( void *ctx, const unsigned char *buf, size_t len )
 
     if( ret < 0 )
     {
-//        if( net_would_block( ctx ) != 0 )
-//            return( MBEDTLS_ERR_SSL_WANT_WRITE );
+        if( net_would_block( ctx ) != 0 )
+            return( MBEDTLS_ERR_SSL_WANT_WRITE );
 
 #if ( defined(_WIN32) || defined(_WIN32_WCE) ) && !defined(EFIX64) && \
     !defined(EFI32)
