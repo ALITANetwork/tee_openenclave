@@ -276,6 +276,28 @@ done:
     return ret;
 }
 
+int oe_fcntl(int fd, int cmd, int arg)
+{
+    int ret = -1;
+    oe_device_t* device = oe_get_fd_device(fd);
+
+     if (!device)
+    {
+        goto done;
+    }
+
+     if (device->ops.base->fcntl == NULL)
+    {
+        oe_errno = EINVAL;
+        return -1;
+    }
+
+    ret = (*device->ops.base->fcntl)(device, cmd, arg);
+
+ done:
+    return ret;
+}
+
 int oe_ioctl_va(int fd, unsigned long request, oe_va_list ap)
 {
     int ret = -1;

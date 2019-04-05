@@ -301,6 +301,19 @@ int oe_hostsock_close(int fd, int* err)
     return ret;
 }
 
+int oe_hostsock_fcntl(int fd, int cmd, int arg, int* err)
+{
+    int ret = fcntl(fd, cmd, arg);
+
+    if (ret == -1)
+    {
+        if (err)
+            *err = errno;
+    }
+
+    return ret;
+}
+
 int oe_hostsock_dup(int oldfd, int* err)
 {
     int ret = dup(oldfd);

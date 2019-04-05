@@ -229,7 +229,10 @@ static long _syscall(
         }
         case OE_SYS_fcntl:
         {
-            /* Silently ignore. */
+            int fd = (int)arg1;
+            int cmd = (int)arg2;
+            int arg = (int)arg3;
+            ret = oe_fcntl(fd, cmd, arg);
             goto done;
         }
         case OE_SYS_mount:

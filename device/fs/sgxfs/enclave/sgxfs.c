@@ -634,6 +634,16 @@ static int _sgxfs_ioctl(oe_device_t* file, unsigned long request, oe_va_list ap)
     return -1;
 }
 
+static int _sgxfs_fcntl(oe_device_t* file, int cmd, int arg)
+{
+    /* Unsupported */
+    oe_errno = ENOTTY;
+    (void)file;
+    (void)cmd;
+    (void)arg;
+    return -1;
+}
+
 static int _sgxfs_getdents(
     oe_device_t* file,
     struct oe_dirent* dirp,
@@ -1156,6 +1166,7 @@ static oe_fs_ops_t _ops = {
     .base.release = _sgxfs_release,
     .base.shutdown = _sgxfs_shutdown,
     .base.ioctl = _sgxfs_ioctl,
+    .base.fcntl = _sgxfs_fcntl,
     .mount = _sgxfs_mount,
     .unmount = _sgxfs_unmount,
     .open = _sgxfs_open,
