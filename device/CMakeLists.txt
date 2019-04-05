@@ -6,6 +6,6 @@ add_subdirectory(fs)
 add_subdirectory(eventfd)
 
 install(FILES
-    edl/sgxfs.edl
+    fs/sgxfs/sgxfs.edl
     DESTINATION
     "${CMAKE_INSTALL_DATADIR}/edl")
