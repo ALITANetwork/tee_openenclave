@@ -13,7 +13,7 @@
 #include <openenclave/corelibc/netdb.h>
 #include <openenclave/corelibc/netinet/in.h>
 #include <openenclave/internal/device.h>
-#include <openenclave/internal/hostresolver.h>
+//#include <openenclave/internal/hostresolver.h>
 
 //#include <stdarg.h>
 #include <bits/stdfile.h> // For stderr & FILE
