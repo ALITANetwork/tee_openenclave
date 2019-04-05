@@ -4,7 +4,7 @@
 add_custom_command(
     OUTPUT oe_u.h oe_u.c oe_args.h
     DEPENDS ${CMAKE_SOURCE_DIR}/common/oe.edl edger8r
-    COMMAND ${CMAKE_BINARY_DIR}/tools/oeedger8r/oeedger8r
+    COMMAND edger8r
         --search-path ${CMAKE_SOURCE_DIR}/common
         --untrusted ${CMAKE_SOURCE_DIR}/common/oe.edl)
 
