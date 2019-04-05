@@ -75,8 +75,8 @@ typedef struct _oe_struct_type_info
  *
  * @return OE_OK success
  * @return OE_FAILURE the operation failed.
- * @return OE_BUFFER_TOO_SMALL the **dest** buffer is tool small and
- *         **dest_size_in_out** contain the required size.
+ * @return OE_BUFFER_TOO_SMALL the **dest** buffer is too small and
+ *         upon return, **dest_size_in_out** contains the required size.
  *
  */
 oe_result_t oe_deep_copy(
