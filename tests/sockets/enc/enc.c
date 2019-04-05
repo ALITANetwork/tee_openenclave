@@ -9,6 +9,8 @@
 #include <openenclave/corelibc/netinet/in.h>
 #include <openenclave/corelibc/sys/socket.h>
 #include <openenclave/internal/device.h>
+#include <openenclave/internal/tests.h>
+#include <unistd.h>
 
 #include <socket_test_t.h>
 #include <stdio.h>
@@ -20,6 +22,20 @@ static void _initialize()
     oe_enable_feature(OE_FEATURE_HOST_SOCKETS);
     oe_enable_feature(OE_FEATURE_HOST_RESOLVER);
     oe_enable_feature(OE_FEATURE_POLLING);
+
+    {
+        char buf[1024] = {0};
+        OE_TEST(gethostname(buf, sizeof(buf)) == 0);
+        printf("hostname=%s\n", buf);
+        OE_TEST(strlen(buf) > 0);
+    }
+
+    {
+        char buf[1024] = {0};
+        OE_TEST(getdomainname(buf, sizeof(buf)) == 0);
+        printf("domainname=%s\n", buf);
+        OE_TEST(strlen(buf) > 0);
+    }
 }
 
 /* This client connects to an echo server, sends a text message,

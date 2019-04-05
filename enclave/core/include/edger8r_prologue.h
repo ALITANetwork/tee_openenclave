@@ -14,4 +14,5 @@
 #include <openenclave/corelibc/netdb.h>
 #include <openenclave/corelibc/sys/poll.h>
 #include <openenclave/corelibc/sys/socket.h>
+#include <openenclave/corelibc/sys/utsname.h>
 #include <openenclave/internal/epoll.h>

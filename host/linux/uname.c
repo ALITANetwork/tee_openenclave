@@ -6,11 +6,12 @@
 #include <openenclave/internal/defs.h>
 #include <string.h>
 #include <sys/utsname.h>
-#include "../ocalls.h"
+#include "oe_u.h"
 
-void oe_handle_uname(uint64_t arg_in, uint64_t* arg_out)
+int oe_posix_uname(struct utsname* buf, int* err)
 {
-    struct oe_utsname* out = (struct oe_utsname*)arg_in;
+    int ret = -1;
+    struct oe_utsname* out = (struct oe_utsname*)buf;
 
     OE_STATIC_ASSERT(sizeof(struct oe_utsname) == sizeof(struct utsname));
     OE_CHECK_FIELD(struct oe_utsname, struct utsname, sysname);
@@ -24,13 +25,13 @@ void oe_handle_uname(uint64_t arg_in, uint64_t* arg_out)
     OE_CHECK_FIELD(struct oe_utsname, struct utsname, __domainname);
 #endif
 
-    if (uname((struct utsname*)out) != 0)
+    ret = uname((struct utsname*)out);
+
+    if (ret == -1)
     {
-        if (arg_out)
-            *arg_out = (uint64_t)errno;
-        return;
+        if (err)
+            *err = errno;
     }
 
-    if (arg_out)
-        *arg_out = 0;
+    return ret;
 }

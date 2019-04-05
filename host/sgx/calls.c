@@ -417,10 +417,6 @@ static oe_result_t _handle_ocall(
             oe_handle_log(enclave, arg_in);
             break;
 
-        case OE_OCALL_UNAME:
-            oe_handle_uname(arg_in, arg_out);
-            break;
-
         default:
         {
             /* No function found with the number */

@@ -4,42 +4,43 @@
 #include <openenclave/corelibc/sys/utsname.h>
 #include <string.h>
 #include <windows.h>
-#include "../ocalls.h"
+#include "oe_u.h"
 
-void oe_handle_uname(uint64_t arg_in, uint64_t* arg_out)
+int oe_posix_uname(struct utsname* buf, int* err)
 {
-    struct oe_utsname* out = (struct oe_utsname*)arg_in;
+    int ret = -1;
 
-    if (!out)
+    if (!buf)
     {
-        if (arg_out)
-        {
-            *arg_out = OE_EFAULT;
-            return;
-        }
+        if (err)
+            *err = OE_EFAULT;
+
+        goto done;
     }
 
-    memset(out, 0, sizeof(struct oe_utsname));
+    memset(buf, 0, sizeof(struct oe_utsname));
 
     /* oe_utsname.sysname */
-    strcpy(out->sysname, "Windows");
+    strcpy(buf->sysname, "Windows");
 
     /* oe_utsname.nodename */
-    GetComputerNameA(out->nodename, sizeof(out->nodename));
+    GetComputerNameA(buf->nodename, sizeof(buf->nodename));
 
-    strcpy(out->release, "(none)");
-    strcpy(out->machine, "x86_64");
+    strcpy(buf->release, "(none)");
+    strcpy(buf->machine, "x86_64");
 
     /* oe_utsname.version*/
     {
         DWORD version = GetVersion();
         DWORD major = (DWORD)(LOBYTE(LOWORD(version)));
         DWORD minor = (DWORD)(HIBYTE(LOWORD(version)));
-        snprintf(out->version, sizeof(out->version), "%d.%d", major, minor);
+        snprintf(buf->version, sizeof(buf->version), "%d.%d", major, minor);
     }
 
-    strcpy(out->__domainname, "(none)");
+    strcpy(buf->__domainname, "(none)");
 
-    if (arg_out)
-        *arg_out = 0;
+    ret = 0;
+
+done:
+    return ret;
 }

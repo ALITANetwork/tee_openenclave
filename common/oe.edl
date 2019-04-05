@@ -9,6 +9,7 @@ enclave {
     from "hostsock.edl" import *;
     from "polling.edl" import *;
     from "resolve.edl" import *;
+    from "posix.edl" import *;
 
     trusted {
 

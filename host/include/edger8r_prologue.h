@@ -11,5 +11,6 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/utsname.h>
 
 #define oe_call_enclave_function oe_call_internal_enclave_function

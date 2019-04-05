@@ -1,0 +1,16 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+enclave {
+
+    include "openenclave/bits/defs.h"
+    include "openenclave/bits/types.h"
+
+    untrusted {
+
+        int oe_posix_uname(
+            [out, count=1] struct utsname*buf,
+            [out, count=1] int* err);
+
+    };
+};
