@@ -16,18 +16,18 @@
 **==============================================================================
 */
 
-struct widget
+typedef struct _widget
 {
     int value;
     const char* str;
-};
+} widget_t;
 
-struct gadget
+typedef struct _gadget
 {
     int value;
-    struct widget* widgets;
+    widget_t* widgets;
     size_t num_widgets;
-};
+} gadget_t;
 
 /*
 **==============================================================================
@@ -41,37 +41,24 @@ struct gadget
 
 static oe_field_type_info_t _widget_ftis[] =
 {
-    {
-        .field_offset = OE_OFFSETOF(struct widget, str),
-        .field_size = OE_SIZEOF(struct widget, str),
-        .elem_size = sizeof(char),
-        .count_offset = OE_SIZE_MAX,
-        .count_value = OE_SIZE_MAX,
-    },
+    OE_FTI_STRING(widget_t, str),
 };
 
-static oe_struct_type_info_t _widget_struct =
+static oe_struct_type_info_t _widget_sti =
 {
-    sizeof(struct widget),
+    sizeof(widget_t),
     _widget_ftis,
     OE_COUNTOF(_widget_ftis),
 };
 
 static oe_field_type_info_t _gadget_ftis[] =
 {
-    {
-        .field_offset = OE_OFFSETOF(struct gadget, widgets),
-         .field_size = OE_SIZEOF(struct gadget, widgets),
-         .elem_size = sizeof(struct widget),
-         .count_offset = OE_OFFSETOF(struct gadget, num_widgets),
-         .count_value = OE_SIZEOF(struct gadget, num_widgets),
-         .sti = &_widget_struct
-     },
+    OE_FTI_STRUCTS(gadget_t, widgets, widget_t, num_widgets, &_widget_sti)
 };
 
 static oe_struct_type_info_t _gadget_fti =
 {
-    sizeof(struct gadget),
+    sizeof(gadget_t),
     _gadget_ftis,
     OE_COUNTOF(_gadget_ftis),
 };
@@ -86,7 +73,7 @@ static oe_struct_type_info_t _gadget_fti =
 **==============================================================================
 */
 
-static struct widget _w[] = {
+static widget_t _w[] = {
     {
         .value = 1,
         .str = "red",
@@ -101,7 +88,7 @@ static struct widget _w[] = {
     },
 };
 
-static struct gadget _g = {
+static gadget_t _g = {
     .value = 1000,
     .widgets = _w,
     .num_widgets = OE_COUNTOF(_w),
@@ -118,7 +105,7 @@ static struct gadget _g = {
 int test_deepcopy(void)
 {
     oe_struct_type_info_t* sti = &_gadget_fti;
-    struct gadget* g;
+    gadget_t* g;
     size_t size = 0;
 
     /* Determine the size requirments for copying the gadget. */
@@ -136,7 +123,7 @@ int test_deepcopy(void)
 
     for (size_t i = 0; i < g->num_widgets; i++)
     {
-        struct widget* w = &g->widgets[i];
+        widget_t* w = &g->widgets[i];
 
         switch (i)
         {

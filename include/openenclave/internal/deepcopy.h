@@ -10,6 +10,52 @@
 
 #define OE_SIZEOF(TYPE, MEMBER) (sizeof(((((TYPE*)0)->MEMBER))))
 
+// clang-format off
+#define OE_FTI_STRING(STRUCT, FIELD)                \
+    {                                               \
+        .field_offset = OE_OFFSETOF(STRUCT, FIELD), \
+        .field_size = OE_SIZEOF(STRUCT, FIELD),     \
+        .elem_size = sizeof(char),                  \
+        .count_offset = OE_SIZE_MAX,                \
+        .count_value = OE_SIZE_MAX,                 \
+    }
+// clang-format on
+
+// clang-format off
+#define OE_FTI_STRUCTS(STRUCT, FIELD, STRUCT2, COUNT_FIELD, STI) \
+    {                                                            \
+        .field_offset = OE_OFFSETOF(STRUCT, FIELD),              \
+        .field_size = OE_SIZEOF(STRUCT, FIELD),                  \
+        .elem_size = sizeof(STRUCT2),                            \
+        .count_offset = OE_OFFSETOF(STRUCT, COUNT_FIELD),        \
+        .count_value = OE_SIZEOF(STRUCT, COUNT_FIELD),           \
+        .sti = STI                                               \
+    }
+// clang-format on
+
+// clang-format off
+#define OE_FTI_STRUCT(STRUCT, FIELD, STRUCT2, STI)  \
+    {                                               \
+        .field_offset = OE_OFFSETOF(STRUCT, FIELD), \
+        .field_size = OE_SIZEOF(STRUCT, FIELD),     \
+        .elem_size = sizeof(STRUCT2),               \
+        .count_offset = OE_SIZE_MAX,                \
+        .count_value = 1,                           \
+        .sti = STI                                  \
+    }
+// clang-format on
+
+// clang-format off
+#define OE_FTI_ARRAY(STRUCT, FIELD, ELEM_SIZE, COUNT_FIELD) \
+    {                                                       \
+        .field_offset = OE_OFFSETOF(STRUCT, FIELD),         \
+        .field_size = OE_SIZEOF(STRUCT, FIELD),             \
+        .elem_size = ELEM_SIZE,                             \
+        .count_offset = OE_OFFSETOF(STRUCT, COUNT_FIELD),   \
+        .count_value = OE_SIZEOF(STRUCT, COUNT_FIELD),      \
+    }
+// clang-format on
+
 struct _oe_struct_type_info;
 
 /* This structure provides type information for a pointer field within a

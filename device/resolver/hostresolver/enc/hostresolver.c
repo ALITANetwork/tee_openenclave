@@ -32,29 +32,13 @@
 
 extern oe_struct_type_info_t __oe_addrinfo_sti;
 
+typedef struct oe_addrinfo oe_addrinfo_t;
+
 static oe_field_type_info_t _oe_addrinfo_ftis[] =
 {
-    {
-        .field_offset = OE_OFFSETOF(struct oe_addrinfo, ai_addr),
-        .field_size = OE_SIZEOF(struct oe_addrinfo, ai_addr),
-        .elem_size = sizeof(uint8_t),
-        .count_offset = OE_OFFSETOF(struct oe_addrinfo, ai_addrlen),
-        .count_value = OE_SIZEOF(struct oe_addrinfo, ai_addrlen),
-    },
-    {
-        .field_offset = OE_OFFSETOF(struct oe_addrinfo, ai_next),
-        .field_size = OE_SIZEOF(struct oe_addrinfo, ai_next),
-        .elem_size = sizeof(struct oe_addrinfo),
-        .count_offset = OE_SIZE_MAX,
-        .count_value = 1,
-    },
-    {
-        .field_offset = OE_OFFSETOF(struct oe_addrinfo, ai_canonname),
-        .field_size = OE_SIZEOF(struct oe_addrinfo, ai_canonname),
-        .elem_size = sizeof(char),
-        .count_offset = OE_SIZE_MAX,
-        .count_value = OE_SIZE_MAX,
-    },
+    OE_FTI_ARRAY(oe_addrinfo_t, ai_addr, sizeof(uint8_t), ai_addrlen),
+    OE_FTI_STRUCT(oe_addrinfo_t, ai_next, oe_addrinfo_t, &__oe_addrinfo_sti),
+    OE_FTI_STRING(oe_addrinfo_t, ai_canonname),
 };
 
 oe_struct_type_info_t __oe_addrinfo_sti =
