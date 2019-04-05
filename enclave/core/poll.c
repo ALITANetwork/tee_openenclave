@@ -16,6 +16,7 @@
 
 int oe_poll(struct oe_pollfd* fds, nfds_t nfds, int timeout_ms)
 {
+    oe_device_t* pepoll = NULL;
     int retval = -1;
     int epfd = -1;
     nfds_t i = 0;
@@ -28,6 +29,19 @@ int oe_poll(struct oe_pollfd* fds, nfds_t nfds, int timeout_ms)
         return epfd;
     }
 
+    pepoll = oe_get_fd_device(epfd);
+    if (!pepoll)
+    {
+        goto done;
+    }
+
+    if (pepoll->ops.epoll->addeventdata == NULL)
+    {
+        oe_errno = EINVAL;
+        retval = -1;
+        goto done;
+    }
+
     for (i = 0; i < nfds; i++)
     {
         if (fds[i].fd >= 0)
@@ -35,7 +49,8 @@ int oe_poll(struct oe_pollfd* fds, nfds_t nfds, int timeout_ms)
             struct oe_epoll_event ev = {.data.fd = fds[i].fd,
                                         .events = (uint32_t)fds[i].events};
 
-            retval = oe_epoll_ctl(epfd, OE_EPOLL_CTL_ADD, fds[i].fd, &ev);
+            retval = (*pepoll->ops.epoll->addeventdata)(
+                epfd, fds[i].fd, ev.events, ev.data.u64);
             if (retval < 0)
             {
                 goto done;
@@ -43,14 +58,13 @@ int oe_poll(struct oe_pollfd* fds, nfds_t nfds, int timeout_ms)
         }
     }
 
-    oe_device_t* pepoll = oe_get_fd_device(epfd);
-    bool has_host_wait =
-        true; // false; // 2do. We need to figure out how to wait
+    bool has_host_wait = true; // false;
+    // 2do. We need to figure out how to wait
 
     if (!pepoll)
     {
         // Log error here
-        retval = -1; // erno is already set
+        retval = -1; // errno is already set
         goto done;
     }
 
