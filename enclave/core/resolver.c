@@ -31,11 +31,11 @@ int oe_getaddrinfo(
 {
     size_t resolver_idx = 0;
     ssize_t rslt = -1;
-    ssize_t required_size = (ssize_t)(
+    size_t required_size = (size_t)(
         sizeof(struct oe_addrinfo) + sizeof(struct oe_sockaddr) +
         256); // 255+1 for canonname
     struct oe_addrinfo* retinfo =
-        (struct oe_addrinfo*)oe_calloc(1, (size_t)required_size);
+        (struct oe_addrinfo*)oe_calloc(1, required_size);
 
     for (resolver_idx = 0; resolver_idx < _resolver_table_len; resolver_idx++)
     {

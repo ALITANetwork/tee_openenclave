@@ -131,9 +131,9 @@ enclave {
             int sockfd, 
             int level, 
             int optname,
-            [in, size=optlen_in] void* optval, 
+            [out, size=optlen_in] void* optval,
             socklen_t optlen_in,
-            [out, size=1] socklen_t* optlen_out,
+            [out] socklen_t* optlen_out,
             [out, count=1] int* err);
 
         int oe_hostsock_getsockname(

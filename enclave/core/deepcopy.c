@@ -10,6 +10,39 @@ static __inline__ uint64_t _align(uint64_t x)
     return (x + m - 1) / m * m;
 }
 
+typedef struct _allocator
+{
+    uint8_t* data;
+    size_t capacity;
+    size_t offset;
+} allocator_t;
+
+static void _allocator_init(allocator_t* a, void* data, size_t capacity)
+{
+    a->capacity = capacity;
+    a->data = data;
+    a->offset = 0;
+}
+
+static void* _alloc(size_t size, void* a_)
+{
+    allocator_t* a = (allocator_t*)a_;
+    void* ptr;
+
+    if (!a)
+        return NULL;
+
+    size = _align(size);
+
+    if (size > (a->capacity - a->offset))
+        return NULL;
+
+    ptr = a->data + a->offset;
+    a->offset += size;
+
+    return ptr;
+}
+
 static int _compute_count(
     const oe_structure_t* structure,
     const void* struct_ptr,
@@ -88,7 +121,7 @@ done:
     return ret;
 }
 
-int oe_deep_copy(
+static int _deep_copy(
     const oe_structure_t* structure,
     const void* src,
     void* dest,
@@ -143,7 +176,7 @@ int oe_deep_copy(
             {
                 if (f->structure)
                 {
-                    if (oe_deep_copy(
+                    if (_deep_copy(
                             f->structure,
                             src_ptr,
                             dest_ptr,
@@ -170,7 +203,10 @@ done:
     return ret;
 }
 
-int oe_deep_size(const oe_structure_t* structure, const void* src, size_t* size)
+static int _deep_size(
+    const oe_structure_t* structure,
+    const void* src,
+    size_t* size)
 {
     int ret = -1;
 
@@ -210,7 +246,7 @@ int oe_deep_size(const oe_structure_t* structure, const void* src, size_t* size)
                 {
                     size_t tmp_size;
 
-                    if (oe_deep_size(f->structure, src_ptr, &tmp_size) != 0)
+                    if (_deep_size(f->structure, src_ptr, &tmp_size) != 0)
                         goto done;
 
                     *size += _align(tmp_size);
@@ -227,21 +263,62 @@ done:
     return ret;
 }
 
-void* oe_flat_alloc(size_t size, void* a_)
+oe_result_t oe_deep_copy(
+    const oe_structure_t* structure,
+    const void* src,
+    void* dest,
+    size_t* dest_size_in_out)
 {
-    oe_flat_allocator_t* a = (oe_flat_allocator_t*)a_;
-    void* ptr;
+    oe_result_t result = OE_OK;
+    size_t size;
 
-    if (!a)
-        return NULL;
+    (void)dest;
 
-    size = _align(size);
+    /* Check required parameters. */
+    if (!structure || !src || !dest_size_in_out)
+    {
+        result = OE_UNEXPECTED;
+        goto done;
+    }
 
-    if (size > (a->capacity - a->offset))
-        return NULL;
+    /* Determine whether buffer is big enough. */
+    {
+        if (_deep_size(structure, src, &size) != 0)
+        {
+            result = OE_FAILURE;
+            goto done;
+        }
 
-    ptr = a->data + a->offset;
-    a->offset += size;
+        if (size > *dest_size_in_out)
+        {
+            *dest_size_in_out = size;
+            result = OE_BUFFER_TOO_SMALL;
+            goto done;
+        }
 
-    return ptr;
+        *dest_size_in_out = size;
+    }
+
+    /* Perform the deep copy. */
+    if (dest)
+    {
+        allocator_t a;
+
+        _allocator_init(&a, dest, size);
+
+        a.offset = structure->struct_size;
+
+        if (_deep_copy(structure, src, dest, _alloc, &a) != 0)
+        {
+            result = OE_FAILURE;
+            goto done;
+        }
+
+        *dest_size_in_out = a.offset;
+    }
+
+    result = OE_OK;
+
+done:
+    return result;
 }

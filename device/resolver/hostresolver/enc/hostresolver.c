@@ -128,22 +128,20 @@ done:
 // OE_EAI_OVERFLOW and the required size. IF the buffer is overflowed the caller
 // needs to try _hostresolv_getaddrinfo with a suitably reallocated buffer
 //
-static ssize_t _hostresolv_getaddrinfo_r(
+static int _hostresolv_getaddrinfo_r(
     oe_resolver_t* resolv,
     const char* node,
     const char* service,
     const struct oe_addrinfo* hints,
     struct oe_addrinfo* res_out,
-    /* ATTN: change to size_t */
-    ssize_t* required_size_in_out)
+    size_t* required_size_in_out)
 {
-    ssize_t ret = OE_EAI_FAIL;
+    int ret = OE_EAI_FAIL;
     int retval;
-    struct oe_addrinfo* res;
-    size_t required_size = 0;
+    struct oe_addrinfo* res = NULL;
+    oe_structure_t* structure = &__oe_addrinfo_structure;
 
     OE_UNUSED(resolv);
-    OE_UNUSED(res_out);
 
     oe_errno = 0;
 
@@ -167,41 +165,33 @@ static ssize_t _hostresolv_getaddrinfo_r(
 
     /* Determine required buffer size (fail if caller's buffer is too small). */
     {
-        if (oe_deep_size(&__oe_addrinfo_structure, res, &required_size) != 0)
-        {
-            oe_errno = EINVAL;
-            goto done;
-        }
+        oe_result_t result;
 
-        if (required_size > (size_t)*required_size_in_out)
+        result = oe_deep_copy(structure, res, res_out, required_size_in_out);
+
+        if (result == OE_BUFFER_TOO_SMALL)
         {
-            *required_size_in_out = (ssize_t)required_size;
             ret = OE_EAI_OVERFLOW;
             goto done;
         }
-    }
 
-    /* Copy OCALL result to caller's buffer. */
-    {
-        oe_flat_allocator_t a;
-
-        oe_flat_allocator_init(&a, res_out, required_size);
-
-        if (oe_deep_copy(
-                &__oe_addrinfo_structure, res, res_out, oe_flat_alloc, &a) != 0)
+        if (result != OE_OK)
         {
-            oe_errno = EINVAL;
+            ret = OE_EAI_FAIL;
             goto done;
         }
     }
-
-    /* Ask host to release the result buffer. */
-    if (oe_resolve_freeaddrinfo((struct addrinfo*)res) != OE_OK)
-        goto done;
 
     ret = 0;
 
 done:
+
+    if (res)
+    {
+        /* Ask host to release the result buffer. */
+        if (oe_resolve_freeaddrinfo((struct addrinfo*)res) != OE_OK)
+            goto done;
+    }
 
     return ret;
 }

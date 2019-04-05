@@ -14,13 +14,13 @@ typedef struct _oe_resolver oe_resolver_t;
 
 typedef struct _oe_resolver_ops
 {
-    ssize_t (*getaddrinfo_r)(
+    int (*getaddrinfo_r)(
         oe_resolver_t* dev,
         const char* node,
         const char* service,
         const struct oe_addrinfo* hints,
         struct oe_addrinfo* res,
-        ssize_t* buffersize);
+        size_t* buffersize);
 
     void (*freeaddrinfo)(oe_resolver_t* dev, struct oe_addrinfo* res);
 

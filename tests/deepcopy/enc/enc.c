@@ -117,24 +117,18 @@ static struct gadget _g = {
 
 int test_deepcopy(void)
 {
-    oe_flat_allocator_t a;
+    oe_structure_t* structure = &_gadget_struct;
     struct gadget* g;
-    size_t size;
+    size_t size = 0;
 
     /* Determine the size requirments for copying the gadget. */
-    OE_TEST(oe_deep_size(&_gadget_struct, &_g, &size) == 0);
-    OE_TEST(size > 0);
+    OE_TEST(oe_deep_copy(structure, &_g, NULL, &size) == OE_BUFFER_TOO_SMALL);
 
     /* Initialize a flat allocator with stack space. */
-    OE_ALIGNED(16) uint8_t buf[size];
-    oe_flat_allocator_init(&a, buf, sizeof(buf));
-
-    /* Allocate space for a gadget. */
-    if (!(g = oe_flat_alloc(sizeof(struct gadget), &a)))
-        OE_TEST("oe_flat_alloc()" == NULL);
+    OE_TEST((g = calloc(1, size)));
 
     /* Peform a deep copy of the gadget. */
-    OE_TEST(oe_deep_copy(&_gadget_struct, &_g, g, oe_flat_alloc, &a) == 0);
+    OE_TEST(oe_deep_copy(structure, &_g, g, &size) == OE_OK);
 
     OE_TEST(_g.value == g->value);
     OE_TEST(_g.num_widgets == g->num_widgets);

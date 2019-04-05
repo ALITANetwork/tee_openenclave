@@ -24,10 +24,10 @@
 #include <openenclave/internal/calls.h>
 #include <openenclave/internal/epoll.h>
 #include <openenclave/internal/hostfs.h>
-#include <openenclave/internal/resolver.h>
 #include <openenclave/internal/hostsock.h>
 #include <openenclave/internal/raise.h>
 #include <openenclave/internal/registers.h>
+#include <openenclave/internal/resolver.h>
 #include <openenclave/internal/sgxtypes.h>
 #include <openenclave/internal/utils.h>
 #include "../ocalls.h"

@@ -71,57 +71,30 @@ int ecall_getaddrinfo(struct addrinfo** buffer)
 {
     struct oe_addrinfo* ai = NULL;
     struct addrinfo* ai2 = NULL;
-    size_t required_size;
-    oe_flat_allocator_t a;
+    size_t size = 0;
+    oe_structure_t* structure = &__oe_addrinfo_structure;
 
     const char host[] = {"localhost"};
-    const char service[] = {"telnet"};
+    const char serv[] = {"telnet"};
 
-    if (oe_getaddrinfo(host, service, NULL, (struct oe_addrinfo**)&ai) != 0)
-    {
-        OE_TEST("oe_getaddrinfo() failed" == NULL);
-    }
-
-    if (getaddrinfo(host, service, NULL, &ai2) != 0)
-    {
-        OE_TEST("oe_getaddrinfo() failed" == NULL);
-    }
-
+    OE_TEST(oe_getaddrinfo(host, serv, NULL, (struct oe_addrinfo**)&ai) == 0);
+    OE_TEST(getaddrinfo(host, serv, NULL, &ai2) == 0);
     OE_TEST(addrinfo_compare((struct addrinfo*)ai, ai2) == 0);
 
-    addrinfo_dump((struct addrinfo*)ai);
-
     /* Determine the size of the host output buffer. */
-    if (oe_deep_size(&__oe_addrinfo_structure, ai, &required_size) != 0)
-    {
-        OE_TEST("oe_deep_size() failed" == NULL);
-    }
+    OE_TEST(oe_deep_copy(structure, ai, NULL, &size) == OE_BUFFER_TOO_SMALL);
 
     /* Allocate host memory and initialize the flat allocator. */
-    {
-        if (!(*buffer = oe_host_calloc(1, required_size)))
-        {
-            OE_TEST("oe_host_calloc() failed" == NULL);
-        }
-
-        oe_flat_allocator_init(&a, *buffer, required_size);
-    }
+    OE_TEST((*buffer = oe_host_calloc(1, size)));
 
     /* Copy the result from enclave to host memory. */
-    if (oe_deep_copy(
-            &__oe_addrinfo_structure, ai, *buffer, oe_flat_alloc, &a) != 0)
-    {
-        OE_TEST("oe_deep_copy() failed" == NULL);
-    }
 
+    OE_TEST(oe_deep_copy(structure, ai, *buffer, &size) == OE_OK);
+
+    addrinfo_dump((struct addrinfo*)ai);
     addrinfo_dump(*buffer);
 
-    int n = addrinfo_compare((struct addrinfo*)ai, *buffer);
-
-    if (n != 0)
-    {
-        OE_TEST("addrinfo_compare() failed" == NULL);
-    }
+    OE_TEST(addrinfo_compare((struct addrinfo*)ai, *buffer) == 0);
 
     oe_freeaddrinfo(ai);
     freeaddrinfo(ai2);

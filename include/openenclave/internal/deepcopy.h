@@ -5,6 +5,7 @@
 #define _OE_DEEPCOPY_H
 
 #include <openenclave/bits/defs.h>
+#include <openenclave/bits/result.h>
 #include <openenclave/bits/types.h>
 
 #define OE_SIZEOF(TYPE, MEMBER) (sizeof(((((TYPE*)0)->MEMBER))))
@@ -54,36 +55,10 @@ typedef struct _oe_structure
     size_t num_fields;
 } oe_structure_t;
 
-/* Allocate memory from flat address space. */
-typedef struct _oe_flat_allocator
-{
-    uint8_t* data;
-    size_t capacity;
-    size_t offset;
-} oe_flat_allocator_t;
-
-OE_INLINE void oe_flat_allocator_init(
-    oe_flat_allocator_t* a,
-    void* data,
-    size_t capacity)
-{
-    a->capacity = capacity;
-    a->data = data;
-    a->offset = 0;
-}
-
-void* oe_flat_alloc(size_t size, void* a);
-
-int oe_deep_size(
-    const oe_structure_t* structure,
-    const void* src,
-    size_t* size);
-
-int oe_deep_copy(
+oe_result_t oe_deep_copy(
     const oe_structure_t* structure,
     const void* src,
     void* dest,
-    void* (*alloc)(size_t size, void* alloc_data),
-    void* alloc_data);
+    size_t* dest_size_in_out);
 
 #endif /* _OE_DEEPCOPY_H */
