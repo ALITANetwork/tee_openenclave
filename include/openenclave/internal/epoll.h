@@ -54,8 +54,6 @@ struct oe_device_notification_args
     // struct oe_device_notifications events[];
 };
 
-oe_result_t _handle_oe_device_notification(uint64_t args);
-
 /* internal signalling */
 void oe_signal_device_notification(oe_device_t* pdevice, uint32_t event_mask);
 

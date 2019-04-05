@@ -10,8 +10,6 @@ OE_EXTERNC_BEGIN
 
 oe_resolver_t* oe_get_hostresolver(void);
 
-void oe_handle_hostresolver_ocall(void* args);
-
 OE_EXTERNC_END
 
 #endif /* _OE_HOSTRESOLVER_H */
