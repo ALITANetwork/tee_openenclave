@@ -283,7 +283,7 @@ int oe_polling_epoll_poll(
 
     fdsize = sizeof(struct pollfd) * nfds;
 
-    if (!(args = calloc(1, sizeof(wait_args_t) + fdsize)))
+    if (!(args = (poll_args_t*)calloc(1, sizeof(*args) + fdsize)))
     {
         _set_err(err, ENOMEM);
         goto done;
