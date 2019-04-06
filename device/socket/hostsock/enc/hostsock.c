@@ -18,9 +18,51 @@
 #include <openenclave/corelibc/sys/uio.h>
 #include <openenclave/corelibc/sys/socket.h>
 #include <openenclave/internal/print.h>
+#include <openenclave/internal/deepcopy.h>
 #include "oe_t.h"
 
 static oe_spinlock_t _lock;
+
+/*
+**==============================================================================
+**
+** struct type information:
+**
+**==============================================================================
+*/
+
+// clang-format off
+
+typedef struct oe_iovec iovec_t;
+typedef struct oe_msghdr msghdr_t;
+
+static oe_field_type_info_t _iovec_ftis[] =
+{
+    OE_FTI_ARRAY(iovec_t, iov_base, sizeof(uint8_t), iov_len),
+};
+
+static oe_struct_type_info_t _iovec_sti =
+{
+    sizeof(iovec_t),
+    _iovec_ftis,
+    OE_COUNTOF(_iovec_ftis)
+};
+
+static oe_field_type_info_t _msghdr_ftis[] =
+{
+    OE_FTI_ARRAY(msghdr_t, msg_name, sizeof(uint8_t), msg_namelen),
+    OE_FTI_STRUCTS(msghdr_t, msg_iov, iovec_t, msg_iovlen, &_iovec_sti),
+    OE_FTI_ARRAY(msghdr_t, msg_control, sizeof(uint8_t), msg_controllen),
+};
+
+static oe_struct_type_info_t _msghdr_sti =
+{
+    sizeof(msghdr_t),
+    _msghdr_ftis,
+    OE_COUNTOF(_msghdr_ftis)
+};
+
+// clang-format on
 
 /*
 **==============================================================================
@@ -454,6 +496,21 @@ done:
     return ret;
 }
 
+static int _copy(void* dest, const void* src, size_t dest_size, size_t src_size)
+{
+    if (!dest && !src)
+        return 0;
+
+    if (!(dest && src))
+        return -1;
+
+    if (dest_size < src_size)
+        return -1;
+
+    memcpy(dest, src, src_size);
+    return 0;
+}
+
 static ssize_t _hostsock_recvmsg(
     oe_device_t* sock_,
     struct oe_msghdr* msg,
@@ -461,37 +518,86 @@ static ssize_t _hostsock_recvmsg(
 {
     ssize_t ret = -1;
     sock_t* sock = _cast_sock(sock_);
+    size_t size;
+    struct oe_msghdr* host = NULL;
 
     oe_errno = 0;
 
-    if (!sock || !msg)
+    /* Determine size requirements to deep-copy msg. */
+    if (oe_deep_copy(&_msghdr_sti, msg, NULL, &size) != OE_BUFFER_TOO_SMALL)
     {
         oe_errno = EINVAL;
         goto done;
     }
 
+    /* Allocate host memory to hold this message. */
+    if (!(host = oe_host_calloc(1, sizeof(size))))
+    {
+        oe_errno = ENOMEM;
+        goto done;
+    }
+
+    /* Deep-copy the message to host memory. */
+    if (oe_deep_copy(&_msghdr_sti, msg, host, &size) != OE_OK)
+    {
+        oe_errno = EINVAL;
+        goto done;
+    }
+
+    /* Receive the message. */
     if (oe_hostsock_recvmsg(
-            &ret,
-            (int)sock->host_fd,
+            &ret, (int)sock->host_fd, (struct msghdr*)host, flags, &oe_errno) !=
+        OE_OK)
+    {
+        oe_errno = EINVAL;
+        goto done;
+    }
+
+    /* copy msghdr.msg_name. */
+    if (_copy(
             msg->msg_name,
+            host->msg_name,
             msg->msg_namelen,
-            &msg->msg_namelen,
-            (struct iovec*)msg->msg_iov,
-            msg->msg_iovlen,
-            &msg->msg_iovlen,
+            host->msg_namelen) != 0)
+    {
+        oe_errno = EINVAL;
+        goto done;
+    }
+
+    /* Copy msghdr.msg_iov. */
+    {
+        if (msg->msg_iovlen != host->msg_iovlen)
+            goto done;
+
+        for (size_t i = 0; i < host->msg_iovlen; i++)
+        {
+            if (_copy(
+                    msg->msg_iov[i].iov_base,
+                    host->msg_iov[i].iov_base,
+                    msg->msg_iov[i].iov_len,
+                    host->msg_iov[i].iov_len) != 0)
+            {
+                oe_errno = EINVAL;
+                goto done;
+            }
+        }
+    }
+
+    /* copy msghdr.msg_name. */
+    if (_copy(
             msg->msg_control,
+            host->msg_control,
             msg->msg_controllen,
-            &msg->msg_controllen,
-            msg->msg_flags,
-            &msg->msg_flags,
-            flags,
-            &oe_errno) != OE_OK)
+            host->msg_controllen) != 0)
     {
         oe_errno = EINVAL;
         goto done;
     }
 
 done:
+
+    if (host)
+        oe_host_free(host);
 
     return ret;
 }
