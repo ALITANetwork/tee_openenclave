@@ -735,6 +735,33 @@ done:
     return ret;
 }
 
+static int _hostsock_fcntl(oe_device_t* sock_, int cmd, int arg)
+{
+    int ret = -1;
+    sock_t* sock = _cast_sock(sock_);
+
+    oe_errno = 0;
+
+    if (!sock_)
+    {
+        oe_errno = EINVAL;
+        goto done;
+    }
+
+    if (oe_hostsock_fcntl(&ret, (int)sock->host_fd, cmd, arg, &oe_errno) != OE_OK)
+    {
+        oe_errno = EINVAL;
+        goto done;
+    }
+
+    if (ret == 0)
+        oe_free(sock);
+
+done:
+
+    return ret;
+}
+
 static int _hostsock_dup(oe_device_t* sock_, oe_device_t** new_sock)
 {
     int ret = -1;
@@ -1038,6 +1065,7 @@ static oe_sock_ops_t _ops = {
     .base.clone = _hostsock_clone,
     .base.release = _hostsock_release,
     .base.ioctl = _hostsock_ioctl,
+    .base.fcntl = _hostsock_fcntl,
     .base.read = _hostsock_read,
     .base.write = _hostsock_write,
     .base.close = _hostsock_close,

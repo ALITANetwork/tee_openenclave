@@ -58,6 +58,8 @@ int oe_chdir(const char* path);
 
 int oe_close(int fd);
 
+int oe_fcntl(int fd, int cmd, int arg);
+
 int oe_gethostname(char* name, size_t len);
 
 int oe_getdomainname(char* name, size_t len);

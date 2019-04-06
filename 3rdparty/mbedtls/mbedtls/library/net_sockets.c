@@ -98,6 +98,7 @@ static int wsa_init_done = 0;
 #include <time.h>
 
 #include <stdint.h>
+#define MSG_PEEK      0x0002
 
 /*
  * Prepare for using the sockets interface
@@ -117,7 +118,8 @@ static int net_prepare( void )
     }
 #else
 #if !defined(EFIX64) && !defined(EFI32)
-    signal( SIGPIPE, SIG_IGN );
+    // TODO: need to add this back
+	//signal( SIGPIPE, SIG_IGN );
 #endif
 #endif
     return( 0 );
@@ -189,7 +191,7 @@ int mbedtls_net_bind( mbedtls_net_context *ctx, const char *bind_ip, const char 
 
     if( ( ret = net_prepare() ) != 0 )
         return( ret );
-
+#define AI_PASSIVE      0x01
     /* Bind to IPv6 and/or IPv4, but only in the desired protocol */
     memset( &hints, 0, sizeof( hints ) );
     hints.ai_family = AF_UNSPEC;
@@ -334,11 +336,11 @@ int mbedtls_net_accept( mbedtls_net_context *bind_ctx,
     else
     {
         /* UDP: wait for a message, but keep it in the queue */
-        char buf[1] = { 0 };
 
+        char buf[1] = { 0 };
         ret = (int) recvfrom( bind_ctx->fd, buf, sizeof( buf ), MSG_PEEK,
                         (struct sockaddr *) &client_addr, &n );
-
+        ret = 0;
 #if defined(_WIN32)
         if( ret == SOCKET_ERROR &&
             WSAGetLastError() == WSAEMSGSIZE )
@@ -417,6 +419,7 @@ int mbedtls_net_accept( mbedtls_net_context *bind_ctx,
 /*
  * Set the socket blocking or non-blocking
  */
+
 int mbedtls_net_set_block( mbedtls_net_context *ctx )
 {
 #if ( defined(_WIN32) || defined(_WIN32_WCE) ) && !defined(EFIX64) && \
@@ -474,7 +477,7 @@ int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len )
 
     if( ret < 0 )
     {
-        if( net_would_block( ctx ) != 0 )
+      if( net_would_block( ctx ) != 0 )
             return( MBEDTLS_ERR_SSL_WANT_READ );
 
 #if ( defined(_WIN32) || defined(_WIN32_WCE) ) && !defined(EFIX64) && \

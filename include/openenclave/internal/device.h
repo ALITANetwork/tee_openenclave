@@ -96,6 +96,8 @@ ssize_t oe_write(int fd, const void* buf, size_t count);
 
 int oe_close(int fd);
 
+int oe_fcntl(int fd, int cmd, int arg);
+
 int oe_dup(int fd);
 
 int oe_dup2(int fd, int newfd);

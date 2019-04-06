@@ -105,6 +105,12 @@ enclave {
             int fd,
             [out, count=1] int* err);
 
+        int oe_hostsock_fcntl(
+            int fd,
+            int cmd,
+            int arg,
+            [out, count=1] int* err);
+
         int oe_hostsock_dup(
             int oldfd,
             [out, count=1] int* err);

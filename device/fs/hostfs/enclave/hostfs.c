@@ -758,6 +758,17 @@ static int _hostfs_ioctl(
     return -1;
 }
 
+static int _hostfs_fcntl(oe_device_t* file, int cmd, int arg)
+{
+    // TODO: need to add this for fs
+    /* Unsupported */
+    oe_errno = ENOTTY;
+    (void)file;
+    (void)cmd;
+    (void)arg;
+    return -1;
+}
+
 static oe_device_t* _hostfs_opendir(oe_device_t* fs_, const char* name)
 {
     oe_device_t* ret = NULL;
@@ -1182,6 +1193,7 @@ static oe_fs_ops_t _ops = {
     .base.release = _hostfs_release,
     .base.shutdown = _hostfs_shutdown,
     .base.ioctl = _hostfs_ioctl,
+    .base.fcntl = _hostfs_fcntl,
     .mount = _hostfs_mount,
     .unmount = _hostfs_unmount,
     .open = _hostfs_open,
