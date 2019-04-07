@@ -99,6 +99,7 @@ static int wsa_init_done = 0;
 
 #include <stdint.h>
 #define MSG_PEEK      0x0002
+#define AI_PASSIVE      0x01
 
 /*
  * Prepare for using the sockets interface
@@ -191,7 +192,7 @@ int mbedtls_net_bind( mbedtls_net_context *ctx, const char *bind_ip, const char 
 
     if( ( ret = net_prepare() ) != 0 )
         return( ret );
-#define AI_PASSIVE      0x01
+
     /* Bind to IPv6 and/or IPv4, but only in the desired protocol */
     memset( &hints, 0, sizeof( hints ) );
     hints.ai_family = AF_UNSPEC;
@@ -336,11 +337,11 @@ int mbedtls_net_accept( mbedtls_net_context *bind_ctx,
     else
     {
         /* UDP: wait for a message, but keep it in the queue */
-
         char buf[1] = { 0 };
-        ret = (int) recvfrom( bind_ctx->fd, buf, sizeof( buf ), MSG_PEEK,
+
+	ret = (int) recvfrom( bind_ctx->fd, buf, sizeof( buf ), MSG_PEEK,
                         (struct sockaddr *) &client_addr, &n );
-        ret = 0;
+
 #if defined(_WIN32)
         if( ret == SOCKET_ERROR &&
             WSAGetLastError() == WSAEMSGSIZE )
