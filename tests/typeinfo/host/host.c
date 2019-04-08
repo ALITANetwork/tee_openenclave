@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../../../host/strings.h"
-#include "deepcopy_u.h"
+#include "typeinfo_u.h"
 
 int main(int argc, const char* argv[])
 {
@@ -26,10 +26,10 @@ int main(int argc, const char* argv[])
 
     const uint32_t flags = oe_get_create_flags();
 
-    r = oe_create_deepcopy_enclave(argv[1], type, flags, NULL, 0, &enclave);
+    r = oe_create_typeinfo_enclave(argv[1], type, flags, NULL, 0, &enclave);
     OE_TEST(r == OE_OK);
 
-    r = test_deepcopy(enclave, &retval);
+    r = test_typeinfo(enclave, &retval);
     OE_TEST(r == OE_OK);
     OE_TEST(retval == 0);
 

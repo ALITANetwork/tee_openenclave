@@ -17,7 +17,7 @@
 #include <openenclave/internal/print.h>
 #include <openenclave/corelibc/stdlib.h>
 #include <openenclave/corelibc/string.h>
-#include <openenclave/internal/deepcopy.h>
+#include <openenclave/internal/typeinfo.h>
 #include "oe_t.h"
 
 /*
@@ -159,7 +159,8 @@ static int _hostresolv_getaddrinfo_r(
     {
         oe_result_t result;
 
-        result = oe_deep_copy(structure, res, res_out, required_size_in_out);
+        result =
+            oe_type_info_clone(structure, res, res_out, required_size_in_out);
 
         if (result == OE_BUFFER_TOO_SMALL)
         {

@@ -7,10 +7,10 @@
 #include <openenclave/corelibc/arpa/inet.h>
 #include <openenclave/corelibc/netdb.h>
 #include <openenclave/corelibc/netinet/in.h>
-#include <openenclave/internal/deepcopy.h>
 #include <openenclave/internal/device.h>
 #include <openenclave/internal/resolver.h>
 #include <openenclave/internal/tests.h>
+#include <openenclave/internal/typeinfo.h>
 
 #include <resolver_test_t.h>
 #include <stdio.h>
@@ -82,14 +82,15 @@ int ecall_getaddrinfo(struct addrinfo** buffer)
     OE_TEST(addrinfo_compare((struct addrinfo*)ai, ai2) == 0);
 
     /* Determine the size of the host output buffer. */
-    OE_TEST(oe_deep_copy(structure, ai, NULL, &size) == OE_BUFFER_TOO_SMALL);
+    OE_TEST(
+        oe_type_info_clone(structure, ai, NULL, &size) == OE_BUFFER_TOO_SMALL);
 
     /* Allocate host memory and initialize the flat allocator. */
     OE_TEST((*buffer = oe_host_calloc(1, size)));
 
     /* Copy the result from enclave to host memory. */
 
-    OE_TEST(oe_deep_copy(structure, ai, *buffer, &size) == OE_OK);
+    OE_TEST(oe_type_info_clone(structure, ai, *buffer, &size) == OE_OK);
 
     addrinfo_dump((struct addrinfo*)ai);
     addrinfo_dump(*buffer);

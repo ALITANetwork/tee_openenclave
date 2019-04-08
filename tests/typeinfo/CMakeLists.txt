@@ -7,4 +7,4 @@ if (BUILD_ENCLAVES)
 	add_subdirectory(enc)
 endif()
 
-add_enclave_test(tests/deepcopy deepcopy_host deepcopy_enc)
+add_enclave_test(tests/typeinfo typeinfo_host typeinfo_enc)

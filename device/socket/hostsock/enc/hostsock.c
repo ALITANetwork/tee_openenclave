@@ -18,7 +18,7 @@
 #include <openenclave/corelibc/sys/uio.h>
 #include <openenclave/corelibc/sys/socket.h>
 #include <openenclave/internal/print.h>
-#include <openenclave/internal/deepcopy.h>
+#include <openenclave/internal/typeinfo.h>
 #include "oe_t.h"
 
 static oe_spinlock_t _lock;
@@ -524,7 +524,8 @@ static ssize_t _hostsock_recvmsg(
     oe_errno = 0;
 
     /* Determine size requirements to deep-copy msg. */
-    if (oe_deep_copy(&_msghdr_sti, msg, NULL, &size) != OE_BUFFER_TOO_SMALL)
+    if (oe_type_info_clone(&_msghdr_sti, msg, NULL, &size) !=
+        OE_BUFFER_TOO_SMALL)
     {
         oe_errno = EINVAL;
         goto done;
@@ -538,7 +539,7 @@ static ssize_t _hostsock_recvmsg(
     }
 
     /* Deep-copy the message to host memory. */
-    if (oe_deep_copy(&_msghdr_sti, msg, host, &size) != OE_OK)
+    if (oe_type_info_clone(&_msghdr_sti, msg, host, &size) != OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
@@ -748,7 +749,8 @@ static int _hostsock_fcntl(oe_device_t* sock_, int cmd, int arg)
         goto done;
     }
 
-    if (oe_hostsock_fcntl(&ret, (int)sock->host_fd, cmd, arg, &oe_errno) != OE_OK)
+    if (oe_hostsock_fcntl(&ret, (int)sock->host_fd, cmd, arg, &oe_errno) !=
+        OE_OK)
     {
         oe_errno = EINVAL;
         goto done;

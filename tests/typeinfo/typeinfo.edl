@@ -5,7 +5,7 @@ enclave {
 
     trusted {
 
-        public int test_deepcopy();
+        public int test_typeinfo();
 
     };
 };

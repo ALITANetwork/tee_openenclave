@@ -281,12 +281,12 @@ int oe_fcntl(int fd, int cmd, int arg)
     int ret = -1;
     oe_device_t* device = oe_get_fd_device(fd);
 
-     if (!device)
+    if (!device)
     {
         goto done;
     }
 
-     if (device->ops.base->fcntl == NULL)
+    if (device->ops.base->fcntl == NULL)
     {
         oe_errno = EINVAL;
         return -1;
@@ -294,7 +294,7 @@ int oe_fcntl(int fd, int cmd, int arg)
 
     ret = (*device->ops.base->fcntl)(device, cmd, arg);
 
- done:
+done:
     return ret;
 }
 

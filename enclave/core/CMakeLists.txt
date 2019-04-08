@@ -90,7 +90,7 @@ add_library(oecore STATIC
     corelibc.c
     ctype.c
     cwd.c
-    deepcopy.c
+    typeinfo.c
     device.c
     epoll.c
     exit.c

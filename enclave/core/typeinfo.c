@@ -1,8 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+#include <openenclave/corelibc/stdio.h>
 #include <openenclave/corelibc/string.h>
-#include <openenclave/internal/deepcopy.h>
+#include <openenclave/internal/typeinfo.h>
 
 static __inline__ uint64_t _align(uint64_t x)
 {
@@ -231,14 +232,11 @@ static int _deep_size(
 
         /* Determine size of this array field and its descendents. */
         {
-            *size += _align(count * f->elem_size);
-
-            const uint8_t* src_ptr = *((const uint8_t**)src_field);
-
-            /* Copy each element of this array. */
-            for (size_t i = 0; i < count; i++)
+            if (f->sti)
             {
-                if (f->sti)
+                const uint8_t* src_ptr = *((const uint8_t**)src_field);
+
+                for (size_t i = 0; i < count; i++)
                 {
                     size_t tmp_size;
 
@@ -246,9 +244,13 @@ static int _deep_size(
                         goto done;
 
                     *size += _align(tmp_size);
-                }
 
-                src_ptr += f->elem_size;
+                    src_ptr += f->elem_size;
+                }
+            }
+            else
+            {
+                *size += _align(count * f->elem_size);
             }
         }
     }
@@ -259,13 +261,13 @@ done:
     return ret;
 }
 
-oe_result_t oe_deep_copy(
+oe_result_t oe_type_info_clone(
     const oe_struct_type_info_t* sti,
     const void* src,
     void* dest,
     size_t* dest_size_in_out)
 {
-    oe_result_t result = OE_OK;
+    oe_result_t result = OE_UNEXPECTED;
     size_t size;
 
     (void)dest;
@@ -302,15 +304,128 @@ oe_result_t oe_deep_copy(
 
         _allocator_init(&a, dest, size);
 
-        a.offset = sti->struct_size;
+        a.offset = _align(sti->struct_size);
 
         if (_deep_copy(sti, src, dest, _alloc, &a) != 0)
         {
             result = OE_FAILURE;
             goto done;
         }
+    }
 
-        *dest_size_in_out = a.offset;
+    result = OE_OK;
+
+done:
+    return result;
+}
+
+oe_result_t oe_type_info_update(
+    const oe_struct_type_info_t* sti,
+    const void* src,
+    void* dest)
+{
+    oe_result_t result = OE_UNEXPECTED;
+
+    if (!sti || !src || !dest)
+    {
+        result = OE_INVALID_PARAMETER;
+        goto done;
+    }
+
+    /* Update the heap objects. */
+    for (size_t i = 0; i < sti->num_fields; i++)
+    {
+        const oe_field_type_info_t* fti = &sti->fields[i];
+        const uint8_t* src_field = (const uint8_t*)src + fti->field_offset;
+        const uint8_t* dest_field = (const uint8_t*)dest + fti->field_offset;
+        size_t src_count;
+        size_t dest_count;
+
+        /* Verify that field is within structure boundaries. */
+        if (fti->field_offset + fti->field_size > sti->struct_size)
+            goto done;
+
+        /* Skip over null pointer fields. */
+        if (!*(void**)src_field && !*(void**)dest_field)
+            continue;
+
+        /* Fail if source field is null (and destination was not). */
+        if (!*(void**)src_field)
+        {
+            result = OE_FAILURE;
+            goto done;
+        }
+
+        /* Fail if destination field is null (and source was not). */
+        if (!*(void**)dest_field)
+        {
+            result = OE_FAILURE;
+            goto done;
+        }
+
+        /* Determine the size of the source heap object. */
+        if (_compute_count(sti, src, fti, src_field, &src_count) != 0)
+        {
+            result = OE_FAILURE;
+            goto done;
+        }
+
+        /* Determine the size of the destination heap object. */
+        if (_compute_count(sti, dest, fti, dest_field, &dest_count) != 0)
+        {
+            result = OE_FAILURE;
+            goto done;
+        }
+
+        /* If the destination is not big enough. */
+        if (dest_count < src_count)
+        {
+            result = OE_FAILURE;
+            goto done;
+        }
+
+        /* Update the destination heap object from the source. */
+        {
+            const uint8_t* src_ptr = *((const uint8_t**)src_field);
+            uint8_t* dest_ptr = *((uint8_t**)dest_field);
+
+            /* Copy each element of this array. */
+            for (size_t i = 0; i < src_count; i++)
+            {
+                if (fti->sti)
+                {
+                    oe_result_t r;
+
+                    r = oe_type_info_update(fti->sti, src_ptr, dest_ptr);
+
+                    if (r != OE_OK)
+                    {
+                        result = r;
+                        goto done;
+                    }
+                }
+                else
+                {
+                    memcpy(dest_ptr, src_ptr, fti->elem_size);
+                }
+
+                src_ptr += fti->elem_size;
+                dest_ptr += fti->elem_size;
+            }
+        }
+    }
+
+    /* Update any count fields. */
+    for (size_t i = 0; i < sti->num_fields; i++)
+    {
+        const oe_field_type_info_t* fti = &sti->fields[i];
+
+        if (fti->count_offset != OE_SIZE_MAX)
+        {
+            const uint8_t* src_field = (const uint8_t*)src + fti->count_offset;
+            uint8_t* dest_field = (uint8_t*)dest + fti->count_offset;
+            memcpy(dest_field, src_field, fti->count_value);
+        }
     }
 
     result = OE_OK;
