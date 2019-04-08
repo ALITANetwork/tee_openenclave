@@ -53,13 +53,7 @@ enclave {
 
         ssize_t oe_hostsock_sendmsg(
             int sockfd, 
-            [in, size=msg_namelen] const void* msg_name,
-            socklen_t msg_namelen,
-            [in, count=msg_iovlen] const struct iovec* msg_iov,
-            size_t msg_iovlen,
-            [in, size=msg_controllen] const void* msg_control,
-            size_t msg_controllen,
-            int msg_flags,
+            [user_check] const struct msghdr* msg,
             int flags,
             [out, count=1] int* err);
 

@@ -130,29 +130,11 @@ done:
 
 ssize_t oe_hostsock_sendmsg(
     int sockfd,
-    const void* msg_name,
-    socklen_t msg_namelen,
-    const struct iovec* msg_iov,
-    size_t msg_iovlen,
-    const void* msg_control,
-    size_t msg_controllen,
-    int msg_flags,
+    const struct msghdr* msg,
     int flags,
     int* err)
 {
-    ssize_t ret = -1;
-
-    struct msghdr msg = {
-        .msg_name = (void*)msg_name,
-        .msg_namelen = msg_namelen,
-        .msg_iov = (struct iovec*)msg_iov,
-        .msg_iovlen = msg_iovlen,
-        .msg_control = (void*)msg_control,
-        .msg_controllen = msg_controllen,
-        .msg_flags = msg_flags,
-    };
-
-    ret = sendmsg(sockfd, &msg, flags);
+    ssize_t ret = sendmsg(sockfd, msg, flags);
 
     if (ret == -1)
     {

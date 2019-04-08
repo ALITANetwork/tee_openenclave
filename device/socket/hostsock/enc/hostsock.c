@@ -496,21 +496,6 @@ done:
     return ret;
 }
 
-static int _copy(void* dest, const void* src, size_t dest_size, size_t src_size)
-{
-    if (!dest && !src)
-        return 0;
-
-    if (!(dest && src))
-        return -1;
-
-    if (dest_size < src_size)
-        return -1;
-
-    memcpy(dest, src, src_size);
-    return 0;
-}
-
 static ssize_t _hostsock_recvmsg(
     oe_device_t* sock_,
     struct oe_msghdr* msg,
@@ -554,42 +539,8 @@ static ssize_t _hostsock_recvmsg(
         goto done;
     }
 
-    /* copy msghdr.msg_name. */
-    if (_copy(
-            msg->msg_name,
-            host->msg_name,
-            msg->msg_namelen,
-            host->msg_namelen) != 0)
-    {
-        oe_errno = EINVAL;
-        goto done;
-    }
-
-    /* Copy msghdr.msg_iov. */
-    {
-        if (msg->msg_iovlen != host->msg_iovlen)
-            goto done;
-
-        for (size_t i = 0; i < host->msg_iovlen; i++)
-        {
-            if (_copy(
-                    msg->msg_iov[i].iov_base,
-                    host->msg_iov[i].iov_base,
-                    msg->msg_iov[i].iov_len,
-                    host->msg_iov[i].iov_len) != 0)
-            {
-                oe_errno = EINVAL;
-                goto done;
-            }
-        }
-    }
-
-    /* copy msghdr.msg_name. */
-    if (_copy(
-            msg->msg_control,
-            host->msg_control,
-            msg->msg_controllen,
-            host->msg_controllen) != 0)
+    /* Update caller's buffer from host result. */
+    if (oe_type_info_update(&_msghdr_sti, host, msg) != OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
@@ -678,6 +629,8 @@ static ssize_t _hostsock_sendmsg(
 {
     ssize_t ret = -1;
     sock_t* sock = _cast_sock(sock_);
+    struct oe_msghdr* host = NULL;
+    size_t size;
 
     oe_errno = 0;
 
@@ -687,16 +640,32 @@ static ssize_t _hostsock_sendmsg(
         goto done;
     }
 
+    /* Determine size requirements to deep-copy msg. */
+    if (oe_type_info_clone(&_msghdr_sti, msg, NULL, &size) !=
+        OE_BUFFER_TOO_SMALL)
+    {
+        oe_errno = EINVAL;
+        goto done;
+    }
+
+    /* Allocate host memory to hold this message. */
+    if (!(host = oe_host_calloc(1, sizeof(size))))
+    {
+        oe_errno = ENOMEM;
+        goto done;
+    }
+
+    /* Deep-copy the message to host memory. */
+    if (oe_type_info_clone(&_msghdr_sti, msg, host, &size) != OE_OK)
+    {
+        oe_errno = EINVAL;
+        goto done;
+    }
+
     if (oe_hostsock_sendmsg(
             &ret,
             (int)sock->host_fd,
-            msg->msg_name,
-            msg->msg_namelen,
-            (struct iovec*)msg->msg_iov,
-            msg->msg_iovlen,
-            msg->msg_control,
-            msg->msg_controllen,
-            msg->msg_flags,
+            (const struct msghdr*)msg,
             flags,
             &oe_errno) != OE_OK)
     {
@@ -705,6 +674,9 @@ static ssize_t _hostsock_sendmsg(
     }
 
 done:
+
+    if (host)
+        oe_host_free(host);
 
     return ret;
 }

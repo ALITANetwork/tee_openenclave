@@ -549,7 +549,6 @@ static int _epoll_add_event_data(
 {
     int ret = -1;
     epoll_dev_t* epoll = _cast_epoll(oe_get_fd_device(epoll_fd));
-    ssize_t host_fd = -1;
     oe_device_t* pdev = oe_get_fd_device(enclave_fd);
 
     /* Check parameters. */
