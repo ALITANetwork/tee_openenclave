@@ -155,7 +155,7 @@ static int _hostresolv_getaddrinfo_r(
         goto done;
     }
 
-    /* Determine required buffer size (fail if caller's buffer is too small). */
+    /* Clone the result to caller's memory. */
     {
         oe_result_t result;
 
