@@ -10,6 +10,7 @@ enclave {
     from "polling.edl" import *;
     from "resolve.edl" import *;
     from "posix.edl" import *;
+    from "signal.edl" import *;
 
     trusted {
 
