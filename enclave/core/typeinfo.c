@@ -122,7 +122,7 @@ done:
     return ret;
 }
 
-static int _deep_copy(
+static int _clone(
     const oe_struct_type_info_t* sti,
     const void* src,
     void* dest,
@@ -177,8 +177,8 @@ static int _deep_copy(
             {
                 if (f->sti)
                 {
-                    if (_deep_copy(
-                            f->sti, src_ptr, dest_ptr, alloc, alloc_data) != 0)
+                    if (_clone(f->sti, src_ptr, dest_ptr, alloc, alloc_data) !=
+                        0)
                     {
                         goto done;
                     }
@@ -200,7 +200,7 @@ done:
     return ret;
 }
 
-static int _deep_size(
+static int _compute_total_size(
     const oe_struct_type_info_t* sti,
     const void* src,
     size_t* size)
@@ -240,7 +240,7 @@ static int _deep_size(
                 {
                     size_t tmp_size;
 
-                    if (_deep_size(f->sti, src_ptr, &tmp_size) != 0)
+                    if (_compute_total_size(f->sti, src_ptr, &tmp_size) != 0)
                         goto done;
 
                     *size += _align(tmp_size);
@@ -281,7 +281,7 @@ oe_result_t oe_type_info_clone(
 
     /* Determine whether buffer is big enough. */
     {
-        if (_deep_size(sti, src, &size) != 0)
+        if (_compute_total_size(sti, src, &size) != 0)
         {
             result = OE_FAILURE;
             goto done;
@@ -306,7 +306,7 @@ oe_result_t oe_type_info_clone(
 
         a.offset = _align(sti->struct_size);
 
-        if (_deep_copy(sti, src, dest, _alloc, &a) != 0)
+        if (_clone(sti, src, dest, _alloc, &a) != 0)
         {
             result = OE_FAILURE;
             goto done;
