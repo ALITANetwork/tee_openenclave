@@ -27,6 +27,7 @@ if (UNIX)
     linux/hostepoll.c
     linux/hostuid.c
     linux/hostthread.c
+    linux/signal.c
     linux/time.c
     linux/uname.c
     linux/windows.c)

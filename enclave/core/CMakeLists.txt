@@ -110,6 +110,7 @@ add_library(oecore STATIC
     realpath.c
     resolver.c
     result.c
+    signal.c
     sleep.c
     socket.c
     stdio.c

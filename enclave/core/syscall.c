@@ -545,6 +545,23 @@ static long _syscall(
             goto done;
         }
             // case OE_SYS_getegid:
+        case OE_SYS_rt_sigaction:
+        {
+            int signum = (int)arg1;
+            struct sigaction* act = (struct sigaction*)arg2;
+            struct sigaction* oact = (struct sigaction*)arg3;
+
+            ret = (long)oe_signal(signum, act, oact);
+            goto done;
+        }
+        case OE_SYS_kill:
+        {
+            int pid = (int)arg1;
+            int signum = (int)arg2;
+
+            ret = (long)oe_kill(pid, signum);
+            goto done;
+        }
 
         default:
         {

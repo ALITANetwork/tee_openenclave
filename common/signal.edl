@@ -1,0 +1,20 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+enclave {
+
+    include "openenclave/bits/defs.h"
+    include "openenclave/bits/types.h"
+
+
+    trusted {
+        public int oe_signal_notify(int signum);
+    };
+
+    untrusted {
+        int oe_signal_kill(int pid,
+                           int signum,
+                           [out, count=1] int* err);
+
+    };
+};
