@@ -118,7 +118,6 @@ static oe_result_t _syscall_hook(
             result = OE_UNSUPPORTED;
             break;
         }
-        case SYS_readv:
         default:
         {
             OE_RAISE(OE_UNSUPPORTED);
