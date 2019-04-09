@@ -11,5 +11,4 @@ target_include_directories(tls_e2e_host PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR})
 
-#target_link_libraries(tls_e2e_host oehostresolver_host)
 target_link_libraries(tls_e2e_host oehostapp)

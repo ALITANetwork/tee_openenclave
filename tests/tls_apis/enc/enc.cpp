@@ -7,54 +7,47 @@
 #include <openenclave/internal/report.h>
 #include <openenclave/internal/tests.h>
 
-//#include <openenclave/corelibc/stdlib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "tls_t.h"
-#define UNREFERENCE(x) (void(x)) // Prevent unused warning
 
-#define printf oe_host_printf
+//#define printf oe_host_printf
 
+// This is the identity validation callback. An TLS connecting party (client or
+// server) can verify the passed in "identity" information to decide whether to
+// accept an connection reqest
 oe_result_t enclave_identity_verifier(oe_identity_t* identity, void* arg)
 {
     oe_result_t result = OE_VERIFY_FAILED;
 
     (void)arg;
-    printf("enclave_identity_verifier is called with parsed report:\n");
+    OE_TRACE_INFO("enclave_identity_verifier is called with parsed report:\n");
 
     // Check the enclave's security version
     if (identity->security_version < 1)
     {
-        printf(
+        OE_TRACE_ERROR(
             "identity->security_version checking failed (%d)\n",
             identity->security_version);
         goto done;
     }
 
-    // the unique ID for the enclave
-    // For SGX enclaves, this is the MRENCLAVE value
-    printf("identity->signer_id :\n");
+    // Dump an enclave's unique ID, signer ID and Product ID. They are
+    // MRENCLAVE, MRSIGNER and ISVPRODID for SGX enclaves In a real scenario,
+    // custom id checking should be done here
+
+    OE_TRACE_INFO("identity->signer_id :\n");
     for (int i = 0; i < OE_UNIQUE_ID_SIZE; i++)
-    {
-        printf("0x%0x ", (uint8_t)identity->signer_id[i]);
-    }
+        OE_TRACE_INFO("0x%0x ", (uint8_t)identity->signer_id[i]);
 
-    // The signer ID for the enclave.
-    // For SGX enclaves, this is the MRSIGNER value
-    printf("\nparsed_report->identity.signer_id :\n");
+    OE_TRACE_INFO("\nparsed_report->identity.signer_id :\n");
     for (int i = 0; i < OE_SIGNER_ID_SIZE; i++)
-    {
-        printf("0x%0x ", (uint8_t)identity->signer_id[i]);
-    }
+        OE_TRACE_INFO("0x%0x ", (uint8_t)identity->signer_id[i]);
 
-    // The Product ID for the enclave.
-    // For SGX enclaves, this is the ISVPRODID value
-    printf("\nidentity->product_id :\n");
+    OE_TRACE_INFO("\nidentity->product_id :\n");
     for (int i = 0; i < OE_PRODUCT_ID_SIZE; i++)
-    {
-        printf("0x%0x ", (uint8_t)identity->product_id[i]);
-    }
+        OE_TRACE_INFO("0x%0x ", (uint8_t)identity->product_id[i]);
 
     result = OE_OK;
 done:
@@ -115,7 +108,7 @@ oe_result_t get_TLS_cert(unsigned char** cert, size_t* cert_size)
     uint8_t* public_key = NULL;
     size_t public_key_size = 0;
 
-    printf("called into enclave\n");
+    OE_TRACE_INFO("called into enclave\n");
     // fflush(stdout);
 
     // generate public/private key pair
@@ -123,7 +116,7 @@ oe_result_t get_TLS_cert(unsigned char** cert, size_t* cert_size)
         &public_key, &public_key_size, &private_key, &private_key_size);
     if (result != OE_OK)
     {
-        printf(" failed with %s\n", oe_result_str(result));
+        OE_TRACE_ERROR(" failed with %s\n", oe_result_str(result));
         goto done;
     }
 
@@ -136,7 +129,7 @@ oe_result_t get_TLS_cert(unsigned char** cert, size_t* cert_size)
         &output_cert_size);
     if (result != OE_OK)
     {
-        printf(" failed with %s\n", oe_result_str(result));
+        OE_TRACE_ERROR(" failed with %s\n", oe_result_str(result));
         goto done;
     }
 
@@ -144,7 +137,7 @@ oe_result_t get_TLS_cert(unsigned char** cert, size_t* cert_size)
     // validate cert inside the enclave
     result = oe_verify_tls_cert(
         output_cert, output_cert_size, enclave_identity_verifier, NULL);
-    printf(
+    OE_TRACE_INFO(
         "\nFrom inside encalve: verifying SGX certificate extensions... %s\n",
         result == OE_OK ? "Success" : "Fail");
 

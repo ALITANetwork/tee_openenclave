@@ -22,9 +22,7 @@ int cert_verify_callback(
     mbedtls_x509_crt* crt,
     int depth,
     uint32_t* flags);
-oe_result_t enclave_identity_verifier_callback(
-    oe_identity_t* identity,
-    void* arg);
+oe_result_t enclave_identity_verifier(oe_identity_t* identity, void* arg);
 
 bool verify_mrsigner(
     char* siging_public_key_buf,
@@ -36,8 +34,7 @@ bool verify_mrsigner(
 // Verbose
 #define DEBUG_LEVEL 1
 
-#define ADD_TEST_CHECKING
 #define CLIENT_REQUEST_PAYLOAD_SIZE 18
 #define SERVER_RESPONSE_PAYLOAD_SIZE 194
 
-#define printf oe_host_printf
+//#define printf oe_host_printf

@@ -10,7 +10,5 @@ add_executable(tls_enc enc.cpp ${gen})
 target_include_directories(tls_enc PRIVATE
                           ${CMAKE_CURRENT_BINARY_DIR}
                           ${PROJECT_SOURCE_DIR}/include/openenclave/corelibc)
-target_link_libraries(tls_enc oeenclave oelibc)
-#target_link_libraries(tls_enc oeenclave oelibc)
 
-#target_link_libraries(libcxx PUBLIC oelibc)
+target_link_libraries(tls_enc oeenclave oelibc)
