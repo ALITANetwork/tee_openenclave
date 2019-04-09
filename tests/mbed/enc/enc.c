@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mount.h>
 #include <sys/syscall.h>
 #include <sys/uio.h>
 #include <unistd.h>
@@ -76,6 +77,10 @@ static oe_result_t _syscall_hook(
     long* ret)
 {
     oe_result_t result = OE_UNEXPECTED;
+
+    OE_UNUSED(arg1);
+    OE_UNUSED(arg2);
+    OE_UNUSED(arg3);
     OE_UNUSED(arg4);
     OE_UNUSED(arg5);
     OE_UNUSED(arg6);
@@ -88,33 +93,6 @@ static oe_result_t _syscall_hook(
 
     switch (number)
     {
-        case SYS_open:
-        {
-            const int flags = (const int)arg2;
-            if (flags == O_RDONLY)
-            {
-                int rval = 0;
-                result =
-                    mbed_test_open(&rval, (char*)arg1, (int)arg2, (mode_t)arg3);
-                *ret = rval;
-            }
-            break;
-        }
-        case SYS_read:
-        {
-            ssize_t rval = 0;
-            const size_t buf_len = (size_t)arg3;
-            char* host_buf = (char*)oe_host_malloc(buf_len);
-            result = mbed_test_read(&rval, (int)arg1, host_buf, buf_len);
-            if (rval > 0)
-            {
-                char* enc_buf = (char*)arg2;
-                memcpy(enc_buf, host_buf, buf_len);
-            }
-            *ret = (int)rval;
-            oe_host_free(host_buf);
-            break;
-        }
         case SYS_writev:
         {
             char* str_full;
@@ -140,12 +118,6 @@ static oe_result_t _syscall_hook(
             result = OE_UNSUPPORTED;
             break;
         }
-        case SYS_close:
-        {
-            int rval = 0;
-            result = mbed_test_close(&rval, (int)arg1);
-            break;
-        }
         case SYS_readv:
         default:
         {
@@ -167,6 +139,17 @@ int test(
 
     // Install a syscall hook to handle special behavior for mbed TLS.
     oe_register_syscall_hook(_syscall_hook);
+
+    /* Enable host file system support. */
+    {
+        oe_enable_feature(OE_FEATURE_HOST_FILES);
+
+        if (mount("/", "/", "hostfs", 0, NULL) != 0)
+        {
+            fprintf(stderr, "mount() failed\n");
+            exit(1);
+        }
+    }
 
     // verbose option is enabled as some of the functionality in helper.function
     // such as redirect output, restore output is trying to assign values to

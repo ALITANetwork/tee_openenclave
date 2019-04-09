@@ -24,19 +24,6 @@ enclave {
     };
 
     untrusted {
-        int mbed_test_open(
-            [in, string] const char* path,
-            int flags,
-            mode_t mode);
-
-        ssize_t mbed_test_read(
-            int fd,
-            [out, size=buf_len] char* buf,
-            size_t buf_len);
-
-        int mbed_test_close(
-            int fd);
-
         void ocall_exit(
             int arg);
     };
