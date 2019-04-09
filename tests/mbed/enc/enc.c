@@ -65,6 +65,98 @@ void test_checker(char* str)
     }
 }
 
+static oe_result_t _syscall_hook(
+    long number,
+    long arg1,
+    long arg2,
+    long arg3,
+    long arg4,
+    long arg5,
+    long arg6,
+    long* ret)
+{
+    oe_result_t result = OE_UNEXPECTED;
+    OE_UNUSED(arg4);
+    OE_UNUSED(arg5);
+    OE_UNUSED(arg6);
+
+    if (ret)
+        *ret = -1;
+
+    if (!ret)
+        OE_RAISE(OE_INVALID_PARAMETER);
+
+    switch (number)
+    {
+        case SYS_open:
+        {
+            const int flags = (const int)arg2;
+            if (flags == O_RDONLY)
+            {
+                int rval = 0;
+                result =
+                    mbed_test_open(&rval, (char*)arg1, (int)arg2, (mode_t)arg3);
+                *ret = rval;
+            }
+            break;
+        }
+        case SYS_read:
+        {
+            ssize_t rval = 0;
+            const size_t buf_len = (size_t)arg3;
+            char* host_buf = (char*)oe_host_malloc(buf_len);
+            result = mbed_test_read(&rval, (int)arg1, host_buf, buf_len);
+            if (rval > 0)
+            {
+                char* enc_buf = (char*)arg2;
+                memcpy(enc_buf, host_buf, buf_len);
+            }
+            *ret = (int)rval;
+            oe_host_free(host_buf);
+            break;
+        }
+        case SYS_writev:
+        {
+            char* str_full;
+            size_t total_buff_len = 0;
+            const struct iovec* iov = (const struct iovec*)arg2;
+            int iovcnt = (int)arg3;
+            // Calculating  buffer length
+            for (int i = 0; i < iovcnt; i++)
+            {
+                total_buff_len += iov[i].iov_len;
+            }
+            // Considering string terminating character
+            total_buff_len += 1;
+            str_full = (char*)calloc(total_buff_len, sizeof(char));
+            for (int i = 0; i < iovcnt; i++)
+            {
+                strncat(str_full, iov[i].iov_base, iov[i].iov_len);
+            }
+            test_checker(str_full);
+            free(str_full);
+            // expecting the runtime implementation of SYS_writev to also be
+            // called.
+            result = OE_UNSUPPORTED;
+            break;
+        }
+        case SYS_close:
+        {
+            int rval = 0;
+            result = mbed_test_close(&rval, (int)arg1);
+            break;
+        }
+        case SYS_readv:
+        default:
+        {
+            OE_RAISE(OE_UNSUPPORTED);
+        }
+    }
+
+done:
+    return result;
+}
+
 int test(
     const char* in_testname,
     char out_testname[STRLEN],
@@ -72,6 +164,9 @@ int test(
 {
     int return_value = -1;
     printf("RUNNING: %s\n", __TEST__);
+
+    // Install a syscall hook to handle special behavior for mbed TLS.
+    oe_register_syscall_hook(_syscall_hook);
 
     // verbose option is enabled as some of the functionality in helper.function
     // such as redirect output, restore output is trying to assign values to
