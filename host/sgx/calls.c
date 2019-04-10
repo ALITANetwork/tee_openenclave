@@ -12,6 +12,10 @@
 #include <sys/mman.h>
 #include <sys/syscall.h>
 #include <unistd.h>
+#include <openenclave/internal/epoll.h>
+#include <openenclave/internal/hostfs.h>
+#include <openenclave/internal/hostsock.h>
+#include <openenclave/internal/resolver.h>
 #elif defined(_WIN32)
 #include <Windows.h>
 #else
@@ -22,12 +26,8 @@
 #include <openenclave/bits/safemath.h>
 #include <openenclave/host.h>
 #include <openenclave/internal/calls.h>
-#include <openenclave/internal/epoll.h>
-#include <openenclave/internal/hostfs.h>
-#include <openenclave/internal/hostsock.h>
 #include <openenclave/internal/raise.h>
 #include <openenclave/internal/registers.h>
-#include <openenclave/internal/resolver.h>
 #include <openenclave/internal/sgxtypes.h>
 #include <openenclave/internal/utils.h>
 #include "../ocalls.h"
@@ -273,6 +273,7 @@ static oe_result_t _handle_call_host_function(
         OE_RAISE(OE_INVALID_PARAMETER);
 
     // Select either internal or user ocall table.
+#if !defined(WIN32)
     if (args_ptr->is_internal_call)
     {
         extern const oe_ocall_func_t* oe_get_internal_ocall_function_table();
@@ -282,6 +283,7 @@ static oe_result_t _handle_call_host_function(
         num_ocalls = oe_get_internal_ocall_function_table_size();
     }
     else
+#endif
     {
         ocalls = enclave->ocalls;
         num_ocalls = enclave->num_ocalls;

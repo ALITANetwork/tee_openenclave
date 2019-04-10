@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+#if !defined(WIN32)
+
 /* struct stat fields. */
 #if defined(__aarch64__)
 dev_t st_dev;     /* Device.  */
@@ -59,4 +61,5 @@ struct
     suseconds_t tv_nsec;
 } st_ctim;
 long __st_unused[3];
+#endif
 #endif

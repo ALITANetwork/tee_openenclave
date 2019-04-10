@@ -359,6 +359,7 @@ static oe_result_t _initialize_enclave(oe_enclave_t* enclave)
             &args.cpuid_table[i][OE_CPUID_RDX]);
     }
 
+#if !defined(WIN32)
     // uid, gid, and other stuff. uid is uint32_t in linux, but a 64 bit handle
     // of the user SID in windows. So we will allocate 64 bits and pass all 64
     // bits.  In the enclave, apps should treat the uid/sid as anonymous data.
@@ -368,6 +369,7 @@ static oe_result_t _initialize_enclave(oe_enclave_t* enclave)
     args.uid = oe_get_host_uid();
     args.euid = oe_get_host_euid();
     args.num_groups = (uint32_t)oe_get_host_groups(OE_NGROUP_MAX, args.groups);
+#endif
 
     // Pass the enclave handle to the enclave.
     args.enclave = enclave;

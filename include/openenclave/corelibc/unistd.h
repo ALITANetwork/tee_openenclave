@@ -46,7 +46,11 @@ ssize_t oe_read(int fd, void* buf, size_t count);
 
 ssize_t oe_write(int fd, const void* buf, size_t count);
 
+#if !defined(WIN32)
 off_t oe_lseek(int fd, off_t offset, int whence);
+int oe_truncate(const char* path, off_t length);
+int oe_truncate_d(uint64_t devid, const char* path, off_t length);
+#endif
 
 int oe_link(const char* oldpath, const char* newpath);
 
@@ -60,9 +64,7 @@ int oe_rmdir(const char* pathname);
 
 int oe_rmdir_d(uint64_t devid, const char* pathname);
 
-int oe_truncate(const char* path, off_t length);
 
-int oe_truncate_d(uint64_t devid, const char* path, off_t length);
 
 char* oe_getcwd(char* buf, size_t size);
 
@@ -72,6 +74,7 @@ int oe_close(int fd);
 
 int __oe_fcntl_va(int fd, int cmd, oe_va_list ap);
 
+#if !defined(WIN32)
 OE_INLINE int oe_fcntl(int fd, int cmd, ...)
 {
     oe_va_list ap;
@@ -81,6 +84,7 @@ OE_INLINE int oe_fcntl(int fd, int cmd, ...)
 
     return r;
 }
+#endif
 
 int oe_gethostname(char* name, size_t len);
 

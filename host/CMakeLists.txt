@@ -1,20 +1,28 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+if(UNIX)
 add_custom_command(
     OUTPUT oe_u.h oe_u.c oe_args.h
     DEPENDS ${CMAKE_SOURCE_DIR}/common/oe.edl edger8r
     COMMAND edger8r
         --search-path ${CMAKE_SOURCE_DIR}/common
         --untrusted ${CMAKE_SOURCE_DIR}/common/oe.edl)
-
 add_custom_target(oe_untrusted_edl DEPENDS oe_u.h oe_u.c oe_args.h)
+endif()
+
 
 # OS specific but arch agnostic files.
 if (UNIX)
   set(PLATFORM_SRC
     ../common/asn1.c
     ../common/cert.c
+    ${CMAKE_CURRENT_BINARY_DIR}/oe_u.c
+    files.c
+    hostepoll.c
+    hostfs.c
+    hostsock.c
+    hostresolver.c
     crypto/openssl/asn1.c
     crypto/openssl/cert.c
     crypto/openssl/crl.c
@@ -36,11 +44,12 @@ elseif (WIN32)
     ../3rdparty/mbedtls/mbedtls/library/bignum.c
     crypto/bcrypt/hmac.c
     crypto/bcrypt/rsa.c
-    windows/hostepoll.c
-    windows/hostuid.c
+#    windows/hostepoll.c
+#    windows/hostuid.c
     windows/hostthread.c
     windows/time.c
-    windows/uname.c)
+#    windows/uname.c
+    )
 else()
   message(FATAL_ERROR "Unknown OS. Only supported OSes are Linux and Windows")
 endif()
@@ -72,12 +81,12 @@ if (OE_SGX)
     sgx/sgxquote.c
     sgx/sgxsign.c
     sgx/sgxtypes.c
-    sgx/tlsverifierh.c
     sgx/traceh.c)
 
   # OS specific as well.
   if (UNIX)
     list(APPEND PLATFORM_SRC
+      sgx/tlsverifierh.c
       sgx/linux/aep.S
       sgx/linux/aesm.c
       sgx/linux/enter.S
@@ -106,20 +115,14 @@ endif()
 
 # Combine with all other non platform dependent files.
 add_library(oehost STATIC
-  ${CMAKE_CURRENT_BINARY_DIR}/oe_u.c
   ../common/datetime.c
-  ../common/kdf.c
   ../common/safecrt.c
+  ../common/kdf.c
   asym_keys.c
   dupenv.c
   error.c
-  files.c
   fopen.c
   hexdump.c
-  hostepoll.c
-  hostfs.c
-  hostsock.c
-  hostresolver.c
   memalign.c
   result.c
   signkey.c
@@ -128,7 +131,9 @@ add_library(oehost STATIC
   crypto/sha.c
   ${PLATFORM_SRC})
 
+if (UNIX)
 add_dependencies(oehost oe_untrusted_edl)
+endif()
 
 set_property(SOURCE ${CMAKE_CURRENT_BINARY_DIR}/oe_u.c
     PROPERTY COMPILE_DEFINITIONS
