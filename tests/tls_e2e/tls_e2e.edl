@@ -9,7 +9,6 @@ enclave {
         bool fail_oe_verify_tls_cert;
     };
 
-    //from "../../../include/openenclave/socket.edl" import *;
     trusted {
         public int setup_tls_server([in] struct tls_control_args *args, [in, string] char* port);
         public int launch_tls_client([in] struct tls_control_args *args, [in, string] char* server_name, [in, string] char* server_port);

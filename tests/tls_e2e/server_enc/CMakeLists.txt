@@ -19,9 +19,4 @@ target_include_directories(tls_server_enc PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/include/openenclave/corelibc)
 
-#target_link_libraries(tls_server_enc oeenclave oelibc)
-#target_link_libraries(tls_server_enc oeenclave oeresolver_hostresolver_enc)
 target_link_libraries(tls_server_enc oeenclave)
-
-
-# oeresolver_hostresolver_enc

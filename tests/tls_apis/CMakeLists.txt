@@ -3,7 +3,7 @@
 
 add_subdirectory(host)
 if (UNIX)
-	add_subdirectory(enc)
+   add_subdirectory(enc)
 endif()
- add_enclave_test(tests/tls
-    tls_host  tls_enc)
+   add_enclave_test(tests/tls
+       tls_host  tls_enc)

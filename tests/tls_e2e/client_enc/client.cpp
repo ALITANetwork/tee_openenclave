@@ -13,9 +13,7 @@
 #include <openenclave/corelibc/netdb.h>
 #include <openenclave/corelibc/netinet/in.h>
 #include <openenclave/internal/device.h>
-//#include <openenclave/internal/hostresolver.h>
 
-//#include <stdarg.h>
 #include <bits/stdfile.h> // For stderr & FILE
 #include <errno.h>        // For errno & error defs
 #include <stdio.h>
@@ -23,7 +21,6 @@
 #include <string.h>
 
 // clang-format off
-//#include "../../../../enclave/mbedtls_corelibc_defs.h"
 #include <mbedtls/pk.h>
 #include <mbedtls/rsa.h>
 #include <mbedtls/entropy.h>
@@ -36,14 +33,12 @@
 #include <mbedtls/debug.h>
 #include <mbedtls/platform.h>
 #include <mbedtls/ssl_cache.h>
-//#include "../../../../enclave/mbedtls_corelibc_undef.h"
 // clang-format on
 
 #include "tls_e2e_t.h"
 #include "../common/utility.h"
 
-#define printf oe_host_printf
-
+//#define printf oe_host_printf
 #define GET_REQUEST "GET / HTTP/1.0\r\n\r\n"
 
 extern "C"
@@ -55,111 +50,50 @@ extern "C"
     int setup_tls_server(struct tls_control_args* config, char* server_port);
 };
 
-// oe_result_t enclave_identity_verifier_callback(oe_identity_t* identity, void
-// *arg);
-
 struct tls_control_args g_control_config;
 
-oe_result_t enclave_identity_verifier_callback(
-    oe_identity_t* identity,
-    void* arg)
-{
-    oe_result_t result = OE_VERIFY_FAILED;
-
-    (void)arg;
-    if (g_control_config.fail_enclave_identity_verifier_callback)
-        goto exit;
-
-    printf("Server:enclave_identity_verifier_callback is called with enclave "
-           "identity information:\n");
-
-    // the enclave's security version
-    printf("identity->security_version = %d\n", identity->security_version);
-
-    // the unique ID for the enclave, for SGX enclaves, this is the MRENCLAVE
-    // value
-    printf("identity->unique_id(MRENCLAVE) :\n");
-    for (int i = 0; i < OE_UNIQUE_ID_SIZE; i++)
-        printf("0x%0x ", (uint8_t)identity->unique_id[i]);
-
-    // Check enclave's signer id
-    // for SGX enclaves, this is the MRSIGNER value
-    printf("\nidentity->signer_id(MRSIGNER) :\n");
-    for (int i = 0; i < OE_SIGNER_ID_SIZE; i++)
-        printf("0x%0x ", (uint8_t)identity->signer_id[i]);
-
-    // if (!verify_mrsigner((char *)OTHER_ENCLAVE_PUBLIC_KEY,
-    //                     sizeof(OTHER_ENCLAVE_PUBLIC_KEY),
-    //                     identity->signer_id,
-    //                     sizeof(identity->signer_id)))
-    // {
-    //     printf("failed:mrsigner not equal!\n");
-    //     goto exit;
-    // }
-    printf("mrsigner id validation passed.\n");
-
-    // The Product ID for the enclave,  for SGX enclaves, this is the ISVPRODID
-    // value
-    printf("\nidentity->product_id :\n");
-    for (int i = 0; i < OE_PRODUCT_ID_SIZE; i++)
-        printf("0x%0x ", (uint8_t)identity->product_id[i]);
-
-    result = OE_OK;
-exit:
-    return result;
-}
-
+// This is the identity validation callback. An TLS connecting party (client or
+// server) can verify the passed in "identity" information to decide whether to
+// accept an connection reqest
 oe_result_t enclave_identity_verifier(oe_identity_t* identity, void* arg)
 {
     oe_result_t result = OE_VERIFY_FAILED;
 
     (void)arg;
 
-    printf("enclave_identity_verifier is called with parsed report:\n");
+    OE_TRACE_INFO("enclave_identity_verifier is called with parsed report:\n");
     if (g_control_config.fail_enclave_identity_verifier_callback)
-        goto exit;
+        goto done;
 
     // Check the enclave's security version
     if (identity->security_version < 1)
     {
-        printf(
+        OE_TRACE_ERROR(
             "identity->security_version checking failed (%d)\n",
             identity->security_version);
-        goto exit;
+        goto done;
     }
 
-    // the unique ID for the enclave
-    // For SGX enclaves, this is the MRENCLAVE value
-    printf("\nidentity->signer_id :\n");
+    // Dump an enclave's unique ID, signer ID and Product ID. They are
+    // MRENCLAVE, MRSIGNER and ISVPRODID for SGX enclaves In a real scenario,
+    // custom id checking should be done here
+    OE_TRACE_INFO("\nidentity->signer_id :\n");
     for (int i = 0; i < OE_UNIQUE_ID_SIZE; i++)
-        printf("0x%0x ", (uint8_t)identity->signer_id[i]);
+        OE_TRACE_INFO("0x%0x ", (uint8_t)identity->signer_id[i]);
 
-    // The signer ID for the enclave.
-    // For SGX enclaves, this is the MRSIGNER value
-    printf("\nparsed_report->identity.signer_id :\n");
+    OE_TRACE_INFO("\nparsed_report->identity.signer_id :\n");
     for (int i = 0; i < OE_SIGNER_ID_SIZE; i++)
-        printf("0x%0x ", (uint8_t)identity->signer_id[i]);
+        OE_TRACE_INFO("0x%0x ", (uint8_t)identity->signer_id[i]);
 
-    // The Product ID for the enclave.
-    // For SGX enclaves, this is the ISVPRODID value
-    printf("\nidentity->product_id :\n");
+    OE_TRACE_INFO("\nidentity->product_id :\n");
     for (int i = 0; i < OE_PRODUCT_ID_SIZE; i++)
-        printf("0x%0x ", (uint8_t)identity->product_id[i]);
+        OE_TRACE_INFO("0x%0x ", (uint8_t)identity->product_id[i]);
 
     result = OE_OK;
-exit:
+done:
     return result;
 }
 
-// static void debug_print(void *ctx, int level,
-// 	const char *file, int line,
-// 	const char *str)
-// {
-// 	((void)level);
-
-// 	mbedtls_fprintf((FILE *)ctx, "%s:%04d: %s", file, line, str);
-// //	fflush((FILE *)ctx);
-// }
 static void debug_print(
     void* ctx,
     int level,
@@ -170,8 +104,7 @@ static void debug_print(
     ((void)level);
     ((void)ctx);
 
-    printf("%s:%04d: %s", file, line, str);
-    // fflush(ctx);
+    OE_TRACE_INFO("%s:%04d: %s", file, line, str);
 }
 
 int configure_client_ssl(
@@ -184,16 +117,16 @@ int configure_client_ssl(
     int ret = 1;
     oe_result_t result = OE_FAILURE;
 
-    printf("Generating the certificate and private key\n");
+    OE_TRACE_INFO("Generating the certificate and private key\n");
     result = generate_certificate_and_pkey(client_cert, private_key);
     if (result != OE_OK)
     {
-        printf("failed with %s\n", oe_result_str(result));
+        OE_TRACE_ERROR("failed with %s\n", oe_result_str(result));
         ret = 1;
-        goto exit;
+        goto done;
     }
 
-    printf("Setting up the SSL/TLS structure...\n");
+    OE_TRACE_INFO("Setting up the SSL/TLS structure...\n");
 
     if ((ret = mbedtls_ssl_config_defaults(
              conf,
@@ -201,8 +134,9 @@ int configure_client_ssl(
              MBEDTLS_SSL_TRANSPORT_STREAM,
              MBEDTLS_SSL_PRESET_DEFAULT)) != 0)
     {
-        printf("failed! mbedtls_ssl_config_defaults returned %d\n", ret);
-        goto exit;
+        OE_TRACE_ERROR(
+            "failed! mbedtls_ssl_config_defaults returned %d\n", ret);
+        goto done;
     }
 
     // set up random engine
@@ -210,19 +144,13 @@ int configure_client_ssl(
     // set debug function
     mbedtls_ssl_conf_dbg(conf, debug_print, stdout);
 
-    // Set the certificate verification mode Default: NONE on server, REQUIRED
-    // on client. MBEDTLS_SSL_VERIFY_NONE: peer certificate is not checked
-    // (default on server) (insecure on client) MBEDTLS_SSL_VERIFY_OPTIONAL:
-    // peer certificate is checked, however the handshake continues
-    //                              even if verification failed;
-    //                              mbedtls_ssl_get_verify_result() can be
-    //                              called after the handshake is complete.
-    // MBEDTLS_SSL_VERIFY_REQUIRED: peer must present a valid certificate,
-    // handshake is aborted if
-    //                              verification failed. (default on client)
-
+    // Customized certificate validation will replace TLS default operation, set
+    // authmod to OPTIONAL here Set the certificate verification mode to
+    // MBEDTLS_SSL_VERIFY_OPTIONAL, which peer certificate is checked, however
+    // the handshake continues even if verification failed;
+    // mbedtls_ssl_get_verify_result() can be called after the handshake is
+    // complete.
     mbedtls_ssl_conf_authmode(conf, MBEDTLS_SSL_VERIFY_OPTIONAL);
-    // mbedtls_ssl_conf_authmode(conf, MBEDTLS_SSL_VERIFY_NONE);
 
     mbedtls_ssl_conf_verify(conf, cert_verify_callback, NULL);
 
@@ -258,34 +186,19 @@ int configure_client_ssl(
 
     if ((ret = mbedtls_ssl_conf_own_cert(conf, client_cert, private_key)) != 0)
     {
-        printf("failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n", ret);
-        goto exit;
+        OE_TRACE_ERROR(
+            "failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n", ret);
+        goto done;
     }
 
     if ((ret = mbedtls_ssl_setup(ssl, conf)) != 0)
     {
-        printf("failed! mbedtls_ssl_setup returned %d\n", ret);
-        goto exit;
+        OE_TRACE_ERROR("failed! mbedtls_ssl_setup returned %d\n", ret);
+        goto done;
     }
     ret = 0;
-exit:
-    // fflush(stdout);
+done:
     return ret;
-}
-
-int setup_socket_lib()
-{
-    // oe_resolver_t* host_resolver = NULL;
-
-    //    mbedtls_printf("client:enclave: setup_socket_lib\n");
-    //    host_resolver = oe_get_hostresolver();
-    //    (void)oe_register_resolver(2, host_resolver);
-    //    oe_set_default_socket_devid(OE_DEVID_HOST_SOCKET);
-    oe_enable_feature(OE_FEATURE_HOST_RESOLVER);
-    oe_enable_feature(OE_FEATURE_HOST_SOCKETS);
-    oe_set_default_socket_devid(OE_DEVID_HOST_SOCKET);
-
-    return 0;
 }
 
 int launch_tls_client(
@@ -295,6 +208,7 @@ int launch_tls_client(
 {
     int ret = 1;
     uint32_t uret = 1;
+    oe_result_t result = OE_FAILURE;
     int len = 0;
     int exit_code = MBEDTLS_EXIT_FAILURE;
     unsigned char buf[1024];
@@ -307,7 +221,10 @@ int launch_tls_client(
     mbedtls_x509_crt client_cert;
     mbedtls_pk_context pkey;
 
-    setup_socket_lib();
+    // Explicitly enable socket and resolver features, which are required by
+    // mbedtls' TLS feature
+    OE_CHECK(oe_enable_feature(OE_FEATURE_HOST_RESOLVER));
+    OE_CHECK(oe_enable_feature(OE_FEATURE_HOST_SOCKETS));
 
     mbedtls_debug_set_threshold(DEBUG_LEVEL);
 
@@ -323,11 +240,11 @@ int launch_tls_client(
     g_control_config = *config;
     if (CLIENT_REQUEST_PAYLOAD_SIZE != strlen(GET_REQUEST))
     {
-        printf(
+        OE_TRACE_ERROR(
             "Error: this client's request payload size does not match"
             " what's defined in CLIENT_REQUEST_PAYLOAD_SIZE, please fix it\n");
         exit_code = MBEDTLS_EXIT_FAILURE;
-        goto exit;
+        goto done;
     }
 
     mbedtls_entropy_init(&entropy);
@@ -338,25 +255,26 @@ int launch_tls_client(
              (const unsigned char*)pers,
              strlen(pers))) != 0)
     {
-        printf("Failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", ret);
-        goto exit;
+        OE_TRACE_ERROR("Failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", ret);
+        goto done;
     }
 
     //
     // Start the connection
     //
-    printf("client (E)Connecting to tcp/%s/%s...\n", server_name, server_port);
+    OE_TRACE_INFO(
+        "client (E)Connecting to tcp/%s/%s...\n", server_name, server_port);
     if ((ret = mbedtls_net_connect(
              &server_fd, server_name, server_port, MBEDTLS_NET_PROTO_TCP)) != 0)
     {
-        printf(
+        OE_TRACE_ERROR(
             "Failed\n  ! mbedtls_net_connect returned %d (errno=%d)\n",
             ret,
             errno);
-        goto exit;
+        goto done;
     }
 
-    printf("Connected to server @%s.%s\n", server_name, server_port);
+    OE_TRACE_INFO("Connected to server @%s.%s\n", server_name, server_port);
 
     //
     // Configure client SSL settings
@@ -364,14 +282,14 @@ int launch_tls_client(
     ret = configure_client_ssl(&ssl, &conf, &ctr_drbg, &client_cert, &pkey);
     if (ret != 0)
     {
-        printf("Failed! mbedtls_net_connect returned %d\n", ret);
-        goto exit;
+        OE_TRACE_ERROR("Failed! mbedtls_net_connect returned %d\n", ret);
+        goto done;
     }
 
     if ((ret = mbedtls_ssl_set_hostname(&ssl, server_name)) != 0)
     {
-        printf("Failed! mbedtls_ssl_set_hostname returned %d\n", ret);
-        goto exit;
+        OE_TRACE_ERROR("Failed! mbedtls_ssl_set_hostname returned %d\n", ret);
+        goto done;
     }
 
     mbedtls_ssl_set_bio(
@@ -380,34 +298,35 @@ int launch_tls_client(
     //
     // Handshake
     //
-    printf("Performing the SSL/TLS handshake...\n");
+    OE_TRACE_INFO("Performing the SSL/TLS handshake...\n");
     while ((ret = mbedtls_ssl_handshake(&ssl)) != 0)
     {
         if (ret != MBEDTLS_ERR_SSL_WANT_READ &&
             ret != MBEDTLS_ERR_SSL_WANT_WRITE)
         {
-            printf(
+            OE_TRACE_ERROR(
                 "Failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", -ret);
-            goto exit;
+            goto done;
         }
     }
 
     uret = mbedtls_ssl_get_verify_result(&ssl);
     if (uret != 0)
     {
-        printf("client mbedtls_ssl_handshake failed with uret = 0x%x\n", uret);
+        OE_TRACE_ERROR(
+            "client mbedtls_ssl_handshake failed with uret = 0x%x\n", uret);
         mbedtls_ssl_close_notify(&ssl);
         exit_code = MBEDTLS_EXIT_FAILURE;
-        goto exit;
+        goto done;
     }
-    printf("client mbedtls_ssl_handshake ok\n");
+    OE_TRACE_INFO("client mbedtls_ssl_handshake ok\n");
 
     //
     // Start simple communication with the TLS server
     //
 
     // Write an GET request to the server
-    printf("Write to server-->:");
+    OE_TRACE_INFO("Write to server-->:");
     //	len = sprintf((char *)buf, GET_REQUEST);
     len = snprintf((char*)buf, sizeof(buf) - 1, GET_REQUEST);
     while ((ret = mbedtls_ssl_write(&ssl, buf, (size_t)len)) <= 0)
@@ -415,16 +334,16 @@ int launch_tls_client(
         if (ret != MBEDTLS_ERR_SSL_WANT_READ &&
             ret != MBEDTLS_ERR_SSL_WANT_WRITE)
         {
-            printf("Failed! mbedtls_ssl_write returned %d\n", ret);
-            goto exit;
+            OE_TRACE_ERROR("Failed! mbedtls_ssl_write returned %d\n", ret);
+            goto done;
         }
     }
 
     len = ret;
-    printf("%d bytes written\n%s", len, (char*)buf);
+    OE_TRACE_INFO("%d bytes written\n%s", len, (char*)buf);
 
     // Read the HTTP response from server
-    printf("<-- Read from server:\n");
+    OE_TRACE_INFO("<-- Read from server:\n");
     do
     {
         len = sizeof(buf) - 1;
@@ -437,49 +356,49 @@ int launch_tls_client(
 
         if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY)
         {
-            printf("Failed! mbedtls_ssl_read returned %d\n\n", ret);
+            OE_TRACE_ERROR("Failed! mbedtls_ssl_read returned %d\n\n", ret);
             exit_code = ret;
-            goto exit;
+            goto done;
             // break;
         }
 
         if (ret < 0)
         {
-            printf("Failed! mbedtls_ssl_read returned %d\n\n", ret);
+            OE_TRACE_ERROR("Failed! mbedtls_ssl_read returned %d\n\n", ret);
             break;
         }
 
         if (ret == 0)
         {
-            printf("\n\nEOF\n\n");
+            OE_TRACE_INFO("\n\nEOF\n\n");
             break;
         }
         len = ret;
-        printf(" %d bytes read\n%s", len, (char*)buf);
+        OE_TRACE_INFO(" %d bytes read\n%s", len, (char*)buf);
         if (len != SERVER_RESPONSE_PAYLOAD_SIZE) // hard coded to match server
         {
-            printf(
+            OE_TRACE_ERROR(
                 "ERROR: expected reading %d bytes but only got %d bytes\n",
                 SERVER_RESPONSE_PAYLOAD_SIZE,
                 len);
             exit_code = MBEDTLS_EXIT_FAILURE;
-            goto exit;
+            goto done;
         }
         else
         {
-            printf("Client done reading server data\n");
+            OE_TRACE_INFO("Client done reading server data\n");
             break;
         }
     } while (1);
 
     mbedtls_ssl_close_notify(&ssl);
     exit_code = MBEDTLS_EXIT_SUCCESS;
-exit:
+done:
     if (exit_code != MBEDTLS_EXIT_SUCCESS)
     {
         char error_buf[100];
         mbedtls_strerror(ret, error_buf, 100);
-        printf("Last error was: %d - %s\n", ret, error_buf);
+        OE_TRACE_ERROR("Last error was: %d - %s\n", ret, error_buf);
     }
 
     mbedtls_net_free(&server_fd);
@@ -492,10 +411,6 @@ exit:
     mbedtls_ctr_drbg_free(&ctr_drbg);
     mbedtls_entropy_free(&entropy);
 
-    // if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY)
-    // 	ret = 0;
-
-    // fflush(stdout);
     return (exit_code);
 }
 
@@ -503,7 +418,7 @@ int setup_tls_server(struct tls_control_args* config, char* server_port)
 {
     (void)config;
     (void)server_port;
-    printf("Client: calling setup_tls_server: Never reach here\n");
+    OE_TRACE_INFO("Client: calling setup_tls_server: Never reach here\n");
     return 0;
 }
 
