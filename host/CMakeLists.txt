@@ -19,7 +19,6 @@ if (UNIX)
     ../common/cert.c
     ${CMAKE_CURRENT_BINARY_DIR}/oe_u.c
     files.c
-    fopen.c
     hostepoll.c
     hostfs.c
     hostsock.c
@@ -122,6 +121,7 @@ add_library(oehost STATIC
   asym_keys.c
   dupenv.c
   error.c
+  fopen.c
   hexdump.c
   memalign.c
   result.c
