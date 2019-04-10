@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#define OE_NEED_STDC_NAMES
-
 #include <openenclave/enclave.h>
 
 #include <openenclave/bits/safemath.h>
@@ -18,14 +16,14 @@
 #define MAGIC 0xe437a308
 #define BUFFER_SIZE (OE_BUFSIZ * 4)
 
+/* TODO: use buffering to optimize small reads and writes. */
+
+/* ATTN: add locking. */
+
 struct _OE_IO_FILE
 {
     uint32_t magic;
     int fd;
-    uint8_t inbuf[BUFFER_SIZE];
-    size_t inbuf_size;
-    uint8_t outbuf[BUFFER_SIZE];
-    size_t outbuf_size;
     oe_spinlock_t lock;
     bool err;
     bool eof;
@@ -184,9 +182,7 @@ OE_FILE* oe_fopen(const char* path, const char* mode)
 
     /* Open the OEFS file. */
     if ((fd = oe_open(path, flags, CREATE_MODE)) == -1)
-    {
         goto done;
-    }
 
     /* Initialize the stream object. */
     stream->magic = MAGIC;
@@ -210,19 +206,6 @@ int oe_fflush(OE_FILE* stream)
     {
         oe_errno = EINVAL;
         goto done;
-    }
-
-    if (stream->outbuf_size)
-    {
-        ssize_t n = _write_n(stream->fd, stream->outbuf, stream->outbuf_size);
-
-        if (n == -1)
-            goto done;
-
-        if ((size_t)n != stream->outbuf_size)
-            goto done;
-
-        stream->outbuf_size = 0;
     }
 
     ret = 0;
@@ -252,6 +235,9 @@ int oe_fclose(OE_FILE* stream)
     }
 
     memset(stream, 0, sizeof(OE_FILE));
+
+    oe_free(stream);
+
     ret = 0;
 
 done:
@@ -262,7 +248,6 @@ size_t oe_fread(void* ptr_, size_t size, size_t nmemb, OE_FILE* stream)
 {
     size_t ret = 0;
     size_t count;
-    ssize_t nread = 0;
     uint8_t* ptr = (uint8_t*)ptr_;
 
     if (oe_safe_mul_u64(size, nmemb, &count) != OE_OK)
@@ -282,74 +267,23 @@ size_t oe_fread(void* ptr_, size_t size, size_t nmemb, OE_FILE* stream)
         goto done;
     }
 
-    /* Flush the write buffer before reading. */
-    if (oe_fflush(stream) != 0)
+    /* Read the data. */
     {
-        stream->err = true;
-        goto done;
-    }
+        ssize_t n = _read_n(stream->fd, ptr, count);
 
-    /* Read from the input buffer until caller's buffer is full. */
-    while (count > 0)
-    {
-        /* Read from the input buffer first. */
-        if (stream->inbuf_size)
+        if (n == -1)
         {
-            size_t n;
-
-            if (count <= stream->inbuf_size)
-                n = count;
-            else
-                n = stream->inbuf_size;
-
-            memcpy(ptr, stream->inbuf, n);
-            ptr += n;
-            count -= n;
-            nread += n;
-
-            memmove(stream->inbuf, stream->inbuf + n, stream->inbuf_size - n);
-
-            stream->inbuf_size -= n;
+            stream->err = true;
+            goto done;
         }
 
-        /* Replinish the input buffer if it is depleted. */
-        if (count > 0)
+        if ((size_t)n <= count)
         {
-            ssize_t n;
-
-            /* This is a logic error and should not happen. */
-            if (stream->inbuf_size != 0)
-            {
-                oe_errno = EINVAL;
-                goto done;
-            }
-
-            /* Break out if already at end of file. */
-            if (stream->eof)
-                break;
-
-            /* Read into the input buffer. */
-            if ((n = _read_n(stream->fd, stream->inbuf, BUFFER_SIZE)) == -1)
-            {
-                stream->err = true;
-                goto done;
-            }
-
-            /* Set flag to indicate that the end-of-file reached. */
-            if ((size_t)n < BUFFER_SIZE)
-            {
-                stream->eof = true;
-            }
-
-            /* Increment input buffer size. */
-            stream->inbuf_size += (size_t)n;
+            stream->eof = true;
         }
+
+        ret = (size_t)n / size;
     }
-
-    ret = (size_t)nread / size;
-
-    if (ret == 0)
-        stream->eof = true;
 
 done:
 
@@ -376,33 +310,18 @@ size_t oe_fwrite(const void* ptr_, size_t size, size_t nmemb, OE_FILE* stream)
         goto done;
     }
 
-    /* Discard the input buffer. */
-    stream->inbuf_size = 0;
-
-    /* While there are more bytes to be written. */
-    while (count > 0)
+    /* Write the data. */
     {
-        size_t r = BUFFER_SIZE - stream->outbuf_size;
-        size_t n = (count < r) ? count : r;
+        ssize_t n = _write_n(stream->fd, ptr, count);
 
-        /* Copy more caller data into the output buffer. */
-        memcpy(&stream->outbuf[stream->outbuf_size], ptr, n);
-        ptr += n;
-        count -= n;
-        stream->outbuf_size += n;
-
-        /* Flush the output buffer if it is full. */
-        if (stream->outbuf_size == BUFFER_SIZE)
+        if (n <= 0)
         {
-            if (oe_fflush(stream) == OE_EOF)
-            {
-                stream->eof = true;
-                stream->err = true;
-                goto done;
-            }
+            stream->err = true;
+            stream->eof = true;
+            goto done;
         }
 
-        ret += n;
+        ret = (size_t)n / size;
     }
 
 done:
@@ -440,15 +359,6 @@ int oe_fseek(OE_FILE* stream, long offset, int whence)
         oe_errno = EINVAL;
         goto done;
     }
-
-    if (oe_fflush(stream) != 0)
-    {
-        stream->err = true;
-        goto done;
-    }
-
-    /* Discard the input buffer. */
-    stream->inbuf_size = 0;
 
     if ((r = oe_lseek(stream->fd, offset, whence)) == (off_t)-1)
         goto done;
@@ -562,5 +472,50 @@ char* oe_fgets(char* s, int size, OE_FILE* stream)
     ret = s;
 
 done:
+    return ret;
+}
+
+int oe_fileno(OE_FILE* stream)
+{
+    int ret = -1;
+
+    if (!_valid(stream))
+    {
+        oe_errno = EBADF;
+        goto done;
+    }
+
+    ret = stream->fd;
+
+done:
+    return ret;
+}
+
+OE_FILE* oe_fdopen(int fd, const char* mode)
+{
+    OE_FILE* ret = NULL;
+    OE_FILE* stream = NULL;
+
+    if (fd < 0 || !mode)
+        goto done;
+
+    /* Create the file object. */
+    if (!(stream = oe_calloc(1, sizeof(OE_FILE))))
+    {
+        oe_errno = ENOMEM;
+        goto done;
+    }
+
+    /* Initialize the stream object. */
+    stream->magic = MAGIC;
+    stream->fd = fd;
+    ret = stream;
+    stream = NULL;
+
+done:
+
+    if (stream)
+        oe_free(stream);
+
     return ret;
 }

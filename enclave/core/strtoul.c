@@ -4,6 +4,7 @@
 #include <openenclave/bits/defs.h>
 #include <openenclave/bits/types.h>
 #include <openenclave/corelibc/ctype.h>
+#include <openenclave/corelibc/stdlib.h>
 
 //
 // If c is a digit character:
@@ -152,6 +153,11 @@ unsigned long int oe_strtoul(const char* nptr, char** endptr, int base)
     }
 
     return x;
+}
+
+long int oe_strtol(const char* nptr, char** endptr, int base)
+{
+    return (long)oe_strtoul(nptr, endptr, base);
 }
 
 /*

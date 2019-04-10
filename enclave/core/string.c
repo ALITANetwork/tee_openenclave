@@ -171,3 +171,14 @@ char* oe_strdup(const char* s)
 }
 
 OE_WEAK_ALIAS(oe_strcmp, strcmp);
+
+int oe_strcasecmp(const char* s1, const char* s2)
+{
+    while ((*s1 && *s2) && (oe_toupper(*s1) == oe_toupper(*s2)))
+    {
+        s1++;
+        s2++;
+    }
+
+    return oe_toupper(*s1) - oe_toupper(*s2);
+}

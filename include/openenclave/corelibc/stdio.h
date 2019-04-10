@@ -29,6 +29,19 @@ int oe_vprintf(const char* format, oe_va_list ap);
 OE_PRINTF_FORMAT(1, 2)
 int oe_printf(const char* format, ...);
 
+int oe_vfprintf(OE_FILE* stream, const char* format, oe_va_list ap);
+
+OE_PRINTF_FORMAT(2, 3)
+OE_INLINE int oe_fprintf(OE_FILE* stream, const char* format, ...)
+{
+    oe_va_list ap;
+    oe_va_start(ap, format);
+    int r = oe_vfprintf(stream, format, ap);
+    oe_va_end(ap);
+
+    return r;
+}
+
 int oe_rename(const char* oldpath, const char* newpath);
 
 int oe_rename_d(uint64_t devid, const char* oldpath, const char* newpath);
@@ -57,21 +70,23 @@ int oe_fgetc(OE_FILE* stream);
 
 char* oe_fgets(char* s, int size, OE_FILE* stream);
 
+int oe_fileno(OE_FILE* stream);
+
+OE_FILE* oe_fdopen(int fd, const char* mode);
+
 #if defined(OE_NEED_STDC_NAMES)
 
 #include "bits/stdfile.h"
 #define BUFSIZ OE_BUFSIZ
 #define EOF (-1)
 
-OE_INLINE
-int vsnprintf(char* str, size_t size, const char* format, va_list ap)
+OE_INLINE int vsnprintf(char* str, size_t size, const char* format, va_list ap)
 {
     return oe_vsnprintf(str, size, format, ap);
 }
 
 #ifdef _MSC_VER
-OE_INLINE
-int _vsnprintf(char* str, size_t size, const char* format, va_list ap)
+OE_INLINE int _vsnprintf(char* str, size_t size, const char* format, va_list ap)
 {
     return oe_vsnprintf(str, size, format, ap);
 }
@@ -101,6 +116,20 @@ int printf(const char* format, ...)
     va_start(ap, format);
     return oe_vprintf(format, ap);
     va_end(ap);
+}
+
+OE_PRINTF_FORMAT(2, 3)
+OE_INLINE int fprintf(FILE* stream, const char* format, ...)
+{
+    oe_va_list ap;
+    oe_va_start(ap, format);
+    return oe_vfprintf((OE_FILE*)stream, format, ap);
+    oe_va_end(ap);
+}
+
+OE_INLINE int vfprintf(FILE* stream, const char* format, va_list ap)
+{
+    return oe_vfprintf((OE_FILE*)stream, format, ap);
 }
 
 OE_INLINE int rename(const char* oldpath, const char* newpath)
@@ -169,6 +198,16 @@ OE_INLINE int fgetc(FILE* stream)
 OE_INLINE char* fgets(char* s, int size, FILE* stream)
 {
     return oe_fgets(s, size, (OE_FILE*)stream);
+}
+
+OE_INLINE int fileno(FILE* stream)
+{
+    return oe_fileno((OE_FILE*)stream);
+}
+
+OE_INLINE FILE* fdopen(int fd, const char* mode)
+{
+    return (FILE*)oe_fdopen(fd, mode);
 }
 
 #endif /* defined(OE_NEED_STDC_NAMES) */

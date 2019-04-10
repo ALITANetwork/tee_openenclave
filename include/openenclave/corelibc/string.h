@@ -49,6 +49,8 @@ size_t oe_strspn(const char* s, const char* accept);
 
 size_t oe_strcspn(const char* s, const char* reject);
 
+int oe_strcasecmp(const char* s1, const char* s2);
+
 #if defined(OE_NEED_STDC_NAMES)
 
 OE_INLINE
@@ -130,6 +132,11 @@ OE_INLINE size_t strspn(const char* s, const char* accept)
 OE_INLINE size_t strcspn(const char* s, const char* reject)
 {
     return oe_strcspn(s, reject);
+}
+
+OE_INLINE int strcasecmp(const char* s1, const char* s2)
+{
+    return oe_strcasecmp(s1, s2);
 }
 
 #endif /* defined(OE_NEED_STDC_NAMES) */
