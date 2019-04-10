@@ -10,7 +10,7 @@
 #include <string.h>
 
 #if defined(WIN32)
-int posix_memalign(void **res, size_t align, size_t len);
+int posix_memalign(void** res, size_t align, size_t len);
 #endif
 
 OE_EXTERNC_BEGIN

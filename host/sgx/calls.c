@@ -8,14 +8,14 @@
 #if defined(__linux__)
 #include <dlfcn.h>
 #include <linux/futex.h>
-#include <setjmp.h>
-#include <sys/mman.h>
-#include <sys/syscall.h>
-#include <unistd.h>
 #include <openenclave/internal/epoll.h>
 #include <openenclave/internal/hostfs.h>
 #include <openenclave/internal/hostsock.h>
 #include <openenclave/internal/resolver.h>
+#include <setjmp.h>
+#include <sys/mman.h>
+#include <sys/syscall.h>
+#include <unistd.h>
 #elif defined(_WIN32)
 #include <Windows.h>
 #else
@@ -272,7 +272,7 @@ static oe_result_t _handle_call_host_function(
     if (args_ptr->input_buffer == NULL || args_ptr->output_buffer == NULL)
         OE_RAISE(OE_INVALID_PARAMETER);
 
-    // Select either internal or user ocall table.
+        // Select either internal or user ocall table.
 #if !defined(WIN32)
     if (args_ptr->is_internal_call)
     {

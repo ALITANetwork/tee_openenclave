@@ -64,8 +64,6 @@ int oe_rmdir(const char* pathname);
 
 int oe_rmdir_d(uint64_t devid, const char* pathname);
 
-
-
 char* oe_getcwd(char* buf, size_t size);
 
 int oe_chdir(const char* path);

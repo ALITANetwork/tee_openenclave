@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "myfileio.h"
 
 #include "mbed_u.h"
 
@@ -24,15 +23,15 @@ char* find_data_file(char* str, size_t size)
         printf("buffer overflow error");
         return NULL;
     }
-    token = strstr(str, checker);
-    if (token == NULL)
+
+    if (!(token = strstr(str, checker)))
     {
         printf("!!File is not in format !!!!\n");
         return token;
     }
 
     strncat(str, tail, strlen(tail));
-    printf("######## data_file: %s ###### \n", token);
+
     return token;
 }
 
@@ -110,16 +109,14 @@ int main(int argc, const char* argv[])
     int selftest = 0;
     uint32_t flags = oe_get_create_flags();
     char* data_file_name = NULL;
-    const char* tmp_dir;
+    const oe_enclave_type_t type = OE_ENCLAVE_TYPE_SGX;
 
-    // Check argument count:
+    /* Check argument count */
     if (argc != 3)
     {
         fprintf(stderr, "Usage: %s ENCLAVE\n", argv[0]);
         exit(1);
     }
-
-    tmp_dir = argv[2];
 
     printf("=== %s: %s %s\n", argv[0], argv[1], argv[2]);
 
@@ -133,8 +130,7 @@ int main(int argc, const char* argv[])
     {
         selftest = 0;
 
-        data_file_name = find_data_file(temp, sizeof(temp));
-        if (data_file_name == NULL)
+        if (!(data_file_name = find_data_file(temp, sizeof(temp))))
         {
             printf("Could not get test data file name from %s\n", temp);
             return 0;
@@ -145,17 +141,16 @@ int main(int argc, const char* argv[])
             data_file_name);
     }
 
-    // Create the enclave:
-    if ((result = oe_create_mbed_enclave(
-             argv[1], OE_ENCLAVE_TYPE_SGX, flags, NULL, 0, &enclave)) != OE_OK)
-        oe_put_err("oe_create_enclave(): result=%u", result);
+    /* Create the enclave. */
+    result = oe_create_mbed_enclave(argv[1], type, flags, NULL, 0, &enclave);
+    OE_TEST(result == OE_OK);
 
-    // Invoke "test()" in the enclave.
+    /* Invoke the enclave's "test()" function. */
     _test(enclave, argv[2], selftest, data_file_name);
 
-    // Shutdown the enclave.
-    if ((result = oe_terminate_enclave(enclave)) != OE_OK)
-        oe_put_err("oe_terminate_enclave(): result=%u", result);
+    /* Shutdown the enclave. */
+    result = oe_terminate_enclave(enclave);
+    OE_TEST(result == OE_OK);
 
     printf("\n");
 
