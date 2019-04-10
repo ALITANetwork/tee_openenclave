@@ -69,7 +69,7 @@ target_link_libraries(mbedtls_imported INTERFACE oecore)
 add_library(mbedx509_imported IMPORTED STATIC)
 set_target_properties(mbedx509_imported PROPERTIES
   IMPORTED_LOCATION ${BINARY_DIR}/library/libmbedx509.a)
-target_link_libraries(mbedx509_imported INTERFACE oelibc oecore)
+target_link_libraries(mbedx509_imported INTERFACE oecore)
 
 add_library(mbedcrypto_imported IMPORTED STATIC)
 set_target_properties(mbedcrypto_imported PROPERTIES
