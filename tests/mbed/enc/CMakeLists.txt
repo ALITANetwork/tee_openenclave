@@ -35,17 +35,25 @@ function(add_mbed_test_enclave NAME)
     SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/test_suite_${NAME}.c
     enc.c
-    start.S
     ${gen})
 
-  target_compile_options(mbedtest_suite_${NAME} PRIVATE -Wno-error)
-  target_compile_definitions(mbedtest_suite_${NAME} PRIVATE -D__TEST__="${NAME}")
+  target_compile_options(mbedtest_suite_${NAME} PRIVATE
+    -Wno-incompatible-pointer-types-discards-qualifiers
+    -Wno-error
+    -Wno-conversion
+    -Wno-sign-conversion
+    -Wno-unused-function
+    -Wno-shorten-64-to-32)
+  target_compile_definitions(mbedtest_suite_${NAME} PRIVATE
+    -D__TEST__="${NAME}"
+    -DOE_NEED_STDC_NAMES)
   target_include_directories(mbedtest_suite_${NAME} PRIVATE
     ..
+    ${PROJECT_SOURCE_DIR}/include/openenclave/corelibc
     ${PROJECT_SOURCE_DIR}/3rdparty/mbedtls/mbedtls/tests
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_BINARY_DIR}/3rdparty/mbedtls/mbedtls-wrap-prefix/src/mbedtls-wrap/include/)
-  target_link_libraries(mbedtest_suite_${NAME} oelibc)
+  target_link_libraries(mbedtest_suite_${NAME} oeenclave)
 
   maybe_build_using_clangw(mbedtest_suite_${NAME})
 
@@ -79,17 +87,26 @@ function(add_mbed_selftest_enclave)
     SOURCES
     selftest_wrapper.c
     enc.c
-    start.S
     ${gen})
 
-  target_compile_options(mbedtest_selftest PRIVATE -Wno-conversion -Wno-pointer-arith)
-  target_compile_definitions(mbedtest_selftest PRIVATE -D__TEST__="selftest")
+  target_compile_options(mbedtest_selftest PRIVATE
+    -Wno-incompatible-pointer-types-discards-qualifiers
+    -Wno-error
+    -Wno-conversion
+    -Wno-sign-conversion
+    -Wno-unused-function
+    -Wno-shorten-64-to-32
+    -Wno-pointer-arith)
+  target_compile_definitions(mbedtest_selftest PRIVATE
+    -D__TEST__="selftest"
+    -DOE_NEED_STDC_NAMES)
   target_include_directories(mbedtest_selftest PRIVATE
     ..
+    ${PROJECT_SOURCE_DIR}/include/openenclave/corelibc
     ${PROJECT_SOURCE_DIR}/3rdparty/mbedtls/mbedtls/tests
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_BINARY_DIR}/3rdparty/mbedtls/mbedtls-wrap-prefix/src/mbedtls-wrap/include/)
-  target_link_libraries(mbedtest_selftest oelibc)
+  target_link_libraries(mbedtest_selftest oeenclave)
 
   maybe_build_using_clangw(mbedtest_selftest)
 

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+#include <assert.h>
 #include <openenclave/host.h>
 #include <openenclave/internal/calls.h>
 #include <openenclave/internal/error.h>
@@ -63,13 +64,17 @@ void datafileloc(char* data_file_name, char* path)
     return;
 }
 
-void Test(oe_enclave_t* enclave, int selftest, char* data_file_name)
+static void _test(
+    oe_enclave_t* enclave,
+    const char* cwd,
+    int selftest,
+    char* data_file_name)
 {
     char path[1024];
     int return_value = 1;
     char* in_testname = NULL;
     char out_testname[STRLEN];
-    struct mbed_args args = {0};
+
     if (!selftest)
     {
         datafileloc(data_file_name, path);
@@ -77,13 +82,9 @@ void Test(oe_enclave_t* enclave, int selftest, char* data_file_name)
     }
 
     oe_result_t result =
-        test(enclave, &return_value, in_testname, out_testname, &args);
+        test(enclave, &return_value, cwd, in_testname, out_testname);
+
     OE_TEST(result == OE_OK);
-    if (!selftest)
-    {
-        OE_TEST(args.total > 0);
-        OE_TEST(args.total > args.skipped);
-    }
 
     if (return_value == 0)
     {
@@ -109,14 +110,18 @@ int main(int argc, const char* argv[])
     int selftest = 0;
     uint32_t flags = oe_get_create_flags();
     char* data_file_name = NULL;
+    const char* tmp_dir;
+
     // Check argument count:
-    if (argc != 2)
+    if (argc != 3)
     {
         fprintf(stderr, "Usage: %s ENCLAVE\n", argv[0]);
         exit(1);
     }
 
-    printf("=== %s: %s\n", argv[0], argv[1]);
+    tmp_dir = argv[2];
+
+    printf("=== %s: %s %s\n", argv[0], argv[1], argv[2]);
 
     strcpy(temp, argv[1]);
 
@@ -145,8 +150,8 @@ int main(int argc, const char* argv[])
              argv[1], OE_ENCLAVE_TYPE_SGX, flags, NULL, 0, &enclave)) != OE_OK)
         oe_put_err("oe_create_enclave(): result=%u", result);
 
-    // Invoke "Test()" in the enclave.
-    Test(enclave, selftest, data_file_name);
+    // Invoke "test()" in the enclave.
+    _test(enclave, argv[2], selftest, data_file_name);
 
     // Shutdown the enclave.
     if ((result = oe_terminate_enclave(enclave)) != OE_OK)

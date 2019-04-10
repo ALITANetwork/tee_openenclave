@@ -390,7 +390,10 @@ static size_t _format(
     {
         /* left justified */
         n += _prefix(out, ph);
-        n += _fill(out, '0', nprecision);
+
+        if (ph->type != TYPE_s)
+            n += _fill(out, '0', nprecision);
+
         n += out->write(out, buf, len);
         n += _fill(out, pad, nwidth);
     }
@@ -399,7 +402,10 @@ static size_t _format(
         /* right justified */
         n += _fill(out, pad, nwidth);
         n += _prefix(out, ph);
-        n += _fill(out, '0', nprecision);
+
+        if (ph->type != TYPE_s)
+            n += _fill(out, '0', nprecision);
+
         n += out->write(out, buf, len);
     }
 

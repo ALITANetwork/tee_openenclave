@@ -7,20 +7,15 @@ enclave {
     include "sys/stat.h"
     include "myfileio.h"
 
-    struct mbed_args {
-        int skipped;
-        int total;
-    };
-
     enum string_limit {
         STRLEN = 1024
     };
 
     trusted {
         public int test(
+            [in, string] const char* cwd,
             [in, string] const char* in_testname,
-            [out, size=1024] char* out_testname,
-            [out] mbed_args* args);
+            [out, size=1024] char* out_testname);
     };
 
     untrusted {

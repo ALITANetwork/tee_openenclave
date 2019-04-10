@@ -31,7 +31,7 @@ static const char* _lines[] = {
 
 static const size_t _nlines = OE_COUNTOF(_lines);
 
-static void create_file(const char* tmp_dir)
+static void _create_file(const char* tmp_dir)
 {
     FILE* stream;
     char path[PATH_MAX];
@@ -49,7 +49,7 @@ static void create_file(const char* tmp_dir)
     printf("Created %s\n", path);
 }
 
-static void verify_file(const char* tmp_dir)
+static void _verify_file(const char* tmp_dir)
 {
     FILE* stream;
     char path[PATH_MAX];
@@ -83,6 +83,24 @@ static void verify_file(const char* tmp_dir)
     printf("Verified %s\n", path);
 }
 
+static void _test_printf(void)
+{
+    char buf[1024];
+
+    snprintf(buf, sizeof(buf), "%.5s", "1234567890");
+    OE_TEST(strcmp(buf, "12345") == 0);
+
+    snprintf(buf, sizeof(buf), "%.5s", "");
+    OE_TEST(strcmp(buf, "") == 0);
+}
+
+static void _test_strtol(void)
+{
+    long x = strtol("-0x0020", NULL, 16);
+
+    printf("x=%ld\n", x);
+}
+
 void test_corelibc(const char* tmp_dir)
 {
     OE_TEST(tmp_dir != NULL);
@@ -99,10 +117,14 @@ void test_corelibc(const char* tmp_dir)
     OE_TEST(mkdir(tmp_dir, 0777) == 0);
 
     /* Create the new file. */
-    create_file(tmp_dir);
+    _create_file(tmp_dir);
 
     /* Read the file back and verify it. */
-    verify_file(tmp_dir);
+    _verify_file(tmp_dir);
+
+    _test_printf();
+
+    _test_strtol();
 }
 
 OE_SET_ENCLAVE_SGX(

@@ -277,7 +277,7 @@ size_t oe_fread(void* ptr_, size_t size, size_t nmemb, OE_FILE* stream)
             goto done;
         }
 
-        if ((size_t)n <= count)
+        if ((size_t)n < count)
         {
             stream->eof = true;
         }
