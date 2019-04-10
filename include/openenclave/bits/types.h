@@ -47,7 +47,6 @@ typedef unsigned int uint32_t;
 typedef long long int64_t;
 typedef unsigned long long uint64_t;
 typedef unsigned long long uintptr_t;
-typedef unsigned long intptr_t;
 typedef long long ptrdiff_t;
 typedef unsigned mode_t;
 typedef long long intptr_t;
@@ -57,11 +56,13 @@ typedef long long suseconds_t;
 #error "unknown compiler - please adapt basic types"
 #endif
 
+#if !defined(WIN32)
 typedef int64_t off_t;
 typedef uint64_t ino_t;
-typedef uint32_t uid_t;
-typedef uint32_t gid_t;
 typedef uint64_t dev_t;
+#endif
+typedef uint32_t gid_t;
+typedef uint32_t uid_t;
 #if !defined(__aarch64__)
 typedef uint64_t nlink_t;
 typedef int64_t blksize_t;
