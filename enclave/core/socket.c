@@ -10,8 +10,6 @@
 #include <openenclave/internal/print.h>
 // clang-format on
 
-#define printf oe_host_printf
-
 static uint64_t _default_socket_devid = OE_DEVID_NULL;
 static oe_spinlock_t _default_socket_devid_lock;
 
