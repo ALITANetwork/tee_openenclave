@@ -119,8 +119,7 @@ static int net_prepare( void )
     }
 #else
 #if !defined(EFIX64) && !defined(EFI32)
-    // TODO: need to add this back
-	//signal( SIGPIPE, SIG_IGN );
+    signal( SIGPIPE, SIG_IGN );
 #endif
 #endif
     return( 0 );
@@ -339,7 +338,7 @@ int mbedtls_net_accept( mbedtls_net_context *bind_ctx,
         /* UDP: wait for a message, but keep it in the queue */
         char buf[1] = { 0 };
 
-	ret = (int) recvfrom( bind_ctx->fd, buf, sizeof( buf ), MSG_PEEK,
+        ret = (int) recvfrom( bind_ctx->fd, buf, sizeof( buf ), MSG_PEEK,
                         (struct sockaddr *) &client_addr, &n );
 
 #if defined(_WIN32)
@@ -478,7 +477,7 @@ int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len )
 
     if( ret < 0 )
     {
-      if( net_would_block( ctx ) != 0 )
+        if( net_would_block( ctx ) != 0 )
             return( MBEDTLS_ERR_SSL_WANT_READ );
 
 #if ( defined(_WIN32) || defined(_WIN32_WCE) ) && !defined(EFIX64) && \
