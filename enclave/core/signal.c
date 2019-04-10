@@ -4,7 +4,7 @@
 // clang-format off
 #include <openenclave/enclave.h>
 #include <openenclave/corelibc/stdlib.h>
-#include <openenclave/internal/signal.h>
+#include <openenclave/corelibc/signal.h>
 #include <openenclave/internal/thread.h>
 #include <openenclave/corelibc/errno.h>
 #include <openenclave/internal/print.h>
@@ -15,8 +15,8 @@
 
 static void _handle_ignore(int signum);
 
-static struct sigaction _actions[_NSIG] = {{{0}}};
-static sighandler_t _default_actions[_NSIG] = {
+static struct oe_sigaction _actions[__OE_NSIG] = {{{0}}};
+static oe_sighandler_t _default_actions[__OE_NSIG] = {
     _handle_ignore, _handle_ignore, _handle_ignore, _handle_ignore,
     _handle_ignore, _handle_ignore, _handle_ignore, _handle_ignore,
     _handle_ignore, _handle_ignore, _handle_ignore, _handle_ignore,
@@ -31,22 +31,26 @@ static void _handle_ignore(int signum)
     (void)signum;
 }
 
+#if 0
 static void _handle_continue(int signum)
 {
     (void)signum;
 }
+#endif
 
+#if 0
 static void _handle_terminate(int signum)
 {
     (void)signum;
 }
+#endif
 
 static void _handle_error(int signum)
 {
     (void)signum;
 }
 
-int oe_kill(oe_pid_t pid, int signum)
+int oe_kill(pid_t pid, int signum)
 {
     int retval = -1;
     oe_errno = 0;
@@ -64,12 +68,12 @@ done:
 
 int oe_sigaction(
     int signum,
-    const struct sigaction* act,
-    struct sigaction* oldact)
+    const struct oe_sigaction* act,
+    struct oe_sigaction* oldact)
 {
     int retval = -1;
 
-    if (signum >= _NSIG)
+    if (signum >= __OE_NSIG)
     {
         oe_errno = EINVAL;
         goto done;
@@ -90,11 +94,11 @@ done:
     return retval;
 }
 
-sighandler_t oe_signal(int signum, sighandler_t handler)
+oe_sighandler_t oe_signal(int signum, oe_sighandler_t handler)
 {
-    sighandler_t retval = SIG_ERR;
+    oe_sighandler_t retval = OE_SIG_ERR;
 
-    if (signum >= _NSIG)
+    if (signum >= __OE_NSIG)
     {
         oe_errno = EINVAL;
         goto done;
@@ -110,7 +114,7 @@ int oe_signal_notify(int signum)
 {
     int ret = -1;
 
-    if (signum >= _NSIG)
+    if (signum >= __OE_NSIG)
     {
         oe_errno = EINVAL;
         goto done;
@@ -120,12 +124,12 @@ int oe_signal_notify(int signum)
     {
         // Get some siginfo and populate: This only lasts to the end of the call
 
-        siginfo_t info = {0};
+        oe_siginfo_t info = {0};
         info.si_signo = signum;
         info.si_errno = oe_errno;
         info.si_code = 0;
-        info._sifields._kill._pid = oe_getpid();
-        info._sifields._kill._uid = oe_getuid();
+        info.__si_fields.__si_kill.si_pid = oe_getpid();
+        info.__si_fields.__si_kill.si_uid = oe_getuid();
 
         /* we don't do a ucontext, and only a minimal info */
         (*_actions[signum].__sigaction_handler.sa_sigaction)(
@@ -136,13 +140,13 @@ int oe_signal_notify(int signum)
     {
         switch ((int)(_actions[signum].__sigaction_handler.sa_handler))
         {
-            case (int)SIG_DFL:
+            case (int)OE_SIG_DFL:
                 (*_default_actions[signum])(signum);
                 break;
-            case (int)SIG_ERR:
+            case (int)OE_SIG_ERR:
                 _handle_error(signum);
                 break;
-            case (int)SIG_IGN:
+            case (int)OE_SIG_IGN:
                 _handle_ignore(signum);
                 break;
 

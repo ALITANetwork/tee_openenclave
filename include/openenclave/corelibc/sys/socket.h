@@ -332,6 +332,9 @@ int oe_getsockname(int sockfd, struct oe_sockaddr* addr, socklen_t* addrlen);
 #define SHUT_WR OE_SHUT_WR
 #define SHUT_RDWR OE_SHUT_RDWR
 
+/* mbed TLS needs this so it will use socklen_t rather than int. */
+#define __DEFINED_socklen_t
+
 struct sockaddr
 {
 #include <openenclave/corelibc/sys/bits/sockaddr.h>

@@ -8,6 +8,8 @@
 #include <openenclave/bits/result.h>
 #include <openenclave/bits/types.h>
 
+OE_EXTERNC_BEGIN
+
 #define OE_SIZEOF(TYPE, MEMBER) (sizeof(((((TYPE*)0)->MEMBER))))
 
 // clang-format off
@@ -180,5 +182,7 @@ oe_result_t oe_type_info_update(
     const oe_struct_type_info_t* sti,
     const void* src,
     void* dest);
+
+OE_EXTERNC_END
 
 #endif /* _OE_TYPEINFO_H */

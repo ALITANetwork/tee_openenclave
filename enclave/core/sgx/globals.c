@@ -250,41 +250,42 @@ oe_enclave_t* oe_get_enclave(void)
 **==============================================================================
 */
 
-oe_pid_t oe_pid;
-oe_pid_t oe_ppid; // Process ID
-oe_pid_t oe_ppid; // Parent PID
-oe_pid_t oe_pgrp; // Process Group ID
-oe_pid_t oe_uid;  // user id
-oe_pid_t oe_euid; // effective user id
-uint32_t oe_num_groups;
-oe_gid_t oe_groups[OE_NGROUP_MAX];
+pid_t oe_pid;
+pid_t oe_ppid; // Parent PID
+pid_t oe_pgrp; // Process Group ID
+uid_t oe_uid;  // user id
+uid_t oe_euid; // effective user id
 
-oe_pid_t oe_getpid(void)
+uint32_t oe_num_groups;
+
+gid_t oe_groups[OE_NGROUP_MAX];
+
+pid_t oe_getpid(void)
 {
     return oe_pid;
 }
 
-oe_pid_t oe_getppid(void)
+pid_t oe_getppid(void)
 {
     return oe_ppid;
 }
 
-oe_pid_t oe_getpgrp(void)
+pid_t oe_getpgrp(void)
 {
     return oe_pgrp;
 }
 
-oe_uid_t oe_getuid(void)
+uid_t oe_getuid(void)
 {
     return oe_uid;
 }
 
-oe_uid_t oe_geteuid(void)
+uid_t oe_geteuid(void)
 {
     return oe_euid;
 }
 
-int32_t oe_getgroups(uint32_t num_groups, oe_gid_t* pgroups)
+int32_t oe_getgroups(uint32_t num_groups, gid_t* pgroups)
 {
     int32_t retval = -1;
 
@@ -303,7 +304,7 @@ int32_t oe_getgroups(uint32_t num_groups, oe_gid_t* pgroups)
             goto done;
         }
 
-        memcpy(pgroups, oe_groups, oe_num_groups * sizeof(oe_gid_t));
+        memcpy(pgroups, oe_groups, oe_num_groups * sizeof(gid_t));
     }
     else
     {

@@ -1,10 +1,14 @@
 /* Copyright (c) Microsoft Corporation. All rights reserved. */
 /* Licensed under the MIT License. */
 
-#ifndef __OE_EVENTFD_H__
-#define __OE_EVENTFD_H__
-#pragma once
+#ifndef _OE_EVENTFD_H
+#define _OE_EVENTFD_H
+
+#include <openenclave/bits/defs.h>
+#include <openenclave/bits/types.h>
 #include <openenclave/internal/device.h>
+
+OE_EXTERNC_BEGIN
 
 enum
 {
@@ -15,18 +19,16 @@ enum
 
 typedef uint64_t oe_eventfd_t;
 
-#ifdef cplusplus
-extern "C"
-{
-#endif
+int oe_register_eventfd_device(void);
 
-    int oe_register_eventfd_device(void);
-    oe_device_t* oe_get_eventfd_device(void);
-    int oe_eventfd(unsigned int count, int flags);
-    int oe_eventfd_read(int fd, oe_eventfd_t* value);
-    int oe_eventfd_write(int fd, oe_eventfd_t value);
+oe_device_t* oe_get_eventfd_device(void);
 
-#ifdef cplusplus
-}
-#endif
-#endif // __OE_EVENTFD_H__
+int oe_eventfd(unsigned int count, int flags);
+
+int oe_eventfd_read(int fd, oe_eventfd_t* value);
+
+int oe_eventfd_write(int fd, oe_eventfd_t value);
+
+OE_EXTERNC_END
+
+#endif /* _OE_EVENTFD_H */

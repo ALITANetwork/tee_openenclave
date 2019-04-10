@@ -204,6 +204,7 @@ if (USE_DEBUG_MALLOC)
 endif ()
 
 if (UNIX)
+  target_compile_options(oehost PRIVATE -Werror)
   target_compile_options(oehost PRIVATE
     -Wno-attributes -Wmissing-prototypes -fPIC ${PLATFORM_FLAGS})
   target_compile_definitions(oehost PRIVATE _GNU_SOURCE)

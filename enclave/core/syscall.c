@@ -5,6 +5,7 @@
 #include <openenclave/corelibc/errno.h>
 #include <openenclave/corelibc/fcntl.h>
 #include <openenclave/corelibc/setjmp.h>
+#include <openenclave/corelibc/signal.h>
 #include <openenclave/corelibc/stdarg.h>
 #include <openenclave/corelibc/stdio.h>
 #include <openenclave/corelibc/stdlib.h>
@@ -548,10 +549,10 @@ static long _syscall(
         case OE_SYS_rt_sigaction:
         {
             int signum = (int)arg1;
-            struct sigaction* act = (struct sigaction*)arg2;
-            struct sigaction* oact = (struct sigaction*)arg3;
+            struct oe_sigaction* act = (struct oe_sigaction*)arg2;
+            struct oe_sigaction* oact = (struct oe_sigaction*)arg3;
 
-            ret = (long)oe_signal(signum, act, oact);
+            ret = (long)oe_sigaction(signum, act, oact);
             goto done;
         }
         case OE_SYS_kill:

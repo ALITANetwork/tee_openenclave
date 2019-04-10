@@ -6,10 +6,7 @@ oeedl_file(../socket_test.edl
     --edl-search-dir ../../../include
 )
 
-add_enclave(
-    TARGET socket_enc
-    SOURCES enc.c libcex.c ${socket_test_t}
-)
+add_enclave(TARGET socket_enc SOURCES enc.c ${socket_test_t})
 
 target_include_directories(socket_enc PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 

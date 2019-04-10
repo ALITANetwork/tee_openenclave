@@ -1,2 +1,2 @@
-#warning redirecting incorrect #include <sys/signal.h> to <signal.h>
-#include <signal.h>
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.

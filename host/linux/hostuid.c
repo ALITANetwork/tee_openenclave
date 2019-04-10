@@ -7,38 +7,33 @@
 #include <openenclave/internal/uid.h>
 // clang-format on
 
-oe_pid_t oe_get_host_pid(void)
-
+pid_t oe_get_host_pid(void)
 {
-    return (oe_pid_t)getpid();
+    return (pid_t)getpid();
 }
 
-oe_pid_t oe_get_host_ppid(void)
+pid_t oe_get_host_ppid(void)
 
 {
-    return (oe_pid_t)getppid();
+    return (pid_t)getppid();
 }
 
-oe_pid_t oe_get_host_pgrp(void)
-
+pid_t oe_get_host_pgrp(void)
 {
-    return (oe_pid_t)getpgrp();
+    return (pid_t)getpgrp();
 }
 
-oe_pid_t oe_get_host_uid(void)
-
+uid_t oe_get_host_uid(void)
 {
-    return (oe_pid_t)getuid();
+    return (uid_t)getuid();
 }
 
-oe_pid_t oe_get_host_euid(void)
-
+uid_t oe_get_host_euid(void)
 {
-    return (oe_pid_t)geteuid();
+    return (uid_t)geteuid();
 }
 
-int32_t oe_get_host_groups(size_t size, oe_gid_t plist[])
-
+int32_t oe_get_host_groups(size_t size, gid_t plist[])
 {
     int32_t retval = -1;
     gid_t list[OE_NGROUP_MAX] = {0};
@@ -56,7 +51,7 @@ int32_t oe_get_host_groups(size_t size, oe_gid_t plist[])
         // getgroups returns a list of uint32_t. So we need to convert
         for (idx = 0; idx < (int)size; idx++)
         {
-            plist[idx] = (oe_gid_t)list[idx];
+            plist[idx] = (gid_t)list[idx];
         }
     }
 

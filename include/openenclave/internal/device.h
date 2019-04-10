@@ -7,6 +7,7 @@
 #include <openenclave/bits/result.h>
 #include <openenclave/bits/types.h>
 #include <openenclave/corelibc/errno.h>
+#include <openenclave/corelibc/unistd.h>
 #include <openenclave/internal/epoll_ops.h>
 #include <openenclave/internal/eventfd_ops.h>
 #include <openenclave/internal/fd.h>
@@ -89,18 +90,6 @@ int oe_device_addref(uint64_t devid);
 int oe_device_release(uint64_t devid);
 
 int oe_remove_device();
-
-ssize_t oe_read(int fd, void* buf, size_t count);
-
-ssize_t oe_write(int fd, const void* buf, size_t count);
-
-int oe_close(int fd);
-
-int oe_fcntl(int fd, int cmd, int arg);
-
-int oe_dup(int fd);
-
-int oe_dup2(int fd, int newfd);
 
 int oe_ioctl(int fd, unsigned long request, ...);
 

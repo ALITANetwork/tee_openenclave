@@ -8,7 +8,6 @@
 #include <openenclave/bits/types.h>
 #include <openenclave/internal/types.h>
 #include <openenclave/internal/uid.h>
-//#include <openenclave/corelibc/errno.h>
 
 OE_EXTERNC_BEGIN
 

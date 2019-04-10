@@ -33,6 +33,8 @@ char* oe_strstr(const char* haystack, const char* needle);
 
 size_t oe_strlcpy(char* dest, const char* src, size_t size);
 
+char* oe_strncpy(char* dest, const char* src, size_t n);
+
 size_t oe_strlcat(char* dest, const char* src, size_t size);
 
 char* oe_strerror(int errnum);
@@ -83,6 +85,12 @@ OE_INLINE
 size_t strlcpy(char* dest, const char* src, size_t size)
 {
     return oe_strlcpy(dest, src, size);
+}
+
+OE_INLINE
+char* strncpy(char* dest, const char* src, size_t n)
+{
+    return oe_strncpy(dest, src, n);
 }
 
 OE_INLINE

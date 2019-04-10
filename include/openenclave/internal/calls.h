@@ -6,6 +6,7 @@
 
 #include <openenclave/bits/defs.h>
 #include <openenclave/bits/types.h>
+#include <openenclave/corelibc/unistd.h>
 #include <openenclave/internal/cpuid.h>
 #include <openenclave/internal/defs.h>
 #include <openenclave/internal/uid.h>
@@ -317,15 +318,13 @@ typedef struct _oe_realloc_args
 
 typedef struct _oe_init_enclave_args
 {
-    uint64_t pid;  // Process ID
-    uint64_t ppid; // Parent PID
-    uint64_t pgrp; // Process Group ID
-    uint64_t uid;  // user id
-    uint64_t euid; // effective user id
+    pid_t pid;  // Process ID
+    pid_t ppid; // Parent PID
+    pid_t pgrp; // Process Group ID
+    uid_t uid;  // user id
+    uid_t euid; // effective user id
+    gid_t groups[OE_NGROUP_MAX];
     uint32_t num_groups;
-    uint64_t
-        groups[OE_NGROUP_MAX]; // where to define? NGROUPS_MAX 256 (32 before
-                               // Linux 2.6.4; 65536 since Linux 2.6.4).
     uint32_t cpuid_table[OE_CPUID_LEAF_COUNT][OE_CPUID_REG_COUNT];
     oe_enclave_t* enclave;
 } oe_init_enclave_args_t;

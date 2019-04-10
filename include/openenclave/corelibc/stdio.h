@@ -7,10 +7,12 @@
 #include <openenclave/bits/defs.h>
 #include <openenclave/bits/types.h>
 #include <openenclave/corelibc/stdarg.h>
+#include <openenclave/corelibc/unistd.h>
 
 OE_EXTERNC_BEGIN
 
 #define OE_BUFSIZ 8192
+#define OE_EOF (-1)
 
 typedef struct _OE_IO_FILE OE_FILE;
 extern OE_FILE* const oe_stdin;
@@ -31,10 +33,35 @@ int oe_rename(const char* oldpath, const char* newpath);
 
 int oe_rename_d(uint64_t devid, const char* oldpath, const char* newpath);
 
+OE_FILE* oe_fopen(const char* path, const char* mode);
+
+int oe_fflush(OE_FILE* stream);
+
+int oe_fclose(OE_FILE* stream);
+
+size_t oe_fread(void* ptr, size_t size, size_t nmemb, OE_FILE* stream);
+
+size_t oe_fwrite(const void* ptr, size_t size, size_t nmemb, OE_FILE* stream);
+
+long oe_ftell(OE_FILE* stream);
+
+int oe_fseek(OE_FILE* stream, long offset, int whence);
+
+int oe_ferror(OE_FILE* stream);
+
+int oe_feof(OE_FILE* stream);
+
+void oe_clearerr(OE_FILE* stream);
+
+int oe_fgetc(OE_FILE* stream);
+
+char* oe_fgets(char* s, int size, OE_FILE* stream);
+
 #if defined(OE_NEED_STDC_NAMES)
 
 #include "bits/stdfile.h"
 #define BUFSIZ OE_BUFSIZ
+#define EOF (-1)
 
 OE_INLINE
 int vsnprintf(char* str, size_t size, const char* format, va_list ap)
@@ -79,6 +106,69 @@ int printf(const char* format, ...)
 OE_INLINE int rename(const char* oldpath, const char* newpath)
 {
     return oe_rename(oldpath, newpath);
+}
+
+typedef OE_FILE FILE;
+
+OE_INLINE FILE* fopen(const char* path, const char* mode)
+{
+    return (FILE*)oe_fopen(path, mode);
+}
+
+OE_INLINE int fflush(FILE* stream)
+{
+    return oe_fflush((OE_FILE*)stream);
+}
+
+OE_INLINE int fclose(FILE* stream)
+{
+    return oe_fclose((OE_FILE*)stream);
+}
+
+OE_INLINE size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream)
+{
+    return oe_fread(ptr, size, nmemb, (OE_FILE*)stream);
+}
+
+OE_INLINE size_t
+fwrite(const void* ptr, size_t size, size_t nmemb, FILE* stream)
+{
+    return oe_fwrite(ptr, size, nmemb, (OE_FILE*)stream);
+}
+
+OE_INLINE long ftell(FILE* stream)
+{
+    return oe_ftell((OE_FILE*)stream);
+}
+
+OE_INLINE int fseek(FILE* stream, long offset, int whence)
+{
+    return oe_fseek((OE_FILE*)stream, offset, whence);
+}
+
+OE_INLINE int ferror(FILE* stream)
+{
+    return oe_ferror((OE_FILE*)stream);
+}
+
+OE_INLINE int feof(FILE* stream)
+{
+    return oe_feof((OE_FILE*)stream);
+}
+
+OE_INLINE void clearerr(FILE* stream)
+{
+    return oe_clearerr((OE_FILE*)stream);
+}
+
+OE_INLINE int fgetc(FILE* stream)
+{
+    return oe_fgetc((OE_FILE*)stream);
+}
+
+OE_INLINE char* fgets(char* s, int size, FILE* stream)
+{
+    return oe_fgets(s, size, (OE_FILE*)stream);
 }
 
 #endif /* defined(OE_NEED_STDC_NAMES) */

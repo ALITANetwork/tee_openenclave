@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include <openenclave/internal/calls.h>
-
 #define OE_NEED_STDC_NAMES
+
+#include <openenclave/internal/calls.h>
 
 #define __oe_ecalls_table_size __oe_internal_ecalls_table_size
 #define __oe_ecalls_table __oe_internal_ecalls_table

@@ -18,11 +18,12 @@ int oe_signal_kill(int pid, int signum, int* err)
     *err = 0;
 
     retval = kill(pid, signum);
+
     if (retval < 0)
     {
-        err = errno;
+        if (err)
+            *err = errno;
     }
 
-done:
     return retval;
 }

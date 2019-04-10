@@ -551,6 +551,8 @@ static int _epoll_add_event_data(
     epoll_dev_t* epoll = _cast_epoll(oe_get_fd_device(epoll_fd));
     oe_device_t* pdev = oe_get_fd_device(enclave_fd);
 
+    OE_UNUSED(events);
+
     /* Check parameters. */
     if (!epoll || !pdev || (enclave_fd == -1))
     {
@@ -627,7 +629,7 @@ static int _epoll_poll(
             &ret,
             (int64_t)oe_get_enclave(),
             (int)epoll_fd,
-            (struct oe_pollfd*)host_fds,
+            (struct pollfd*)host_fds,
             nfds,
             (int)timeout,
             &oe_errno) != OE_OK)

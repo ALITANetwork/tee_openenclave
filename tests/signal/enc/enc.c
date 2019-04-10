@@ -5,8 +5,8 @@
 #include <openenclave/internal/time.h>
 
 // enclave.h must come before socket.h
+#include <openenclave/corelibc/signal.h>
 #include <openenclave/internal/device.h>
-#include <openenclave/internal/signal.h>
 
 #include <assert.h>
 #include <signal_test_t.h>
@@ -24,7 +24,7 @@ int ecall_device_init()
 {
     oe_enable_feature(OE_FEATURE_HOST_FILES);
 
-    oe_signal(SIGUSR1, print_signal_success);
+    oe_signal(OE_SIGUSR1, print_signal_success);
     return 0;
 }
 
@@ -35,6 +35,8 @@ int ecall_signal_in_test(size_t buff_len, char* recv_buff)
 {
     size_t n = 0;
     printf("--------------- receive signal -------------\n");
+
+    OE_UNUSED(buff_len);
 
     do
     {
@@ -55,7 +57,7 @@ int ecall_signal_out_test()
 {
     printf("--------------- send signal -------------\n");
     memset(buff, 0, sizeof(buff));
-    oe_kill(0, SIGUSR2);
+    oe_kill(0, OE_SIGUSR2);
 
     oe_sleep_msec(3000);
 

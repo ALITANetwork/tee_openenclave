@@ -276,7 +276,7 @@ done:
     return ret;
 }
 
-int oe_fcntl(int fd, int cmd, int arg)
+int __oe_fcntl_va(int fd, int cmd, oe_va_list ap)
 {
     int ret = -1;
     oe_device_t* device = oe_get_fd_device(fd);
@@ -291,6 +291,8 @@ int oe_fcntl(int fd, int cmd, int arg)
         oe_errno = EINVAL;
         return -1;
     }
+
+    int arg = oe_va_arg(ap, int);
 
     ret = (*device->ops.base->fcntl)(device, cmd, arg);
 

@@ -554,13 +554,6 @@ void test_fs(const char* src_dir, const char* tmp_dir)
         OE_TEST(oe_umount("/") == 0);
     }
 
-    /* Test iot I/O. */
-    {
-        printf("=== testing iot:\n");
-        extern void test_iot(const char* tmp_dir);
-        test_iot(tmp_dir);
-    }
-
     /* Write the standard output and standard error. */
     {
         static const char DATA[] = "abcdefghijklmnopqrstuvwxyz\n";

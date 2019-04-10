@@ -1,293 +1,174 @@
-#ifndef _SIGNAL_H
-#define _SIGNAL_H
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 
-#ifdef __cplusplus
-extern "C"
+#ifndef _OE_SIGNAL_H
+#define _OE_SIGNAL_H
+
+#include <openenclave/bits/defs.h>
+#include <openenclave/bits/types.h>
+#include <openenclave/internal/defs.h>
+
+/*
+**==============================================================================
+**
+** oe-prefixed names:
+**
+**==============================================================================
+*/
+
+#define OE_SIG_ERR ((oe_sighandler_t)-1)
+#define OE_SIG_DFL ((oe_sighandler_t)0)
+#define OE_SIG_IGN ((oe_sighandler_t)1)
+#define OE_SIGINT 2
+#define OE_SIGILL 4
+#define OE_SIGABRT 6
+#define OE_SIGFPE 8
+#define OE_SIGSEGV 11
+#define OE_SIGTERM 15
+#define OE_SIGHUP 1
+#define OE_SIGQUIT 3
+#define OE_SIGTRAP 5
+#define OE_SIGKILL 9
+#define OE_SIGPIPE 13
+#define OE_SIGALRM 14
+#define OE_SIGTTIN 21
+#define OE_SIGTTOU 22
+#define OE_SIGXCPU 24
+#define OE_SIGXFSZ 25
+#define OE_SIGVTALRM 26
+#define OE_SIGPROF 27
+#define OE_SIGWINCH 28
+#define OE_SIGBUS 7
+#define OE_SIGUSR1 10
+#define OE_SIGUSR2 12
+#define OE_SIGCHLD 17
+#define OE_SIGCONT 18
+#define OE_SIGSTOP 19
+#define OE_SIGTSTP 20
+#define OE_SIGURG 23
+#define OE_SIGPOLL 29
+#define OE_SIGSYS 31
+#define OE_SIGIO OE_SIGPOLL
+#define OE_SIGIOT OE_SIGABRT
+#define OE_SIGCLD OE_SIGCHLD
+
+// Only flag supported. 3 args for the sighandler rather than 1
+#define SA_SIGINFO 0x00000004
+
+#define __OE_SIGSET_NWORDS (1024 / (8 * sizeof(unsigned long int)))
+
+#define __OE_NSIG 32
+
+typedef struct
 {
-#endif
+    unsigned long int __val[__OE_SIGSET_NWORDS];
+} oe_sigset_t;
 
-#include <features.h>
+typedef void (*oe_sighandler_t)(int);
 
-#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) || \
-    defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
+union oe_sigval {
+    int sival_int;
+    void* sival_ptr;
+};
 
-#ifdef _GNU_SOURCE
-#define __ucontext ucontext
-#endif
+#define __OE_SIGINFO oe_siginfo_t
+#include <openenclave/corelibc/bits/siginfo.h>
+#undef __OE_SIGINFO
 
-#define __NEED_size_t
-#define __NEED_pid_t
-#define __NEED_uid_t
-#define __NEED_struct_timespec
-#define __NEED_pthread_t
-#define __NEED_pthread_attr_t
-#define __NEED_time_t
-#define __NEED_clock_t
-#define __NEED_sigset_t
+#define __OE_SIGACTION oe_sigaction
+#include <openenclave/corelibc/bits/sigaction.h>
+#undef __OE_SIGACTION
 
-#include <bits/alltypes.h>
+oe_sighandler_t oe_signal(int signum, oe_sighandler_t handler);
 
-#define SIG_BLOCK 0
-#define SIG_UNBLOCK 1
-#define SIG_SETMASK 2
+int oe_kill(pid_t pid, int sig);
 
-#define SI_ASYNCNL (-60)
-#define SI_TKILL (-6)
-#define SI_SIGIO (-5)
-#define SI_ASYNCIO (-4)
-#define SI_MESGQ (-3)
-#define SI_TIMER (-2)
-#define SI_QUEUE (-1)
-#define SI_USER 0
-#define SI_KERNEL 128
+int oe_sigaction(
+    int signum,
+    const struct oe_sigaction* act,
+    struct oe_sigaction* oldact);
 
-    typedef struct sigaltstack stack_t;
+/*
+**==============================================================================
+**
+** Standard-C names:
+**
+**==============================================================================
+*/
 
-#endif
+#if defined(OE_NEED_STDC_NAMES)
 
-#include <bits/signal.h>
+#define SIG_ERR ((sighandler_t)-1)
+#define SIG_DFL ((sighandler_t)0)
+#define SIG_IGN ((sighandler_t)1)
+#define SIGINT OE_SIGINT
+#define SIGILL OE_SIGILL
+#define SIGABRT OE_SIGABRT
+#define SIGFPE OE_SIGFPE
+#define SIGSEGV OE_SIGSEGV
+#define SIGTERM OE_SIGTERM
+#define SIGHUP OE_SIGHUP
+#define SIGQUIT OE_SIGQUIT
+#define SIGTRAP OE_SIGTRAP
+#define SIGKILL OE_SIGKILL
+#define SIGPIPE OE_SIGPIPE
+#define SIGALRM OE_SIGALRM
+#define SIGTTIN OE_SIGTTIN
+#define SIGTTOU OE_SIGTTOU
+#define SIGXCPU OE_SIGXCPU
+#define SIGXFSZ OE_SIGXFSZ
+#define SIGVTALRM OE_SIGVTALRM
+#define SIGPROF OE_SIGPROF
+#define SIGWINCH OE_SIGWINCH
+#define SIGBUS OE_SIGBUS
+#define SIGUSR1 OE_SIGUSR1
+#define SIGUSR2 OE_SIGUSR2
+#define SIGCHLD OE_SIGCHLD
+#define SIGCONT OE_SIGCONT
+#define SIGSTOP OE_SIGSTOP
+#define SIGTSTP OE_SIGTSTP
+#define SIGURG OE_SIGURG
+#define SIGPOLL OE_SIGPOLL
+#define SIGSYS OE_SIGSYS
+#define SIGIO OE_SIGIO
+#define SIGIOT OE_SIGIOT
+#define SIGCLD OE_SIGCLD
 
-#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) || \
-    defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
+typedef oe_sigset_t sigset_t;
+typedef oe_sighandler_t sighandler_t;
 
-#define SIG_HOLD ((void (*)(int))2)
+union sigval {
+    int sival_int;
+    void* sival_ptr;
+};
 
-#define FPE_INTDIV 1
-#define FPE_INTOVF 2
-#define FPE_FLTDIV 3
-#define FPE_FLTOVF 4
-#define FPE_FLTUND 5
-#define FPE_FLTRES 6
-#define FPE_FLTINV 7
-#define FPE_FLTSUB 8
+#define __OE_SIGINFO siginfo_t
+#include <openenclave/corelibc/bits/siginfo.h>
+#undef __OE_SIGINFO
 
-#define ILL_ILLOPC 1
-#define ILL_ILLOPN 2
-#define ILL_ILLADR 3
-#define ILL_ILLTRP 4
-#define ILL_PRVOPC 5
-#define ILL_PRVREG 6
-#define ILL_COPROC 7
-#define ILL_BADSTK 8
+#define __OE_SIGACTION sigaction
+#include <openenclave/corelibc/bits/sigaction.h>
+#undef __OE_SIGACTION
 
-#define SEGV_MAPERR 1
-#define SEGV_ACCERR 2
-#define SEGV_BNDERR 3
-#define SEGV_PKUERR 4
-
-#define BUS_ADRALN 1
-#define BUS_ADRERR 2
-#define BUS_OBJERR 3
-#define BUS_MCEERR_AR 4
-#define BUS_MCEERR_AO 5
-
-#define CLD_EXITED 1
-#define CLD_KILLED 2
-#define CLD_DUMPED 3
-#define CLD_TRAPPED 4
-#define CLD_STOPPED 5
-#define CLD_CONTINUED 6
-
-    union sigval {
-        int sival_int;
-        void* sival_ptr;
-    };
-
-    typedef struct
-    {
-#ifdef __SI_SWAP_ERRNO_CODE
-        int si_signo, si_code, si_errno;
-#else
-        int si_signo, si_errno, si_code;
-#endif
-        union {
-            char __pad[128 - 2 * sizeof(int) - sizeof(long)];
-            struct
-            {
-                union {
-                    struct
-                    {
-                        pid_t si_pid;
-                        uid_t si_uid;
-                    } __piduid;
-                    struct
-                    {
-                        int si_timerid;
-                        int si_overrun;
-                    } __timer;
-                } __first;
-                union {
-                    union sigval si_value;
-                    struct
-                    {
-                        int si_status;
-                        clock_t si_utime, si_stime;
-                    } __sigchld;
-                } __second;
-            } __si_common;
-            struct
-            {
-                void* si_addr;
-                short si_addr_lsb;
-                union {
-                    struct
-                    {
-                        void* si_lower;
-                        void* si_upper;
-                    } __addr_bnd;
-                    unsigned si_pkey;
-                } __first;
-            } __sigfault;
-            struct
-            {
-                long si_band;
-                int si_fd;
-            } __sigpoll;
-            struct
-            {
-                void* si_call_addr;
-                int si_syscall;
-                unsigned si_arch;
-            } __sigsys;
-        } __si_fields;
-    } siginfo_t;
-#define si_pid __si_fields.__si_common.__first.__piduid.si_pid
-#define si_uid __si_fields.__si_common.__first.__piduid.si_uid
-#define si_status __si_fields.__si_common.__second.__sigchld.si_status
-#define si_utime __si_fields.__si_common.__second.__sigchld.si_utime
-#define si_stime __si_fields.__si_common.__second.__sigchld.si_stime
-#define si_value __si_fields.__si_common.__second.si_value
-#define si_addr __si_fields.__sigfault.si_addr
-#define si_addr_lsb __si_fields.__sigfault.si_addr_lsb
-#define si_lower __si_fields.__sigfault.__first.__addr_bnd.si_lower
-#define si_upper __si_fields.__sigfault.__first.__addr_bnd.si_upper
-#define si_pkey __si_fields.__sigfault.__first.si_pkey
-#define si_band __si_fields.__sigpoll.si_band
-#define si_fd __si_fields.__sigpoll.si_fd
-#define si_timerid __si_fields.__si_common.__first.__timer.si_timerid
-#define si_overrun __si_fields.__si_common.__first.__timer.si_overrun
-#define si_ptr si_value.sival_ptr
-#define si_int si_value.sival_int
-#define si_call_addr __si_fields.__sigsys.si_call_addr
-#define si_syscall __si_fields.__sigsys.si_syscall
-#define si_arch __si_fields.__sigsys.si_arch
-
-    struct sigaction
-    {
-        union {
-            void (*sa_handler)(int);
-            void (*sa_sigaction)(int, siginfo_t*, void*);
-        } __sa_handler;
-        sigset_t sa_mask;
-        int sa_flags;
-        void (*sa_restorer)(void);
-    };
-#define sa_handler __sa_handler.sa_handler
-#define sa_sigaction __sa_handler.sa_sigaction
-
-    struct sigevent
-    {
-        union sigval sigev_value;
-        int sigev_signo;
-        int sigev_notify;
-        void (*sigev_notify_function)(union sigval);
-        pthread_attr_t* sigev_notify_attributes;
-        char __pad[56 - 3 * sizeof(long)];
-    };
-
-#define SIGEV_SIGNAL 0
-#define SIGEV_NONE 1
-#define SIGEV_THREAD 2
-
-    int __libc_current_sigrtmin(void);
-    int __libc_current_sigrtmax(void);
-
-#define SIGRTMIN (__libc_current_sigrtmin())
-#define SIGRTMAX (__libc_current_sigrtmax())
-
-    int kill(pid_t, int);
-
-    int sigemptyset(sigset_t*);
-    int sigfillset(sigset_t*);
-    int sigaddset(sigset_t*, int);
-    int sigdelset(sigset_t*, int);
-    int sigismember(const sigset_t*, int);
-
-    int sigprocmask(int, const sigset_t* __restrict, sigset_t* __restrict);
-    int sigsuspend(const sigset_t*);
-    int sigaction(
-        int,
-        const struct sigaction* __restrict,
-        struct sigaction* __restrict);
-    int sigpending(sigset_t*);
-    int sigwait(const sigset_t* __restrict, int* __restrict);
-    int sigwaitinfo(const sigset_t* __restrict, siginfo_t* __restrict);
-    int sigtimedwait(
-        const sigset_t* __restrict,
-        siginfo_t* __restrict,
-        const struct timespec* __restrict);
-    int sigqueue(pid_t, int, union sigval);
-
-    int pthread_sigmask(int, const sigset_t* __restrict, sigset_t* __restrict);
-    int pthread_kill(pthread_t, int);
-
-    void psiginfo(const siginfo_t*, const char*);
-    void psignal(int, const char*);
-
-#endif
-
-#if defined(_XOPEN_SOURCE) || defined(_BSD_SOURCE) || defined(_GNU_SOURCE)
-    int killpg(pid_t, int);
-    int sigaltstack(const stack_t* __restrict, stack_t* __restrict);
-    int sighold(int);
-    int sigignore(int);
-    int siginterrupt(int, int);
-    int sigpause(int);
-    int sigrelse(int);
-    void (*sigset(int, void (*)(int)))(int);
-#define TRAP_BRKPT 1
-#define TRAP_TRACE 2
-#define TRAP_BRANCH 3
-#define TRAP_HWBKPT 4
-#define POLL_IN 1
-#define POLL_OUT 2
-#define POLL_MSG 3
-#define POLL_ERR 4
-#define POLL_PRI 5
-#define POLL_HUP 6
-#define SS_ONSTACK 1
-#define SS_DISABLE 2
-#define SS_AUTODISARM (1U << 31)
-#define SS_FLAG_BITS SS_AUTODISARM
-#endif
-
-#if defined(_BSD_SOURCE) || defined(_GNU_SOURCE)
-#define NSIG _NSIG
-    typedef void (*sig_t)(int);
-#endif
-
-#ifdef _GNU_SOURCE
-    typedef void (*sighandler_t)(int);
-    void (*bsd_signal(int, void (*)(int)))(int);
-    int sigisemptyset(const sigset_t*);
-    int sigorset(sigset_t*, const sigset_t*, const sigset_t*);
-    int sigandset(sigset_t*, const sigset_t*, const sigset_t*);
-
-#define SA_NOMASK SA_NODEFER
-#define SA_ONESHOT SA_RESETHAND
-#endif
-
-#define SIG_ERR ((void (*)(int)) - 1)
-#define SIG_DFL ((void (*)(int))0)
-#define SIG_IGN ((void (*)(int))1)
-
-    typedef int sig_atomic_t;
-
-    void (*signal(int, void (*)(int)))(int);
-    int raise(int);
-
-#ifdef __cplusplus
+OE_INLINE sighandler_t signal(int signum, sighandler_t handler)
+{
+    return (sighandler_t)oe_signal(signum, (oe_sighandler_t)handler);
 }
-#endif
 
-#endif
+OE_INLINE int kill(pid_t pid, int sig)
+{
+    return oe_kill(pid, sig);
+}
+
+OE_INLINE int sigaction(
+    int signum,
+    const struct sigaction* act,
+    struct sigaction* oldact)
+{
+    return oe_sigaction(
+        signum, (struct oe_sigaction*)act, (struct oe_sigaction*)oldact);
+}
+
+#endif /* defined(OE_NEED_STDC_NAMES) */
+
+#endif /* _OE_SIGNAL_H */

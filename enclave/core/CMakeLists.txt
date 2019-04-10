@@ -149,6 +149,8 @@ maybe_build_using_clangw(oecore)
 
 target_link_libraries(oecore PUBLIC oe_includes)
 
+target_compile_options(oecore PRIVATE -Werror)
+
 if (CMAKE_C_COMPILER_ID MATCHES GNU)
     target_compile_options(oecore PRIVATE -Wjump-misses-init)
 endif()

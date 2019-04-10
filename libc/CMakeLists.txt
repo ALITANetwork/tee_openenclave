@@ -69,7 +69,6 @@ add_library(oelibc STATIC
     getaddrinfo.c
     getnameinfo.c
     libunwind_stubs.c
-    libcex_stdio.c
     link.c
     locale.c
     malloc.c

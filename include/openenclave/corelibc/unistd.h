@@ -6,8 +6,18 @@
 
 #include <openenclave/bits/defs.h>
 #include <openenclave/bits/types.h>
+#include <openenclave/corelibc/stdarg.h>
+#include <openenclave/corelibc/unistd.h>
 
 OE_EXTERNC_BEGIN
+
+/*
+**==============================================================================
+**
+** oe-prefixed names:
+**
+**==============================================================================
+*/
 
 #define OE_STDIN_FILENO 0
 #define OE_STDOUT_FILENO 1
@@ -23,6 +33,8 @@ OE_EXTERNC_BEGIN
 #define OE_SEEK_SET 0
 #define OE_SEEK_CUR 1
 #define OE_SEEK_END 2
+
+#define OE_NGROUP_MAX 256
 
 int oe_access(const char* pathname, int mode);
 
@@ -58,13 +70,45 @@ int oe_chdir(const char* path);
 
 int oe_close(int fd);
 
-int oe_fcntl(int fd, int cmd, int arg);
+int __oe_fcntl_va(int fd, int cmd, oe_va_list ap);
+
+OE_INLINE int oe_fcntl(int fd, int cmd, ...)
+{
+    oe_va_list ap;
+    oe_va_start(ap, cmd);
+    int r = __oe_fcntl_va(fd, cmd, ap);
+    oe_va_end(ap);
+
+    return r;
+}
 
 int oe_gethostname(char* name, size_t len);
 
 int oe_getdomainname(char* name, size_t len);
 
 unsigned int oe_sleep(unsigned int seconds);
+
+int oe_dup(int fd);
+
+int oe_dup2(int fd, int newfd);
+
+pid_t oe_getpid(void);
+
+pid_t oe_getppid(void);
+
+pid_t oe_getpgrp(void);
+
+uid_t oe_getuid(void);
+
+uid_t oe_geteuid(void);
+
+/*
+**==============================================================================
+**
+** Standard-C names:
+**
+**==============================================================================
+*/
 
 #if defined(OE_NEED_STDC_NAMES)
 
@@ -152,6 +196,51 @@ OE_INLINE int getdomainname(char* name, size_t len)
 OE_INLINE unsigned int sleep(unsigned int seconds)
 {
     return oe_sleep(seconds);
+}
+
+OE_INLINE int fcntl(int fd, int cmd, ...)
+{
+    oe_va_list ap;
+    oe_va_start(ap, cmd);
+    int r = __oe_fcntl_va(fd, cmd, ap);
+    oe_va_end(ap);
+
+    return r;
+}
+
+OE_INLINE int dup(int fd)
+{
+    return oe_dup(fd);
+}
+
+OE_INLINE int dup2(int fd, int newfd)
+{
+    return oe_dup2(fd, newfd);
+}
+
+OE_INLINE pid_t getpid(void)
+{
+    return oe_getpid();
+}
+
+OE_INLINE pid_t getppid(void)
+{
+    return oe_getppid();
+}
+
+OE_INLINE pid_t getpgrp(void)
+{
+    return oe_getpgrp();
+}
+
+OE_INLINE uid_t getuid(void)
+{
+    return oe_getuid();
+}
+
+OE_INLINE uid_t geteuid(void)
+{
+    return oe_geteuid();
 }
 
 #endif /* defined(OE_NEED_STDC_NAMES) */

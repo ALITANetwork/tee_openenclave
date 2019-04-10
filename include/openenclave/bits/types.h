@@ -82,6 +82,8 @@ typedef uint16_t sa_family_t;
 typedef uint16_t in_port_t;
 typedef uint32_t in_addr_t;
 
+typedef int pid_t;
+
 /* bool type */
 #ifndef __cplusplus
 #define true 1
