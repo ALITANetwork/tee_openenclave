@@ -46,6 +46,7 @@ elseif (WIN32)
     crypto/bcrypt/rsa.c
 #    windows/hostepoll.c
 #    windows/hostuid.c
+    ocalls.c
     windows/hostthread.c
     windows/time.c
 #    windows/uname.c

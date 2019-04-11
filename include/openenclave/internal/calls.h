@@ -95,6 +95,9 @@ typedef enum _oe_func
     OE_OCALL_MALLOC,
     OE_OCALL_REALLOC,
     OE_OCALL_FREE,
+#if defined(WINDOWS_HOST)
+    OE_OCALL_WRITE,
+#endif
     OE_OCALL_SLEEP,
     OE_OCALL_GET_TIME,
     OE_OCALL_BACKTRACE_SYMBOLS,
