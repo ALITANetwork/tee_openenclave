@@ -203,3 +203,35 @@ int oe_strncasecmp(const char* s1, const char* s2, size_t n)
 
     return oe_toupper(*s1) - oe_toupper(*s2);
 }
+
+char* oe_strchr(const char* s, int c)
+{
+    while (*s && *s != c)
+        s++;
+
+    if (*s == c)
+        return (char*)s;
+
+    return NULL;
+}
+
+char* oe_strrchr(const char* s, int c)
+{
+    char* p = (char*)s + oe_strlen(s);
+
+    if (c == '\0')
+        return p;
+
+    while (p != s)
+    {
+        if (*--p == c)
+            return p;
+    }
+
+    return NULL;
+}
+
+int oe_atoi(const char* nptr)
+{
+    return (int)oe_strtol(nptr, NULL, 10);
+}

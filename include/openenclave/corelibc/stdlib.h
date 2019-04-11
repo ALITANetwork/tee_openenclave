@@ -39,6 +39,8 @@ void oe_exit(int status);
 
 void oe_set_exit_handler(void (*handler)(int status));
 
+int oe_atoi(const char* nptr);
+
 #if defined(OE_NEED_STDC_NAMES)
 
 #include "bits/atexit.h"
@@ -69,6 +71,11 @@ OE_INLINE void abort(void)
 OE_INLINE void exit(int status)
 {
     return oe_exit(status);
+}
+
+OE_INLINE int atoi(const char* nptr)
+{
+    return oe_atoi(nptr);
 }
 
 #endif /* defined(OE_NEED_STDC_NAMES) */

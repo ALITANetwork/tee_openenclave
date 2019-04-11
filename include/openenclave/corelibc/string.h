@@ -53,6 +53,10 @@ int oe_strcasecmp(const char* s1, const char* s2);
 
 int oe_strncasecmp(const char* s1, const char* s2, size_t n);
 
+char* oe_strchr(const char* s, int c);
+
+char* oe_strrchr(const char* s, int c);
+
 #if defined(OE_NEED_STDC_NAMES)
 
 OE_INLINE
@@ -144,6 +148,16 @@ OE_INLINE int strcasecmp(const char* s1, const char* s2)
 OE_INLINE int strncasecmp(const char* s1, const char* s2, size_t n)
 {
     return oe_strncasecmp(s1, s2, n);
+}
+
+OE_INLINE char* strchr(const char* s, int c)
+{
+    return oe_strchr(s, c);
+}
+
+OE_INLINE char* strrchr(const char* s, int c)
+{
+    return oe_strrchr(s, c);
 }
 
 #endif /* defined(OE_NEED_STDC_NAMES) */
