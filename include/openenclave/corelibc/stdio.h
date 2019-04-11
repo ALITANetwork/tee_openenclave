@@ -7,6 +7,7 @@
 #include <openenclave/bits/defs.h>
 #include <openenclave/bits/types.h>
 #include <openenclave/corelibc/stdarg.h>
+#include <openenclave/corelibc/stdint.h>
 #include <openenclave/corelibc/unistd.h>
 
 OE_EXTERNC_BEGIN
@@ -99,6 +100,15 @@ int snprintf(char* str, size_t size, const char* format, ...)
     va_list ap;
     va_start(ap, format);
     return oe_vsnprintf(str, size, format, ap);
+    va_end(ap);
+}
+
+OE_PRINTF_FORMAT(2, 3)
+OE_INLINE int sprintf(char* str, const char* format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    return oe_vsnprintf(str, SIZE_MAX, format, ap);
     va_end(ap);
 }
 
