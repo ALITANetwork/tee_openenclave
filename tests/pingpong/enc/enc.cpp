@@ -3,14 +3,13 @@
 
 #include <openenclave/enclave.h>
 #include <openenclave/internal/print.h>
-#include "pingpong_t.h"
 #include <string.h>
+#include "pingpong_t.h"
 
 extern "C" int oe_host_write(int device, const char* str, size_t len);
 
 void Ping(const char* in, char* out)
 {
-    oe_host_write(0, "ping\n", strlen("ping\n"));
     Pong(in, out);
 }
 
