@@ -101,7 +101,7 @@ char* oe_host_strndup(const char* str, size_t n)
     return p;
 }
 
-#if defined(WINDOWS_HOST)
+#if defined(WINDOWS_HOST) /* __feature_io__ */
 
 int oe_host_write(int device, const char* str, size_t len)
 {
@@ -176,12 +176,13 @@ int oe_host_vfprintf(int device, const char* fmt, oe_va_list ap_)
         oe_va_end(ap);
     }
 
-#if !defined(WINDOWS_HOST)
+#if defined(WINDOWS_HOST) /* __feature_io__ */
+    oe_host_write(device, p, (size_t)-1);
+#else
     if (oe_write(device + 1, p, (size_t)n) != n)
         return -1;
-#else
-    oe_host_write(device, p, (size_t)-1);
 #endif
+
     return n;
 }
 

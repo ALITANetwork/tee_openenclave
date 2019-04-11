@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-if(UNIX)
+if(UNIX) # __feature_io__
 add_custom_command(
     OUTPUT oe_u.h oe_u.c oe_args.h
     DEPENDS ${CMAKE_SOURCE_DIR}/common/oe.edl edger8r
@@ -17,12 +17,12 @@ if (UNIX)
   set(PLATFORM_SRC
     ../common/asn1.c
     ../common/cert.c
-    ${CMAKE_CURRENT_BINARY_DIR}/oe_u.c
-    files.c
-    hostepoll.c
-    hostfs.c
-    hostsock.c
-    hostresolver.c
+    ${CMAKE_CURRENT_BINARY_DIR}/oe_u.c # __feature_io__
+    files.c # __feature_io__
+    hostepoll.c # __feature_io__
+    hostfs.c # __feature_io__
+    hostsock.c # __feature_io__
+    hostresolver.c # __feature_io__
     crypto/openssl/asn1.c
     crypto/openssl/cert.c
     crypto/openssl/crl.c
@@ -44,9 +44,7 @@ elseif (WIN32)
     ../3rdparty/mbedtls/mbedtls/library/bignum.c
     crypto/bcrypt/hmac.c
     crypto/bcrypt/rsa.c
-#    windows/hostepoll.c
-#    windows/hostuid.c
-    ocalls.c
+    ocalls.c # __feature_io__
     windows/hostthread.c
     windows/time.c
 #    windows/uname.c
@@ -82,12 +80,13 @@ if (OE_SGX)
     sgx/sgxquote.c
     sgx/sgxsign.c
     sgx/sgxtypes.c
+    # __feature_io__: - sgx/tlsverifierh.c
     sgx/traceh.c)
 
   # OS specific as well.
   if (UNIX)
     list(APPEND PLATFORM_SRC
-      sgx/tlsverifierh.c
+      sgx/tlsverifierh.c # __feature_io__
       sgx/linux/aep.S
       sgx/linux/aesm.c
       sgx/linux/enter.S
@@ -116,12 +115,20 @@ endif()
 
 # Combine with all other non platform dependent files.
 add_library(oehost STATIC
+  # __feature_io__: - ${CMAKE_CURRENT_BINARY_DIR}/oe_u.c
+  # __feature_io__: - ../common/kdf.c
   ../common/datetime.c
   ../common/safecrt.c
   ../common/kdf.c
   asym_keys.c
   dupenv.c
   error.c
+  # __feature_io__: - ${CMAKE_CURRENT_BINARY_DIR}/oe_u.c
+  # __feature_io__: - files.c
+  # __feature_io__: - hostepoll.c
+  # __feature_io__: - hostfs.c
+  # __feature_io__: - hostsock.c
+  # __feature_io__: - hostresolver.c
   fopen.c
   hexdump.c
   memalign.c
@@ -132,7 +139,7 @@ add_library(oehost STATIC
   crypto/sha.c
   ${PLATFORM_SRC})
 
-if (UNIX)
+if (UNIX) # __feature_io__
 add_dependencies(oehost oe_untrusted_edl)
 endif()
 

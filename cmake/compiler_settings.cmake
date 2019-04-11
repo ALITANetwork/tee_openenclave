@@ -65,7 +65,7 @@ else ()
   message(WARNING "Spectre 1 mitigations NOT supported")
 endif ()
 
-if (WIN32)
+if (WIN32) # __feature_io__
   add_compile_options(-DWINDOWS_HOST=1)
 endif ()
 

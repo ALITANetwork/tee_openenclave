@@ -95,7 +95,7 @@ typedef enum _oe_func
     OE_OCALL_MALLOC,
     OE_OCALL_REALLOC,
     OE_OCALL_FREE,
-#if defined(WINDOWS_HOST)
+#if defined(WINDOWS_HOST) /* __feature_io__ */
     OE_OCALL_WRITE,
 #endif
     OE_OCALL_SLEEP,

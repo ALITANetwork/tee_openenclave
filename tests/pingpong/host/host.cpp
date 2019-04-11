@@ -16,8 +16,7 @@ void Log(const char* str, uint64_t x)
 
 void Pong(const char* in, char* out)
 {
-    printf("Pong: %p %p\n", in, out);
-    printf("Pong: %s %s\n", in, out);
+    // printf("Pong: %s %s\n", in, out);
 
     if (in && out)
     {

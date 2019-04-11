@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#if !defined(WIN32)
+#if !defined(WIN32) /* __feature_io__ */
 
 /* struct stat fields. */
 #if defined(__aarch64__)
@@ -62,4 +62,5 @@ struct
 } st_ctim;
 long __st_unused[3];
 #endif
-#endif
+
+#endif /* !defined(WIN32) */

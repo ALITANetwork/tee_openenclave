@@ -22,7 +22,7 @@ void HandleGetQuoteEnclaveIdentityInfo(uint64_t arg_in);
 void oe_handle_backtrace_symbols(oe_enclave_t* enclave, uint64_t arg);
 void oe_handle_log(oe_enclave_t* enclave, uint64_t arg);
 
-#if defined(WIN32)
+#if defined(WIN32) /* __feature_io__ */
 void HandlePrint(uint64_t arg_in);
 #endif
 

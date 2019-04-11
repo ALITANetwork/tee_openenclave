@@ -49,6 +49,7 @@ if (UNIX OR ADD_WINDOWS_ENCLAVE_TESTS OR USE_CLANGW)
         endif()
         add_subdirectory(array)
         add_subdirectory(bigmalloc)
+        # __feature_io__: - add_subdirectory(corelibc)
         add_subdirectory(crypto)
         add_subdirectory(debug-mode)
         add_subdirectory(typeinfo)
@@ -77,23 +78,23 @@ endif()
 # Windows test Broken Post #632 issue
 if ( UNIX )
     if (OE_SGX)
-        add_subdirectory(sgxfs)
+        add_subdirectory(sgxfs) # __feature_io__
         add_subdirectory(libc)
         add_subdirectory(libcxx)
         add_subdirectory(libcxxrt)
         add_subdirectory(memory)
     endif()
-add_subdirectory(corelibc)
+add_subdirectory(corelibc)      # __feature_io__
 add_subdirectory(signal)
 add_subdirectory(sockets)
 add_subdirectory(libcsock)
 add_subdirectory(polling)
 add_subdirectory(resolver)
-add_subdirectory(hostfs)
-add_subdirectory(fs)
 add_subdirectory(create-rapid)
-add_subdirectory(tls_apis)
-add_subdirectory(tls_e2e)
+add_subdirectory(hostfs)        # __feature_io__
+add_subdirectory(fs)            # __feature_io__
+add_subdirectory(tls_apis)      # __feature_io__
+add_subdirectory(tls_e2e)       # __feature_io__
 endif()
 
 if (OE_SGX AND UNIX)
