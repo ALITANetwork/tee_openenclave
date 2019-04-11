@@ -225,7 +225,7 @@ static long _syscall(
             long p3 = arg5;
             long p4 = arg6;
 
-            ret = ((ioctl_proc)oe_ioctl)(fd, request, p1, p2, p3, p4);
+            ret = oe_ioctl(fd, request, p1, p2, p3, p4);
             goto done;
         }
         case OE_SYS_fcntl:
@@ -468,6 +468,7 @@ static long _syscall(
             int maxevents = (int)arg3;
             int timeout = (int)arg4;
 #if defined(SUPPORT_ENCLAVE_SIGNALS)
+            /* ATTN:IO: support this? */
             const sigset_t* sigmask = (const sigset_t*)arg5;
             ret = oe_epoll_pwait(epfd, events, maxevents, timeout, sigmask);
 #else
@@ -475,6 +476,7 @@ static long _syscall(
 #endif
             goto done;
         }
+            /* ATTN:IO: remove this? */
         case OE_SYS_epoll_wait_old:
         {
             int epfd = (int)arg1;

@@ -45,7 +45,8 @@ void _set_to_fd_list(
                     {
                         fd_list[fd_idx] = (int)fd;
                     }
-                    fd_flags[fd] |= flags;
+                    /* ATTN:IO: sign change here. */
+                    fd_flags[fd] |= (int)flags;
                 }
             }
             bitmask <<= 1;
@@ -90,7 +91,7 @@ int oe_select(
     if (timeout)
     {
         timeout_ms = (int)timeout->tv_sec * 1000;
-        timeout_ms += timeout->tv_usec / 1000;
+        timeout_ms += (int)(timeout->tv_usec / 1000);
     }
 
     memset(fd_list, 0xff, sizeof(uint32_t) * (size_t)(nfds + 1));

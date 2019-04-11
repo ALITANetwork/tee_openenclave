@@ -176,7 +176,7 @@ static ssize_t _eventfd_read(oe_device_t* eventfd_, void* buf, size_t count)
     }
     else
     {
-        const static uint64_t one = 1;
+        static const uint64_t one = 1;
         memcpy(buf, &one, sizeof(uint64_t));
         eventfd->count--;
         ret = 8; //? man page isn't clear
@@ -193,6 +193,8 @@ static ssize_t _eventfd_write(
 {
     ssize_t ret = -1;
     eventfd_dev_t* eventfd = _cast_eventfd(eventfd_);
+    uint64_t incr = 0;
+    __uint128_t total;
 
     oe_errno = 0;
 
@@ -216,10 +218,9 @@ static ssize_t _eventfd_write(
         }
     }
 
-    uint64_t incr = 0;
     memcpy(&incr, buf, sizeof(uint64_t));
 
-    __uint128_t total = (__uint128_t)eventfd->count + (__uint128_t)incr;
+    total = (__uint128_t)eventfd->count + (__uint128_t)incr;
     if (total > 0xfffffffffffffffe)
     {
         eventfd->count = 0xfffffffffffffffe;

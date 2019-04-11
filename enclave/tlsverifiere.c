@@ -80,7 +80,9 @@ static int extract_x509_quote_ext(
                 break;
             }
         }
-        *p += oid.len;
+
+        /* ATTN:IO: changed from *p to p. */
+        p += oid.len;
     }
 done:
     if (ret)

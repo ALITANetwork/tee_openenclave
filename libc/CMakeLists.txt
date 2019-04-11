@@ -68,6 +68,7 @@ add_library(oelibc STATIC
     freeaddrinfo.c
     getaddrinfo.c
     getnameinfo.c
+    kill.c
     libunwind_stubs.c
     link.c
     locale.c
@@ -84,6 +85,8 @@ add_library(oelibc STATIC
     stat.c
     errno.c
     setjmp.c
+    signal.c
+    sigaction.c
     time.c
     __printf_chk.c
     __vfprintf_chk.c
@@ -529,18 +532,18 @@ add_library(oelibc STATIC
      ${MUSLSRC}/select/select.c
      ${MUSLSRC}/select/poll.c
      ${MUSLSRC}/linux/epoll.c
-     ${MUSLSRC}/signal/signal.c
-     ${MUSLSRC}/signal/sigaction.c
-     ${MUSLSRC}/signal/sigaddset.c
-     ${MUSLSRC}/signal/sigandset.c
-     ${MUSLSRC}/signal/sigdelset.c
-     ${MUSLSRC}/signal/sigemptyset.c
-     ${MUSLSRC}/signal/sigfillset.c
-     ${MUSLSRC}/signal/sigignore.c
-     ${MUSLSRC}/signal/sigisemptyset.c
-     ${MUSLSRC}/signal/sigismember.c
-     ${MUSLSRC}/signal/sigorset.c
-     ${MUSLSRC}/signal/sigset.c
+     #${MUSLSRC}/signal/signal.c
+     #${MUSLSRC}/signal/sigaction.c
+     #${MUSLSRC}/signal/sigaddset.c
+     #${MUSLSRC}/signal/sigandset.c
+     #${MUSLSRC}/signal/sigdelset.c
+     #${MUSLSRC}/signal/sigemptyset.c
+     #${MUSLSRC}/signal/sigfillset.c
+     #${MUSLSRC}/signal/sigignore.c
+     #${MUSLSRC}/signal/sigisemptyset.c
+     #${MUSLSRC}/signal/sigismember.c
+     #${MUSLSRC}/signal/sigorset.c
+     #${MUSLSRC}/signal/sigset.c
      ${MUSLSRC}/stat/mkdir.c
      ${MUSLSRC}/search/tdelete.c
      ${MUSLSRC}/search/tfind.c

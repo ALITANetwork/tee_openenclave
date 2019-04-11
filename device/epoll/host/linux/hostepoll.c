@@ -276,6 +276,7 @@ int oe_polling_epoll_poll(
     size_t fdsize = 0;
     pthread_t thread = 0;
     poll_args_t* args = NULL;
+    nfds_t fd_idx = 0;
 
     (void)timeout;
 
@@ -292,7 +293,6 @@ int oe_polling_epoll_poll(
     args->enclaveid = enclaveid;
     args->epfd = epfd;
     args->nfds = nfds;
-    nfds_t fd_idx = 0;
     for (; fd_idx < nfds; fd_idx++)
     {
         args->fds[fd_idx] = fds[fd_idx];

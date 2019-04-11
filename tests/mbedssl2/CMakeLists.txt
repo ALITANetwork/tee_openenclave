@@ -7,4 +7,4 @@ if (BUILD_ENCLAVES)
     add_subdirectory(enc)
 endif()
 
-add_enclave_test(tests/mbedssl2 mbedssl2_host mbedssl2_enc)
+# add_enclave_test(tests/mbedssl2 mbedssl2_host mbedssl2_enc)

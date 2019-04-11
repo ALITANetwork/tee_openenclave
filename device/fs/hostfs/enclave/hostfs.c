@@ -533,7 +533,7 @@ static int _hostfs_getdents(
         }
 
         memcpy(dirp, ent, sizeof(struct oe_dirent));
-        bytes += sizeof(struct oe_dirent);
+        bytes += (int)sizeof(struct oe_dirent);
         dirp++;
     }
 

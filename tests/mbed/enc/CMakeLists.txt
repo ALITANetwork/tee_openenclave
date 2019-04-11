@@ -38,12 +38,7 @@ function(add_mbed_test_enclave NAME)
     ${gen})
 
   target_compile_options(mbedtest_suite_${NAME} PRIVATE
-    -Wno-incompatible-pointer-types-discards-qualifiers
-    -Wno-error
-    -Wno-conversion
-    -Wno-sign-conversion
-    -Wno-unused-function
-    -Wno-shorten-64-to-32)
+    -Wno-error)
   target_compile_definitions(mbedtest_suite_${NAME} PRIVATE
     -D__TEST__="${NAME}"
     -DOE_NEED_STDC_NAMES)
@@ -90,13 +85,7 @@ function(add_mbed_selftest_enclave)
     ${gen})
 
   target_compile_options(mbedtest_selftest PRIVATE
-    -Wno-incompatible-pointer-types-discards-qualifiers
-    -Wno-error
-    -Wno-conversion
-    -Wno-sign-conversion
-    -Wno-unused-function
-    -Wno-shorten-64-to-32
-    -Wno-pointer-arith)
+    -Wno-error)
   target_compile_definitions(mbedtest_selftest PRIVATE
     -D__TEST__="selftest"
     -DOE_NEED_STDC_NAMES)

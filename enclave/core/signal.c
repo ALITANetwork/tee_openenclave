@@ -138,22 +138,25 @@ int oe_signal_notify(int signum)
     }
     else
     {
-        switch ((int)(_actions[signum].__sigaction_handler.sa_handler))
-        {
-            case (int)OE_SIG_DFL:
-                (*_default_actions[signum])(signum);
-                break;
-            case (int)OE_SIG_ERR:
-                _handle_error(signum);
-                break;
-            case (int)OE_SIG_IGN:
-                _handle_ignore(signum);
-                break;
+        oe_sighandler_t h = _actions[signum].__sigaction_handler.sa_handler;
 
-            default:
-                (*_actions[signum].__sigaction_handler.sa_handler)(signum);
-                break;
+        if (h == OE_SIG_DFL)
+        {
+            (*_default_actions[signum])(signum);
         }
+        else if (h == OE_SIG_ERR)
+        {
+            _handle_error(signum);
+        }
+        else if (h == OE_SIG_IGN)
+        {
+            _handle_ignore(signum);
+        }
+        else
+        {
+            (*_actions[signum].__sigaction_handler.sa_handler)(signum);
+        }
+
         ret = 0;
     }
 

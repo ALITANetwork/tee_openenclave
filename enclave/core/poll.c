@@ -22,6 +22,7 @@ int oe_poll(struct oe_pollfd* fds, nfds_t nfds, int timeout_ms)
     nfds_t i = 0;
     struct oe_epoll_event* rev =
         oe_malloc(sizeof(struct oe_epoll_event) * nfds);
+    bool has_host_wait;
 
     epfd = oe_epoll_create1(0);
     if (epfd < 0)
@@ -58,7 +59,7 @@ int oe_poll(struct oe_pollfd* fds, nfds_t nfds, int timeout_ms)
         }
     }
 
-    bool has_host_wait = true; // false;
+    has_host_wait = true; // false;
     // 2do. We need to figure out how to wait
 
     if (!pepoll)

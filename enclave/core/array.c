@@ -116,6 +116,7 @@ int oe_array_append(oe_array_t* array, const void* element)
 {
     int ret = -1;
     void* ptr;
+    size_t index;
 
     if (!array || !element)
         goto done;
@@ -123,7 +124,7 @@ int oe_array_append(oe_array_t* array, const void* element)
     if (oe_array_reserve(array, array->size + 1) != 0)
         goto done;
 
-    size_t index = array->size++;
+    index = array->size++;
 
     if (!(ptr = oe_array_get(array, index)))
     {

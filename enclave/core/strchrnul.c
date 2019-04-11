@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+#pragma GCC diagnostic ignored "-Wparentheses"
+
 #include <openenclave/corelibc/limits.h>
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #define __strchrnul __oe_strchrnul
