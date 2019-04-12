@@ -45,7 +45,7 @@ void _set_to_fd_list(
                     {
                         fd_list[fd_idx] = (int)fd;
                     }
-                    /* ATTN:IO: sign change here. */
+                    /* ATTN:IO: sign change here. Double check this. */
                     fd_flags[fd] |= (int)flags;
                 }
             }

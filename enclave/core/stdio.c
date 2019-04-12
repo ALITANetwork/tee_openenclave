@@ -18,7 +18,7 @@
 
 /* TODO: use buffering to optimize small reads and writes. */
 
-/* ATTN: add locking. */
+/* ATTN:IO: add locking. */
 
 struct _OE_IO_FILE
 {

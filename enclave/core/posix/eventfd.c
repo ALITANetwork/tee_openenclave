@@ -26,7 +26,7 @@ int oe_eventfd(unsigned int initval, int flags)
     ed = oe_assign_fd_device(peventfd);
     if (ed == -1)
     {
-        // ATTN: release peventfd here.
+        // ATTN:IO: release peventfd here.
         // Log error here
         return -1; // erno is already set
     }

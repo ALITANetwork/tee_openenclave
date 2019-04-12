@@ -5,7 +5,7 @@
 #include "linux-sgx/common/inc/sgx_tprotected_fs.h"
 // clang-format on
 
-/* ATTN: use elibc within SGX code. */
+/* ATTN:IO: use elibc within SGX code. */
 #include <errno.h>
 #include <openenclave/enclave.h>
 #include <openenclave/sgxfs.h>

@@ -23,7 +23,6 @@ if (OE_SGX)
         sgx/entropy.c
         sgx/errno.c
         sgx/exception.c
-        sgx/features.c
         sgx/globals.c
         sgx/globals.c
         sgx/hostcalls.c
@@ -78,41 +77,44 @@ add_library(oecore STATIC
     ${MUSL_SRC_DIR}/string/memcpy.c
     ${MUSL_SRC_DIR}/string/memmove.c
     ${MUSL_SRC_DIR}/string/memset.c
-    io/hostfs.c
-    io/hostepoll.c
-    io/hostresolver.c
-    io/hostsock.c
-    io/eventfd.c
+    posix/cwd.c
+    posix/device.c
+    posix/epoll.c
+    posix/eventfd.c
+    posix/eventfd_device.c
+    posix/fd.c
+    posix/fs.c
+    posix/getdomainname.c
+    posix/gethostname.c
+    posix/hostepoll_device.c
+    posix/hostfs_device.c
+    posix/hostresolver_device.c
+    posix/hostsock_device.c
+    posix/mount.c
+    posix/poll.c
+    posix/realpath.c
+    posix/resolver.c
+    posix/select.c
+    posix/signal.c
+    posix/socket.c
+    posix/syscall.c
+    posix/uname.c
+    posix/features.c
     __secs_to_tm.c
     __stack_chk_fail.c
     array.c
     assert.c
     corelibc.c
     ctype.c
-    cwd.c
     typeinfo.c
-    device.c
-    epoll.c
     exit.c
-    select.c
-    poll.c
-    eventfd.c
-    fd.c
-    fs.c
-    gethostname.c
-    getdomainname.c
     gmtime.c
     hexdump.c
     intstr.c
-    mount.c
     printf.c
     pthread.c
-    realpath.c
-    resolver.c
     result.c
-    signal.c
     sleep.c
-    socket.c
     stdio.c
     strerror.c
     strcspn.c
@@ -121,9 +123,7 @@ add_library(oecore STATIC
     strtok_r.c
     strchrnul.c
     strtoul.c
-    syscall.c
     time.c
-    uname.c
     ${PLATFORM_SRC})
 
 add_dependencies(oecore oe_trusted_edl)

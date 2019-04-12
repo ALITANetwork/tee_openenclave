@@ -138,7 +138,6 @@ int oe_socket(int domain, int type, int protocol)
 }
 
 int oe_connect(int sockfd, const struct oe_sockaddr* addr, socklen_t addrlen)
-
 {
     int rtnval = -1;
     oe_device_t* psock = oe_get_fd_device(sockfd);
@@ -164,7 +163,6 @@ int oe_connect(int sockfd, const struct oe_sockaddr* addr, socklen_t addrlen)
 }
 
 int oe_accept(int sockfd, struct oe_sockaddr* addr, socklen_t* addrlen)
-
 {
     oe_device_t* psock = oe_get_fd_device(sockfd);
     oe_device_t* pnewsock = NULL;
@@ -193,14 +191,13 @@ int oe_accept(int sockfd, struct oe_sockaddr* addr, socklen_t* addrlen)
     newfd = oe_assign_fd_device(pnewsock);
     if (newfd == -1)
     {
-        /* ATTN: check value of newfd here. */
+        /* ATTN:IO: handle this. */
     }
 
     return newfd;
 }
 
 int oe_listen(int sockfd, int backlog)
-
 {
     oe_device_t* psock = oe_get_fd_device(sockfd);
 
@@ -221,7 +218,6 @@ int oe_listen(int sockfd, int backlog)
 }
 
 ssize_t oe_recv(int sockfd, void* buf, size_t len, int flags)
-
 {
     oe_device_t* psock = oe_get_fd_device(sockfd);
 
@@ -269,7 +265,6 @@ ssize_t oe_recvfrom(
 }
 
 ssize_t oe_send(int sockfd, const void* buf, size_t len, int flags)
-
 {
     oe_device_t* psock = oe_get_fd_device(sockfd);
 
@@ -317,7 +312,6 @@ ssize_t oe_sendto(
 }
 
 ssize_t oe_recvmsg(int sockfd, struct oe_msghdr* buf, int flags)
-
 {
     oe_device_t* psock = oe_get_fd_device(sockfd);
 
@@ -338,7 +332,6 @@ ssize_t oe_recvmsg(int sockfd, struct oe_msghdr* buf, int flags)
 }
 
 ssize_t oe_sendmsg(int sockfd, const struct oe_msghdr* buf, int flags)
-
 {
     oe_device_t* psock = oe_get_fd_device(sockfd);
 
@@ -359,7 +352,6 @@ ssize_t oe_sendmsg(int sockfd, const struct oe_msghdr* buf, int flags)
 }
 
 int oe_shutdown(int sockfd, int how)
-
 {
     oe_device_t* psock = oe_get_fd_device(sockfd);
 
@@ -451,7 +443,6 @@ int oe_setsockopt(
     int optname,
     const void* optval,
     socklen_t optlen)
-
 {
     oe_device_t* psock = oe_get_fd_device(sockfd);
 
@@ -473,7 +464,6 @@ int oe_setsockopt(
 }
 
 int oe_bind(int sockfd, const struct oe_sockaddr* name, socklen_t namelen)
-
 {
     oe_device_t* psock = oe_get_fd_device(sockfd);
 

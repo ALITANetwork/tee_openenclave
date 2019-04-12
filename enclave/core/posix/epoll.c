@@ -27,7 +27,7 @@ int oe_epoll_create(int size)
     ed = oe_assign_fd_device(pepoll);
     if (ed == -1)
     {
-        // ATTN: release pepoll here.
+        // ATTN:IO: release pepoll here.
         // Log error here
         return -1; // erno is already set
     }
@@ -49,7 +49,7 @@ int oe_epoll_create1(int flags)
     ed = oe_assign_fd_device(pepoll);
     if (ed == -1)
     {
-        // ATTN: release pepoll here.
+        // ATTN:IO: release pepoll here.
         // Log error here
         return -1; // erno is already set
     }

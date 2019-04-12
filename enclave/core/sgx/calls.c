@@ -180,33 +180,6 @@ static oe_result_t _handle_init_enclave(uint64_t arg_in)
             }
 
 #if !defined(WINDOWS_HOST)
-            /* Register the host file system. */
-            if (oe_register_hostfs_device() != 0)
-            {
-                result = OE_FAILURE;
-                goto done;
-            }
-
-            /* Register the host sockets device. */
-            if (oe_register_hostsock_device() != 0)
-            {
-                result = OE_FAILURE;
-                goto done;
-            }
-
-            /* Register the epoll device. */
-            if (oe_register_epoll_device() != 0)
-            {
-                result = OE_FAILURE;
-                goto done;
-            }
-
-            /* Register the eventfd device. */
-            if (oe_register_eventfd_device() != 0)
-            {
-                result = OE_FAILURE;
-                goto done;
-            }
 
             /* Initialize the console devices: stdin, stdout, stderr. */
             if (oe_initialize_console_devices() != 0)

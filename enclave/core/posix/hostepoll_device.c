@@ -248,7 +248,7 @@ static oe_device_t* _epoll_create(oe_device_t* epoll_, int size)
     int retval;
     epoll_dev_t* epoll = NULL;
 
-    /* ATTN: why is size ignored? */
+    /* ATTN:IO: why is size ignored? */
     (void)size;
 
     oe_errno = 0;
@@ -408,7 +408,7 @@ static int _epoll_ctl_mod(
             (int)epoll->host_fd,
             (int)host_fd,
             event->events,
-            enclave_fd, /* list_idx: ATTN: is this correct? */
+            enclave_fd, /* list_idx: ATTN:IO: is this correct? */
             epoll_fd,
             &oe_errno) != OE_OK)
     {

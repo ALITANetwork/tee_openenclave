@@ -26,10 +26,12 @@ typedef struct _oe_sock_ops
         oe_device_t* dev,
         const struct oe_sockaddr* addr,
         socklen_t addrlen);
+
     int (*accept)(
         oe_device_t* dev,
         struct oe_sockaddr* addr,
         socklen_t* addrlen);
+
     int (*bind)(
         oe_device_t* dev,
         const struct oe_sockaddr* addr,
@@ -38,6 +40,7 @@ typedef struct _oe_sock_ops
     int (*listen)(oe_device_t* dev, int backlog);
 
     ssize_t (*recv)(oe_device_t* dev, void* buf, size_t len, int flags);
+
     ssize_t (*recvfrom)(
         oe_device_t* dev,
         void* buf,
@@ -47,6 +50,7 @@ typedef struct _oe_sock_ops
         socklen_t* addrlen);
 
     ssize_t (*send)(oe_device_t* dev, const void* buf, size_t len, int flags);
+
     ssize_t (*sendto)(
         oe_device_t* dev,
         const void* buf,
@@ -54,23 +58,28 @@ typedef struct _oe_sock_ops
         int flags,
         const struct oe_sockaddr* dest_addr,
         socklen_t addrlen);
+
     ssize_t (*socketpair)(
         oe_device_t* dev,
         int domain,
         int type,
         int protocol,
         oe_device_t* retdevs[2]);
+
     ssize_t (
         *sendmsg)(oe_device_t* dev, const struct oe_msghdr* msg, int flags);
+
     ssize_t (*recvmsg)(oe_device_t* dev, struct oe_msghdr* msg, int flags);
 
     int (*shutdown)(oe_device_t* dev, int how);
+
     int (*getsockopt)(
         oe_device_t* dev,
         int level,
         int optname,
         void* optval,
         socklen_t* optlen);
+
     int (*setsockopt)(
         oe_device_t* dev,
         int level,
@@ -81,22 +90,12 @@ typedef struct _oe_sock_ops
         oe_device_t* dev,
         struct oe_sockaddr* addr,
         socklen_t* addrlen);
+
     int (*getsockname)(
         oe_device_t* dev,
         struct oe_sockaddr* addr,
         socklen_t* addrlen);
-
-#if 0
-    int (*getaddrinfo)( oe_device_t* dev, const char *node, const char *service, const struct oe_addrinfo *hints, struct oe_addrinfo **res);
-
-    void (*freeaddrinfo)( oe_device_t* dev, struct oe_addrinfo *res);
-    int (*gethostname)( oe_device_t* dev, char *name, size_t len);
-
-    int (*getnameinfo)( oe_device_t* dev, const struct oe_sockaddr *sa, socklen_t salen, char *host, socklen_t hostlen, char *serv, socklen_t servlen, int flags);
-#endif
 } oe_sock_ops_t;
-
-/* ATTN: where does select go? */
 
 OE_EXTERNC_END
 
