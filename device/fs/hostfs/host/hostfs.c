@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include "oe_u.h"
 
-int oe_hostfs_open(const char* pathname, int flags, mode_t mode, int* err)
+int oe_posix_open_ocall(const char* pathname, int flags, mode_t mode, int* err)
 {
     int ret = -1;
 
@@ -64,7 +64,7 @@ done:
     return ret;
 }
 
-ssize_t oe_hostfs_read(int fd, void* buf, size_t count, int* err)
+ssize_t oe_posix_read_ocall(int fd, void* buf, size_t count, int* err)
 {
     ssize_t ret = read(fd, buf, count);
 
@@ -74,7 +74,7 @@ ssize_t oe_hostfs_read(int fd, void* buf, size_t count, int* err)
     return ret;
 }
 
-ssize_t oe_hostfs_write(int fd, const void* buf, size_t count, int* err)
+ssize_t oe_posix_write_ocall(int fd, const void* buf, size_t count, int* err)
 {
     ssize_t ret = write(fd, buf, count);
 
@@ -84,7 +84,7 @@ ssize_t oe_hostfs_write(int fd, const void* buf, size_t count, int* err)
     return ret;
 }
 
-off_t oe_hostfs_lseek(int fd, off_t offset, int whence, int* err)
+off_t oe_posix_lseek_ocall(int fd, off_t offset, int whence, int* err)
 {
     off_t ret = lseek(fd, offset, whence);
 
@@ -94,17 +94,23 @@ off_t oe_hostfs_lseek(int fd, off_t offset, int whence, int* err)
     return ret;
 }
 
-int oe_hostfs_close(int fd, int* err)
+#if 0
+int oe_posix_close_ocall(int fd, int* err)
 {
     int ret = close(fd);
 
     if (ret != 0 && err)
-        *err = errno;
+    {
+        if (err)
+            *err = errno;
+    }
 
     return ret;
 }
+#endif
 
-int oe_hostfs_dup(int oldfd, int* err)
+#if 0
+int oe_posix_dup_ocall(int oldfd, int* err)
 {
     int ret = dup(oldfd);
 
@@ -113,8 +119,9 @@ int oe_hostfs_dup(int oldfd, int* err)
 
     return ret;
 }
+#endif
 
-void* oe_hostfs_opendir(const char* name, int* err)
+void* oe_posix_opendir_ocall(const char* name, int* err)
 {
     void* ret = opendir(name);
 
@@ -124,7 +131,7 @@ void* oe_hostfs_opendir(const char* name, int* err)
     return ret;
 }
 
-int oe_hostfs_readdir(void* dirp, struct oe_hostfs_dirent_struct* buf, int* err)
+int oe_posix_readdir_ocall(void* dirp, struct oe_posix_dirent* buf, int* err)
 {
     int ret = -1;
     struct dirent* ent = readdir((DIR*)dirp);
@@ -142,7 +149,7 @@ int oe_hostfs_readdir(void* dirp, struct oe_hostfs_dirent_struct* buf, int* err)
         goto done;
     }
 
-    memset(buf, 0, sizeof(struct oe_hostfs_dirent_struct));
+    memset(buf, 0, sizeof(struct oe_posix_dirent));
     buf->d_ino = ent->d_ino;
     buf->d_off = ent->d_off;
     buf->d_reclen = ent->d_reclen;
@@ -155,12 +162,12 @@ done:
     return ret;
 }
 
-void oe_hostfs_rewinddir(void* dirp)
+void oe_posix_rewinddir_ocall(void* dirp)
 {
     rewinddir((DIR*)dirp);
 }
 
-int oe_hostfs_closedir(void* dirp, int* err)
+int oe_posix_closedir_ocall(void* dirp, int* err)
 {
     int ret = closedir((DIR*)dirp);
 
@@ -170,9 +177,9 @@ int oe_hostfs_closedir(void* dirp, int* err)
     return ret;
 }
 
-int oe_hostfs_stat(
+int oe_posix_stat_ocall(
     const char* pathname,
-    struct oe_hostfs_stat_struct* buf,
+    struct oe_posix_stat* buf,
     int* err)
 {
     struct stat st;
@@ -211,7 +218,7 @@ int oe_hostfs_stat(
     return ret;
 }
 
-int oe_hostfs_access(const char* pathname, int mode, int* err)
+int oe_posix_access_ocall(const char* pathname, int mode, int* err)
 {
     int ret = access(pathname, mode);
 
@@ -221,7 +228,7 @@ int oe_hostfs_access(const char* pathname, int mode, int* err)
     return ret;
 }
 
-int oe_hostfs_link(const char* oldpath, const char* newpath, int* err)
+int oe_posix_link_ocall(const char* oldpath, const char* newpath, int* err)
 {
     int ret = link(oldpath, newpath);
 
@@ -231,7 +238,7 @@ int oe_hostfs_link(const char* oldpath, const char* newpath, int* err)
     return ret;
 }
 
-int oe_hostfs_unlink(const char* pathname, int* err)
+int oe_posix_unlink_ocall(const char* pathname, int* err)
 {
     int ret = unlink(pathname);
 
@@ -241,7 +248,7 @@ int oe_hostfs_unlink(const char* pathname, int* err)
     return ret;
 }
 
-int oe_hostfs_rename(const char* oldpath, const char* newpath, int* err)
+int oe_posix_rename_ocall(const char* oldpath, const char* newpath, int* err)
 {
     int ret = rename(oldpath, newpath);
 
@@ -251,7 +258,7 @@ int oe_hostfs_rename(const char* oldpath, const char* newpath, int* err)
     return ret;
 }
 
-int oe_hostfs_truncate(const char* path, off_t length, int* err)
+int oe_posix_truncate_ocall(const char* path, off_t length, int* err)
 {
     int ret = truncate(path, length);
 
@@ -261,7 +268,7 @@ int oe_hostfs_truncate(const char* path, off_t length, int* err)
     return ret;
 }
 
-int oe_hostfs_mkdir(const char* pathname, mode_t mode, int* err)
+int oe_posix_mkdir_ocall(const char* pathname, mode_t mode, int* err)
 {
     int ret = mkdir(pathname, mode);
 
@@ -271,7 +278,7 @@ int oe_hostfs_mkdir(const char* pathname, mode_t mode, int* err)
     return ret;
 }
 
-int oe_hostfs_rmdir(const char* pathname, int* err)
+int oe_posix_rmdir_ocall(const char* pathname, int* err)
 {
     int ret = rmdir(pathname);
 

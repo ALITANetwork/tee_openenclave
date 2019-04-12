@@ -258,7 +258,7 @@ static oe_device_t* _epoll_create(oe_device_t* epoll_, int size)
     (void)_epoll_clone(epoll_, &ret);
     epoll = _cast_epoll(ret);
 
-    if (oe_polling_epoll_create1(&retval, 0, &oe_errno) != OE_OK)
+    if (oe_posix_epoll_create1_ocall(&retval, 0, &oe_errno) != OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
@@ -288,7 +288,7 @@ static oe_device_t* _epoll_create1(oe_device_t* epoll_, int32_t flags)
     (void)_epoll_clone(epoll_, &ret);
     epoll = _cast_epoll(ret);
 
-    if (oe_polling_epoll_create1(&retval, flags, &oe_errno) != OE_OK)
+    if (oe_posix_epoll_create1_ocall(&retval, flags, &oe_errno) != OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
@@ -348,7 +348,7 @@ static int _epoll_ctl_add(
         goto done;
     }
 
-    if (oe_polling_epoll_ctl_add(
+    if (oe_posix_epoll_ctl_add_ocall(
             &ret,
             (int)epoll->host_fd,
             (int)host_fd,
@@ -405,7 +405,7 @@ static int _epoll_ctl_mod(
         goto done;
     }
 
-    if (oe_polling_epoll_ctl_mod(
+    if (oe_posix_epoll_ctl_mod_ocall(
             &ret,
             (int)epoll->host_fd,
             (int)host_fd,
@@ -454,7 +454,7 @@ static int _epoll_ctl_del(int epoll_fd, int enclave_fd)
         return -1;
     }
 
-    if (oe_polling_epoll_ctl_del(
+    if (oe_posix_epoll_ctl_del_ocall(
             &ret, (int)epoll->host_fd, (int)host_fd, &oe_errno) != OE_OK)
     {
         oe_errno = ENOMEM;
@@ -504,7 +504,7 @@ static int _epoll_wait(
         goto done;
     }
 
-    if (oe_polling_epoll_wait(
+    if (oe_posix_epoll_wait_ocall(
             &ret,
             (int64_t)oe_get_enclave(),
             (int)epoll_host_fd,
@@ -625,7 +625,7 @@ static int _epoll_poll(
         }
     }
 
-    if (oe_polling_epoll_poll(
+    if (oe_posix_epoll_poll_ocall(
             &ret,
             (int64_t)oe_get_enclave(),
             (int)epoll_fd,

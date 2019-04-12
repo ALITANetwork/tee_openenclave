@@ -10,7 +10,7 @@
 
 // Poll uses much of the infrastructure from epoll.
 
-int oe_signal_kill(int pid, int signum, int* err)
+int oe_posix_kill_ocall(int pid, int signum, int* err)
 
 {
     int retval = -1;

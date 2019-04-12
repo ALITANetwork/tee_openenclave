@@ -55,7 +55,7 @@ int oe_kill(pid_t pid, int signum)
     int retval = -1;
     oe_errno = 0;
 
-    if (oe_signal_kill(&retval, (int)pid, signum, &oe_errno) != OE_OK)
+    if (oe_posix_kill_ocall(&retval, (int)pid, signum, &oe_errno) != OE_OK)
     {
         goto done;
     }
@@ -110,7 +110,7 @@ done:
     return retval;
 }
 
-int oe_signal_notify(int signum)
+int oe_posix_signal_notify_ecall(int signum)
 {
     int ret = -1;
 

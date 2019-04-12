@@ -8,7 +8,7 @@
 #include <sys/utsname.h>
 #include "oe_u.h"
 
-int oe_posix_uname(struct utsname* buf, int* err)
+int oe_posix_uname_ocall(struct utsname* buf, int* err)
 {
     int ret = -1;
     struct oe_utsname* out = (struct oe_utsname*)buf;

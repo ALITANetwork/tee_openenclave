@@ -14,7 +14,7 @@
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-int oe_hostsock_socket(int domain, int type, int protocol, int* err)
+int oe_posix_socket_ocall(int domain, int type, int protocol, int* err)
 {
     int ret = socket(domain, type, protocol);
 
@@ -24,7 +24,7 @@ int oe_hostsock_socket(int domain, int type, int protocol, int* err)
     return ret;
 }
 
-int oe_hostsock_socketpair(
+int oe_posix_socketpair_ocall(
     int domain,
     int type,
     int protocol,
@@ -42,7 +42,7 @@ int oe_hostsock_socketpair(
     return ret;
 }
 
-int oe_hostsock_connect(
+int oe_posix_connect_ocall(
     int sockfd,
     const struct sockaddr* addr,
     socklen_t addrlen,
@@ -56,7 +56,7 @@ int oe_hostsock_connect(
     return ret;
 }
 
-int oe_hostsock_accept(
+int oe_posix_accept_ocall(
     int sockfd,
     struct sockaddr* addr,
     socklen_t addrlen_in,
@@ -80,7 +80,7 @@ done:
     return ret;
 }
 
-int oe_hostsock_bind(
+int oe_posix_bind_ocall(
     int sockfd,
     const struct sockaddr* addr,
     socklen_t addrlen,
@@ -97,7 +97,7 @@ int oe_hostsock_bind(
     return ret;
 }
 
-int oe_hostsock_listen(int sockfd, int backlog, int* err)
+int oe_posix_listen_ocall(int sockfd, int backlog, int* err)
 {
     errno = 0;
 
@@ -112,7 +112,11 @@ int oe_hostsock_listen(int sockfd, int backlog, int* err)
     return ret;
 }
 
-ssize_t oe_hostsock_recvmsg(int sockfd, struct msghdr* msg, int flags, int* err)
+ssize_t oe_posix_recvmsg_ocall(
+    int sockfd,
+    struct msghdr* msg,
+    int flags,
+    int* err)
 {
     ssize_t ret = recvmsg(sockfd, msg, flags);
 
@@ -128,7 +132,7 @@ done:
     return ret;
 }
 
-ssize_t oe_hostsock_sendmsg(
+ssize_t oe_posix_sendmsg_ocall(
     int sockfd,
     const struct msghdr* msg,
     int flags,
@@ -145,7 +149,12 @@ ssize_t oe_hostsock_sendmsg(
     return ret;
 }
 
-ssize_t oe_hostsock_recv(int sockfd, void* buf, size_t len, int flags, int* err)
+ssize_t oe_posix_recv_ocall(
+    int sockfd,
+    void* buf,
+    size_t len,
+    int flags,
+    int* err)
 {
     ssize_t ret = recv(sockfd, buf, len, flags);
 
@@ -158,7 +167,7 @@ ssize_t oe_hostsock_recv(int sockfd, void* buf, size_t len, int flags, int* err)
     return ret;
 }
 
-ssize_t oe_hostsock_recvfrom(
+ssize_t oe_posix_recvfrom_ocall(
     int sockfd,
     void* buf,
     size_t len,
@@ -182,7 +191,7 @@ ssize_t oe_hostsock_recvfrom(
     return ret;
 }
 
-ssize_t oe_hostsock_send(
+ssize_t oe_posix_send_ocall(
     int sockfd,
     const void* buf,
     size_t len,
@@ -200,7 +209,7 @@ ssize_t oe_hostsock_send(
     return ret;
 }
 
-ssize_t oe_hostsock_sendto(
+ssize_t oe_posix_sendto_ocall(
     int sockfd,
     const void* buf,
     size_t len,
@@ -220,7 +229,7 @@ ssize_t oe_hostsock_sendto(
     return ret;
 }
 
-int oe_hostsock_shutdown(int sockfd, int how, int* err)
+int oe_posix_shutdown_ocall(int sockfd, int how, int* err)
 {
     int ret = shutdown(sockfd, how);
 
@@ -233,7 +242,7 @@ int oe_hostsock_shutdown(int sockfd, int how, int* err)
     return ret;
 }
 
-int oe_hostsock_close(int fd, int* err)
+int oe_posix_close_ocall(int fd, int* err)
 {
     int ret = close(fd);
 
@@ -246,7 +255,7 @@ int oe_hostsock_close(int fd, int* err)
     return ret;
 }
 
-int oe_hostsock_fcntl(int fd, int cmd, int arg, int* err)
+int oe_posix_fcntl_ocall(int fd, int cmd, int arg, int* err)
 {
     int ret = fcntl(fd, cmd, arg);
 
@@ -259,7 +268,7 @@ int oe_hostsock_fcntl(int fd, int cmd, int arg, int* err)
     return ret;
 }
 
-int oe_hostsock_dup(int oldfd, int* err)
+int oe_posix_dup_ocall(int oldfd, int* err)
 {
     int ret = dup(oldfd);
 
@@ -272,7 +281,7 @@ int oe_hostsock_dup(int oldfd, int* err)
     return ret;
 }
 
-int oe_hostsock_setsockopt(
+int oe_posix_setsockopt_ocall(
     int sockfd,
     int level,
     int optname,
@@ -295,7 +304,7 @@ int oe_hostsock_setsockopt(
     return ret;
 }
 
-int oe_hostsock_getsockopt(
+int oe_posix_getsockopt_ocall(
     int sockfd,
     int level,
     int optname,
@@ -320,7 +329,7 @@ int oe_hostsock_getsockopt(
     return ret;
 }
 
-int oe_hostsock_getsockname(
+int oe_posix_getsockname_ocall(
     int sockfd,
     struct sockaddr* addr,
     socklen_t addrlen_in,
@@ -341,7 +350,7 @@ int oe_hostsock_getsockname(
     return ret;
 }
 
-int oe_hostsock_getpeername(
+int oe_posix_getpeername_ocall(
     int sockfd,
     struct sockaddr* addr,
     socklen_t addrlen_in,
@@ -362,7 +371,7 @@ int oe_hostsock_getpeername(
     return ret;
 }
 
-int oe_hostsock_shutdown_device(int sockfd, int* err)
+int oe_posix_shutdown_sockets_device_ocall(int sockfd, int* err)
 {
     if (err)
         *err = EINVAL;

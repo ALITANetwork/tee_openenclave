@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include "oe_u.h"
 
-int oe_resolve_getaddrinfo(
+int oe_posix_getaddrinfo_ocall(
     const char* node,
     const char* service,
     const struct addrinfo* hints,
@@ -34,13 +34,13 @@ done:
     return ret;
 }
 
-void oe_resolve_freeaddrinfo(struct addrinfo* res)
+void oe_posix_freeaddrinfo_ocall(struct addrinfo* res)
 {
     if (res)
         freeaddrinfo(res);
 }
 
-int oe_resolve_getnameinfo(
+int oe_posix_getnameinfo_ocall(
     const struct sockaddr* sa,
     socklen_t salen,
     char* host,
@@ -61,7 +61,7 @@ int oe_resolve_getnameinfo(
     return ret;
 }
 
-int oe_resolve_shutdown(int* err)
+int oe_posix_shutdown_resolver_device_ocall(int* err)
 {
     OE_UNUSED(err);
 

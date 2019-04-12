@@ -42,7 +42,7 @@ static void* epoll_wait_thread(void* arg_)
 
         OE_STATIC_ASSERT(sizeof(notifications[0]) == sizeof(ev[0]));
 
-        if (oe_polling_notify(
+        if (oe_posix_polling_notify_ecall(
                 (oe_enclave_t*)args->enclaveid,
                 &retval,
                 notifications,
@@ -101,7 +101,7 @@ static void* poll_wait_thread(void* arg_)
             }
         }
 
-        if (oe_polling_notify(
+        if (oe_posix_polling_notify_ecall(
                 (oe_enclave_t*)args->enclaveid,
                 &retval,
                 notifications,
@@ -124,7 +124,7 @@ OE_INLINE void _set_err(int* err, int num)
         *err = num;
 }
 
-int oe_polling_epoll_create1(int flags, int* err)
+int oe_posix_epoll_create1_ocall(int flags, int* err)
 {
     int ret = epoll_create1(flags);
 
@@ -134,7 +134,7 @@ int oe_polling_epoll_create1(int flags, int* err)
     return ret;
 }
 
-int oe_polling_epoll_wait(
+int oe_posix_epoll_wait_ocall(
     int64_t enclaveid,
     int epfd,
     struct epoll_event* events,
@@ -180,7 +180,7 @@ done:
     return ret;
 }
 
-int oe_polling_epoll_ctl_add(
+int oe_posix_epoll_ctl_add_ocall(
     int epfd,
     int fd,
     unsigned int event_mask,
@@ -208,7 +208,7 @@ int oe_polling_epoll_ctl_add(
     return ret;
 }
 
-int oe_polling_epoll_ctl_del(int epfd, int fd, int* err)
+int oe_posix_epoll_ctl_del_ocall(int epfd, int fd, int* err)
 {
     int ret = epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
 
@@ -218,7 +218,7 @@ int oe_polling_epoll_ctl_del(int epfd, int fd, int* err)
     return ret;
 }
 
-int oe_polling_epoll_ctl_mod(
+int oe_posix_epoll_ctl_mod_ocall(
     int epfd,
     int fd,
     unsigned int event_mask,
@@ -244,7 +244,7 @@ int oe_polling_epoll_ctl_mod(
     return ret;
 }
 
-int oe_polling_epoll_close(int fd, int* err)
+int oe_posix_epoll_close_ocall(int fd, int* err)
 {
     int ret = close(fd);
 
@@ -254,7 +254,7 @@ int oe_polling_epoll_close(int fd, int* err)
     return ret;
 }
 
-int oe_polling_shutdown_device(int fd, int* err)
+int oe_posix_shutdown_polling_device_ocall(int fd, int* err)
 {
     (void)fd;
     (void)err;
@@ -263,7 +263,7 @@ int oe_polling_shutdown_device(int fd, int* err)
     return -1;
 }
 
-int oe_polling_epoll_poll(
+int oe_posix_epoll_poll_ocall(
     int64_t enclaveid,
     int epfd,
     struct pollfd* fds,

@@ -6,7 +6,7 @@
 #include <windows.h>
 #include "oe_u.h"
 
-int oe_posix_uname(struct utsname* buf, int* err)
+int oe_posix_uname_ocall(struct utsname* buf, int* err)
 {
     int ret = -1;
 

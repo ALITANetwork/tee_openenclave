@@ -165,7 +165,8 @@ static oe_device_t* _hostsock_socket(
     if (domain == OE_AF_HOST)
         domain = OE_AF_INET;
 
-    if (oe_hostsock_socket(&retval, domain, type, protocol, &oe_errno) != OE_OK)
+    if (oe_posix_socket_ocall(&retval, domain, type, protocol, &oe_errno) !=
+        OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
@@ -215,8 +216,8 @@ static ssize_t _hostsock_socketpair(
         domain = OE_AF_INET;
 
     /* Call */
-    if (oe_hostsock_socketpair(&ret, domain, type, protocol, svs, &oe_errno) !=
-        OE_OK)
+    if (oe_posix_socketpair_ocall(
+            &ret, domain, type, protocol, svs, &oe_errno) != OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
@@ -287,7 +288,7 @@ static int _hostsock_connect(
     memcpy(&buf, addr, addrlen);
     _fix_address_family(&buf.addr);
 
-    if (oe_hostsock_connect(
+    if (oe_posix_connect_ocall(
             &ret,
             (int)sock->host_fd,
             (struct sockaddr*)&buf.addr,
@@ -336,7 +337,7 @@ static int _hostsock_accept(
         addrlen_in = *addrlen;
     }
 
-    if (oe_hostsock_accept(
+    if (oe_posix_accept_ocall(
             &ret,
             (int)sock->host_fd,
             (struct sockaddr*)&buf.addr,
@@ -380,7 +381,7 @@ static int _hostsock_bind(
     memcpy(&buf, addr, addrlen);
     _fix_address_family(&buf.addr);
 
-    if (oe_hostsock_bind(
+    if (oe_posix_bind_ocall(
             &ret,
             (int)sock->host_fd,
             (struct sockaddr*)&buf.addr,
@@ -409,7 +410,7 @@ static int _hostsock_listen(oe_device_t* sock_, int backlog)
         goto done;
     }
 
-    if (oe_hostsock_listen(&ret, (int)sock->host_fd, backlog, &oe_errno) !=
+    if (oe_posix_listen_ocall(&ret, (int)sock->host_fd, backlog, &oe_errno) !=
         OE_OK)
     {
         goto done;
@@ -441,7 +442,7 @@ static ssize_t _hostsock_recv(
     if (buf)
         memset(buf, 0, sizeof(count));
 
-    if (oe_hostsock_recv(
+    if (oe_posix_recv_ocall(
             &ret, (int)sock->host_fd, buf, count, flags, &oe_errno) != OE_OK)
     {
         oe_errno = EINVAL;
@@ -476,7 +477,7 @@ static ssize_t _hostsock_recvfrom(
     if (addrlen)
         addrlen_in = *addrlen;
 
-    if (oe_hostsock_recvfrom(
+    if (oe_posix_recvfrom_ocall(
             &ret,
             (int)sock->host_fd,
             buf,
@@ -531,7 +532,7 @@ static ssize_t _hostsock_recvmsg(
     }
 
     /* Receive the message. */
-    if (oe_hostsock_recvmsg(
+    if (oe_posix_recvmsg_ocall(
             &ret, (int)sock->host_fd, (struct msghdr*)host, flags, &oe_errno) !=
         OE_OK)
     {
@@ -571,7 +572,7 @@ static ssize_t _hostsock_send(
         goto done;
     }
 
-    if (oe_hostsock_send(
+    if (oe_posix_send_ocall(
             &ret, (int)sock->host_fd, buf, count, flags, &oe_errno) != OE_OK)
     {
         oe_errno = EINVAL;
@@ -603,7 +604,7 @@ static ssize_t _hostsock_sendto(
         goto done;
     }
 
-    if (oe_hostsock_sendto(
+    if (oe_posix_sendto_ocall(
             &ret,
             (int)sock->host_fd,
             buf,
@@ -662,7 +663,7 @@ static ssize_t _hostsock_sendmsg(
         goto done;
     }
 
-    if (oe_hostsock_sendmsg(
+    if (oe_posix_sendmsg_ocall(
             &ret,
             (int)sock->host_fd,
             (const struct msghdr*)msg,
@@ -694,7 +695,7 @@ static int _hostsock_close(oe_device_t* sock_)
         goto done;
     }
 
-    if (oe_hostsock_close(&ret, (int)sock->host_fd, &oe_errno) != OE_OK)
+    if (oe_posix_close_ocall(&ret, (int)sock->host_fd, &oe_errno) != OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
@@ -721,7 +722,7 @@ static int _hostsock_fcntl(oe_device_t* sock_, int cmd, int arg)
         goto done;
     }
 
-    if (oe_hostsock_fcntl(&ret, (int)sock->host_fd, cmd, arg, &oe_errno) !=
+    if (oe_posix_fcntl_ocall(&ret, (int)sock->host_fd, cmd, arg, &oe_errno) !=
         OE_OK)
     {
         oe_errno = EINVAL;
@@ -749,7 +750,7 @@ static int _hostsock_dup(oe_device_t* sock_, oe_device_t** new_sock)
         goto done;
     }
 
-    if (oe_hostsock_dup(&ret, (int)sock->host_fd, &oe_errno) != OE_OK)
+    if (oe_posix_dup_ocall(&ret, (int)sock->host_fd, &oe_errno) != OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
@@ -800,7 +801,7 @@ static int _hostsock_getsockopt(
     if (optlen)
         optlen_in = *optlen;
 
-    if (oe_hostsock_getsockopt(
+    if (oe_posix_getsockopt_ocall(
             &ret,
             (int)sock->host_fd,
             level,
@@ -838,7 +839,7 @@ static int _hostsock_setsockopt(
         goto done;
     }
 
-    if (oe_hostsock_setsockopt(
+    if (oe_posix_setsockopt_ocall(
             &ret,
             (int)sock->host_fd,
             level,
@@ -889,7 +890,7 @@ static int _hostsock_getpeername(
     if (addrlen)
         addrlen_in = *addrlen;
 
-    if (oe_hostsock_getpeername(
+    if (oe_posix_getpeername_ocall(
             &ret,
             (int)sock->host_fd,
             (struct sockaddr*)addr,
@@ -926,7 +927,7 @@ static int _hostsock_getsockname(
     if (addrlen)
         addrlen_in = *addrlen;
 
-    if (oe_hostsock_getsockname(
+    if (oe_posix_getsockname_ocall(
             &ret,
             (int)sock->host_fd,
             (struct sockaddr*)addr,
@@ -970,7 +971,8 @@ static int _hostsock_socket_shutdown(oe_device_t* sock_, int how)
         goto done;
     }
 
-    if (oe_hostsock_shutdown(&ret, (int)sock->host_fd, how, &oe_errno) != OE_OK)
+    if (oe_posix_shutdown_ocall(&ret, (int)sock->host_fd, how, &oe_errno) !=
+        OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
@@ -996,8 +998,8 @@ static int _hostsock_shutdown_device(oe_device_t* sock_)
         goto done;
     }
 
-    if (oe_hostsock_shutdown_device(&ret, (int)sock->host_fd, &oe_errno) !=
-        OE_OK)
+    if (oe_posix_shutdown_sockets_device_ocall(
+            &ret, (int)sock->host_fd, &oe_errno) != OE_OK)
     {
         oe_errno = EINVAL;
         goto done;

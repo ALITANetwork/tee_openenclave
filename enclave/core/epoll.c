@@ -462,7 +462,7 @@ int oe_get_epoll_events(
 // of handle notification calls in rapid succesion. This could raise needless
 // synchronisaion issues. Instead, we send the list and notify the list, the
 // push the doorbell
-int oe_polling_notify(
+int oe_posix_polling_notify_ecall(
     oe_device_notifications_t* notifications,
     size_t num_notifications)
 {

@@ -18,7 +18,10 @@
 
 #define SERVER_PORT "12345"
 
-oe_result_t oe_signal_notify(oe_enclave_t* enclave, int* _retval, int signum);
+oe_result_t oe_posix_signal_notify_ecall(
+    oe_enclave_t* enclave,
+    int* _retval,
+    int signum);
 
 void sigusr2_handler(int signum)
 {
@@ -34,7 +37,7 @@ void* host_signal_thread(void* arg)
 
     while (!*done)
     {
-        (void)oe_signal_notify(client_enclave, &ret, SIGUSR1);
+        (void)oe_posix_signal_notify_ecall(client_enclave, &ret, SIGUSR1);
         sleep(3);
     };
 

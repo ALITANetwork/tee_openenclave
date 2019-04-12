@@ -9,7 +9,7 @@ int oe_uname(struct oe_utsname* buf)
 {
     int ret = -1;
 
-    if (oe_posix_uname(&ret, (struct utsname*)buf, &oe_errno) != OE_OK)
+    if (oe_posix_uname_ocall(&ret, (struct utsname*)buf, &oe_errno) != OE_OK)
         goto done;
 
 done:

@@ -294,7 +294,8 @@ static oe_device_t* _hostfs_open_file(
         if (_expand_path(fs, pathname, full_pathname) != 0)
             goto done;
 
-        if (oe_hostfs_open(&retval, full_pathname, flags, mode, &err) != OE_OK)
+        if (oe_posix_open_ocall(&retval, full_pathname, flags, mode, &err) !=
+            OE_OK)
         {
             oe_errno = EINVAL;
             goto done;
@@ -437,7 +438,7 @@ static int _hostfs_dup(oe_device_t* file_, oe_device_t** new_file)
         int err = 0;
         int retval = -1;
 
-        if (oe_hostfs_dup(&retval, file->host_fd, &err) != OE_OK)
+        if (oe_posix_dup_ocall(&retval, file->host_fd, &err) != OE_OK)
         {
             oe_errno = EINVAL;
             goto done;
@@ -485,7 +486,8 @@ static ssize_t _hostfs_read(oe_device_t* file_, void* buf, size_t count)
     }
 
     /* Call the host. */
-    if (oe_hostfs_read(&ret, file->host_fd, buf, count, &oe_errno) != OE_OK)
+    if (oe_posix_read_ocall(&ret, file->host_fd, buf, count, &oe_errno) !=
+        OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
@@ -558,7 +560,7 @@ static ssize_t _hostfs_write(oe_device_t* file, const void* buf, size_t count)
     }
 
     /* Call the host. */
-    if (oe_hostfs_write(&ret, f->host_fd, buf, count, &oe_errno) != OE_OK)
+    if (oe_posix_write_ocall(&ret, f->host_fd, buf, count, &oe_errno) != OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
@@ -582,7 +584,8 @@ static off_t _hostfs_lseek_file(oe_device_t* file, off_t offset, int whence)
         goto done;
     }
 
-    if (oe_hostfs_lseek(&ret, f->host_fd, offset, whence, &oe_errno) != OE_OK)
+    if (oe_posix_lseek_ocall(&ret, f->host_fd, offset, whence, &oe_errno) !=
+        OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
@@ -603,7 +606,7 @@ static int _hostfs_rewinddir(oe_device_t* dir_)
         goto done;
     }
 
-    oe_hostfs_rewinddir(dir->host_dir);
+    oe_posix_rewinddir_ocall(dir->host_dir);
 
     ret = 0;
 
@@ -676,7 +679,7 @@ static int _hostfs_close_file(oe_device_t* file)
         goto done;
     }
 
-    if (oe_hostfs_close(&ret, f->host_fd, &oe_errno) != OE_OK)
+    if (oe_posix_close_ocall(&ret, f->host_fd, &oe_errno) != OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
@@ -786,7 +789,7 @@ static oe_device_t* _hostfs_opendir(oe_device_t* fs_, const char* name)
     if (_expand_path(fs, name, full_name) != 0)
         goto done;
 
-    if (oe_hostfs_opendir(&retval, full_name, &oe_errno) != OE_OK)
+    if (oe_posix_opendir_ocall(&retval, full_name, &oe_errno) != OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
@@ -822,7 +825,7 @@ static struct oe_dirent* _hostfs_readdir(oe_device_t* dir)
     struct oe_dirent* ret = NULL;
     dir_t* d = _cast_dir(dir);
     int retval = -1;
-    struct oe_hostfs_dirent_struct buf;
+    struct oe_posix_dirent buf;
 
     if (!d)
     {
@@ -830,7 +833,7 @@ static struct oe_dirent* _hostfs_readdir(oe_device_t* dir)
         goto done;
     }
 
-    if (oe_hostfs_readdir(&retval, d->host_dir, &buf, &oe_errno) != OE_OK)
+    if (oe_posix_readdir_ocall(&retval, d->host_dir, &buf, &oe_errno) != OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
@@ -868,7 +871,7 @@ static int _hostfs_closedir(oe_device_t* dir)
         goto done;
     }
 
-    if (oe_hostfs_closedir(&retval, d->host_dir, &oe_errno) != OE_OK)
+    if (oe_posix_closedir_ocall(&retval, d->host_dir, &oe_errno) != OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
@@ -891,7 +894,7 @@ static int _hostfs_stat(
 {
     int ret = -1;
     fs_t* fs = _cast_fs(fs_);
-    struct oe_hostfs_stat_struct st;
+    struct oe_posix_stat st;
     char full_pathname[OE_PATH_MAX];
 
     if (buf)
@@ -906,7 +909,7 @@ static int _hostfs_stat(
     if (_expand_path(fs, pathname, full_pathname) != 0)
         goto done;
 
-    if (oe_hostfs_stat(&ret, full_pathname, &st, &oe_errno) != OE_OK)
+    if (oe_posix_stat_ocall(&ret, full_pathname, &st, &oe_errno) != OE_OK)
     {
         goto done;
     }
@@ -956,7 +959,7 @@ static int _hostfs_access(oe_device_t* fs_, const char* pathname, int mode)
     if (_expand_path(fs, pathname, full_pathname) != 0)
         goto done;
 
-    if (oe_hostfs_access(&ret, full_pathname, mode, &oe_errno) != OE_OK)
+    if (oe_posix_access_ocall(&ret, full_pathname, mode, &oe_errno) != OE_OK)
         goto done;
 
 done:
@@ -994,7 +997,8 @@ static int _hostfs_link(
     if (_expand_path(fs, newpath, full_newpath) != 0)
         goto done;
 
-    if (oe_hostfs_link(&ret, full_oldpath, full_newpath, &oe_errno) != OE_OK)
+    if (oe_posix_link_ocall(&ret, full_oldpath, full_newpath, &oe_errno) !=
+        OE_OK)
         goto done;
 
 done:
@@ -1025,7 +1029,7 @@ static int _hostfs_unlink(oe_device_t* fs_, const char* pathname)
     if (_expand_path(fs, pathname, full_pathname) != 0)
         goto done;
 
-    if (oe_hostfs_unlink(&ret, full_pathname, &oe_errno) != OE_OK)
+    if (oe_posix_unlink_ocall(&ret, full_pathname, &oe_errno) != OE_OK)
         goto done;
 
 done:
@@ -1063,7 +1067,8 @@ static int _hostfs_rename(
     if (_expand_path(fs, newpath, full_newpath) != 0)
         goto done;
 
-    if (oe_hostfs_rename(&ret, full_oldpath, full_newpath, &oe_errno) != OE_OK)
+    if (oe_posix_rename_ocall(&ret, full_oldpath, full_newpath, &oe_errno) !=
+        OE_OK)
         goto done;
 
 done:
@@ -1094,7 +1099,7 @@ static int _hostfs_truncate(oe_device_t* fs_, const char* path, off_t length)
     if (_expand_path(fs, path, full_path) != 0)
         goto done;
 
-    if (oe_hostfs_truncate(&ret, full_path, length, &oe_errno) != OE_OK)
+    if (oe_posix_truncate_ocall(&ret, full_path, length, &oe_errno) != OE_OK)
         goto done;
 
 done:
@@ -1125,7 +1130,7 @@ static int _hostfs_mkdir(oe_device_t* fs_, const char* pathname, mode_t mode)
     if (_expand_path(fs, pathname, full_pathname) != 0)
         goto done;
 
-    if (oe_hostfs_mkdir(&ret, full_pathname, mode, &oe_errno) != OE_OK)
+    if (oe_posix_mkdir_ocall(&ret, full_pathname, mode, &oe_errno) != OE_OK)
         goto done;
 
 done:
@@ -1156,7 +1161,7 @@ static int _hostfs_rmdir(oe_device_t* fs_, const char* pathname)
     if (_expand_path(fs, pathname, full_pathname) != 0)
         goto done;
 
-    if (oe_hostfs_rmdir(&ret, full_pathname, &oe_errno) != OE_OK)
+    if (oe_posix_rmdir_ocall(&ret, full_pathname, &oe_errno) != OE_OK)
         goto done;
 
 done:

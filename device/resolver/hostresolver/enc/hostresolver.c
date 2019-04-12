@@ -96,7 +96,7 @@ static ssize_t _hostresolv_getnameinfo(
 
     oe_errno = 0;
 
-    if (oe_resolve_getnameinfo(
+    if (oe_posix_getnameinfo_ocall(
             &ret,
             (const struct sockaddr*)sa,
             salen,
@@ -137,7 +137,7 @@ static int _hostresolv_getaddrinfo_r(
 
     oe_errno = 0;
 
-    if (oe_resolve_getaddrinfo(
+    if (oe_posix_getaddrinfo_ocall(
             &retval,
             node,
             service,
@@ -182,7 +182,7 @@ done:
     if (res)
     {
         /* Ask host to release the result buffer. */
-        if (oe_resolve_freeaddrinfo((struct addrinfo*)res) != OE_OK)
+        if (oe_posix_freeaddrinfo_ocall((struct addrinfo*)res) != OE_OK)
             goto done;
     }
 
@@ -203,7 +203,7 @@ static int _hostresolv_shutdown(oe_resolver_t* resolv_)
         goto done;
     }
 
-    if (oe_resolve_shutdown(&ret, &oe_errno) != OE_OK)
+    if (oe_posix_shutdown_resolver_device_ocall(&ret, &oe_errno) != OE_OK)
     {
         oe_errno = EINVAL;
         goto done;
