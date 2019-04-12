@@ -17,7 +17,6 @@ if (OE_SGX)
         sgx/atexit.c
         sgx/backtrace.c
         sgx/calls.c
-        sgx/console.c
         sgx/cpuid.c
         sgx/debugmalloc.c
         sgx/entropy.c
@@ -77,6 +76,7 @@ add_library(oecore STATIC
     ${MUSL_SRC_DIR}/string/memcpy.c
     ${MUSL_SRC_DIR}/string/memmove.c
     ${MUSL_SRC_DIR}/string/memset.c
+    posix/console.c
     posix/cwd.c
     posix/device.c
     posix/epoll.c
