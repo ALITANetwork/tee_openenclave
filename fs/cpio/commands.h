@@ -7,7 +7,7 @@
 #include <openenclave/bits/defs.h>
 #include <openenclave/bits/types.h>
 #include <openenclave/internal/fs.h>
-#include "../common/strarr.h"
+#include "strarr.h"
 
 OE_EXTERNC_BEGIN
 

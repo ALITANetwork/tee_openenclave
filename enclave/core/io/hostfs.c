@@ -21,16 +21,6 @@
 /*
 **==============================================================================
 **
-** host batch:
-**
-**==============================================================================
-*/
-
-static oe_spinlock_t _lock;
-
-/*
-**==============================================================================
-**
 ** hostfs operations:
 **
 **==============================================================================
@@ -763,7 +753,7 @@ static int _hostfs_ioctl(
 
 static int _hostfs_fcntl(oe_device_t* file, int cmd, int arg)
 {
-    // TODO: need to add this for fs
+    // ATTN:IO: need to add this for fs
     /* Unsupported */
     oe_errno = ENOTTY;
     (void)file;

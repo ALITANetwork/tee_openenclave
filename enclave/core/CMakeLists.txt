@@ -27,11 +27,6 @@ if (OE_SGX)
         sgx/globals.c
         sgx/globals.c
         sgx/hostcalls.c
-        sgx/hostfs.c
-        sgx/hostsock.c
-        sgx/hostresolver.c
-        sgx/hostepoll.c
-        sgx/eventfd.c
         sgx/init.c
         sgx/jump.c
         sgx/keys.c
@@ -83,6 +78,11 @@ add_library(oecore STATIC
     ${MUSL_SRC_DIR}/string/memcpy.c
     ${MUSL_SRC_DIR}/string/memmove.c
     ${MUSL_SRC_DIR}/string/memset.c
+    io/hostfs.c
+    io/hostepoll.c
+    io/hostresolver.c
+    io/hostsock.c
+    io/eventfd.c
     __secs_to_tm.c
     __stack_chk_fail.c
     array.c

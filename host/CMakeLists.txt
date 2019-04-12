@@ -19,10 +19,6 @@ if (UNIX)
     ../common/cert.c
     ${CMAKE_CURRENT_BINARY_DIR}/oe_u.c # __feature_io__
     files.c # __feature_io__
-    hostepoll.c # __feature_io__
-    hostfs.c # __feature_io__
-    hostsock.c # __feature_io__
-    hostresolver.c # __feature_io__
     crypto/openssl/asn1.c
     crypto/openssl/cert.c
     crypto/openssl/crl.c
@@ -32,10 +28,9 @@ if (UNIX)
     crypto/openssl/key.c
     crypto/openssl/random.c
     crypto/openssl/rsa.c
-    linux/hostepoll.c
     linux/hostuid.c
     linux/hostthread.c
-    linux/signal.c
+    linux/posix.c
     linux/time.c
     linux/uname.c
     linux/windows.c)
@@ -125,10 +120,6 @@ add_library(oehost STATIC
   error.c
   # __feature_io__: - ${CMAKE_CURRENT_BINARY_DIR}/oe_u.c
   # __feature_io__: - files.c
-  # __feature_io__: - hostepoll.c
-  # __feature_io__: - hostfs.c
-  # __feature_io__: - hostsock.c
-  # __feature_io__: - hostresolver.c
   fopen.c
   hexdump.c
   memalign.c

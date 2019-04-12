@@ -21,8 +21,6 @@
 #include <openenclave/internal/typeinfo.h>
 #include "oe_t.h"
 
-static oe_spinlock_t _lock;
-
 /*
 **==============================================================================
 **

@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
-#include "../common/strarr.h"
+#include "strarr.h"
 #include "trace.h"
 
 int oe_lsr(const char* root, oe_strarr_t* paths)

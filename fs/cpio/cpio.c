@@ -18,7 +18,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "../common/strarr.h"
+#include "strarr.h"
 #include "strings.h"
 #include "trace.h"
 #include "utils.h"

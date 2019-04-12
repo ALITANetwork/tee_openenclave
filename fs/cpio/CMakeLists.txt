@@ -1,11 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-add_library(oecpio STATIC
-    ../common/buf.c
-    commands.c
-    cpio.c
-    ../common/strarr.c)
+add_library(oecpio STATIC commands.c cpio.c strarr.c)
 
 target_include_directories(oecpio PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)

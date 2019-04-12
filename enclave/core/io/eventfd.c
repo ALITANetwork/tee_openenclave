@@ -17,21 +17,6 @@
 #include <openenclave/corelibc/stdlib.h>
 #include <openenclave/corelibc/string.h>
 
-void* memcpy(void* to, const void* from, size_t size);
-/*
-**==============================================================================
-**
-** host batch:
-**
-**==============================================================================
-*/
-
-#if 0
-static void _atexit_handler()
-{
-}
-#endif
-
 /*
 **==============================================================================
 **
