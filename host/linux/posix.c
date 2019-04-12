@@ -309,8 +309,6 @@ int oe_posix_rmdir_ocall(const char* pathname, int* err)
 **==============================================================================
 */
 
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-
 int oe_posix_socket_ocall(int domain, int type, int protocol, int* err)
 {
     int ret = socket(domain, type, protocol);
@@ -409,6 +407,7 @@ int oe_posix_listen_ocall(int sockfd, int backlog, int* err)
     return ret;
 }
 
+/* ATTN:IO: need test for this function. */
 ssize_t oe_posix_recvmsg_ocall(
     int sockfd,
     struct msghdr* msg,
@@ -429,6 +428,7 @@ done:
     return ret;
 }
 
+/* ATTN:IO: need test for this function. */
 ssize_t oe_posix_sendmsg_ocall(
     int sockfd,
     const struct msghdr* msg,
@@ -464,6 +464,7 @@ ssize_t oe_posix_recv_ocall(
     return ret;
 }
 
+/* ATTN:IO: need test for this function. */
 ssize_t oe_posix_recvfrom_ocall(
     int sockfd,
     void* buf,
@@ -506,6 +507,7 @@ ssize_t oe_posix_send_ocall(
     return ret;
 }
 
+/* ATTN:IO: need test for this function. */
 ssize_t oe_posix_sendto_ocall(
     int sockfd,
     const void* buf,
@@ -644,14 +646,12 @@ int oe_posix_getpeername_ocall(
 
 int oe_posix_shutdown_sockets_device_ocall(int sockfd, int* err)
 {
+    /* No shutdown actions needed for this device. */
+
     if (err)
-        *err = EINVAL;
+        *err = 0;
 
-    (void)sockfd;
-
-    /* ATTN:IO: implement or remove. */
-
-    return -1;
+    return 0;
 }
 
 /*
@@ -737,9 +737,11 @@ int oe_posix_getnameinfo_ocall(
 
 int oe_posix_shutdown_resolver_device_ocall(int* err)
 {
-    OE_UNUSED(err);
+    /* No shutdown actions needed for this device. */
 
-    /* ATTN:IO: implement this. */
+    if (err)
+        *err = 0;
+
     return 0;
 }
 
@@ -884,7 +886,7 @@ int oe_posix_epoll_wait_ocall(
     (void)events;
     (void)timeout;
 
-    /* ATTN:IO: how does this work without using the events parameter. */
+    /* ATTN:IO: how does this work without using the events parameter? */
 
     eventsize = sizeof(struct oe_epoll_event) * maxevents;
 
@@ -988,13 +990,16 @@ int oe_posix_epoll_close_ocall(int fd, int* err)
     return ret;
 }
 
+/* ATTN:IO: never called. */
 int oe_posix_shutdown_polling_device_ocall(int fd, int* err)
 {
-    (void)fd;
-    (void)err;
+    OE_UNUSED(fd);
+    OE_UNUSED(err);
 
-    /* ATTN:IO: implement this */
-    return -1;
+    if (err)
+        *err = 0;
+
+    return 0;
 }
 
 int oe_posix_epoll_poll_ocall(
