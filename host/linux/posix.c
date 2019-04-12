@@ -647,7 +647,7 @@ int oe_posix_getpeername_ocall(
 int oe_posix_shutdown_sockets_device_ocall(int sockfd, int* err)
 {
     /* No shutdown actions needed for this device. */
-
+    (void)sockfd;
     if (err)
         *err = 0;
 
