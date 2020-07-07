@@ -5,9 +5,13 @@ Header | Supported | Comments |
 assert.h | Yes | - |
 complex.h | Partial | **Unsupported functions:** cacos(), cacosh(), cacoshl(), cacosl(), casin(), casinh(), casinhl(), casinl(), csqrt(), csqrtl(), cpow(), cpowf(), cpowl() |
 ctype.h | Partial | Only basic support for C/POSIX locale. |
+dirent.h | Partial |  Functions implictly call out to untrusted host. <br> **Supported functions:** opendir(), readdir(), rewinddir(), closedir(), mkdir(), rmdir() |
 errno.h | Yes | - |
+epoll.h | Partial | Functions implictly call out to untrusted host. <br> Full support on Linux hosts. <br> Unsupported on Windows hosts. |
 execinfo.h | Partial | **Supported functions:** backtrace(), backtrace_symbols(). <br> Enclaves must be compiled with `-fno-omit-frame-pointer` for accurate backtraces. |
+fcntl.h | Partial | Functions implictly call out to untrusted host. <br> **Supported functions on Linux hosts:** fcntl(), open() <br> **Experimental support on Windows for the following**: fnctl() (Only for sockets with F_GETFL to check if a socket is blocking), open() (Only supported for files) |
 fenv.h | Yes | - |
+file.h | Partial | Functions implictly call out to untrusted host. <br> **Supported functions on Linux hosts:** flock() <br> Unsupported on Windows hosts |
 float.h | Yes | - |
 inttypes.h | Yes | - |
 iso646.h | Yes | - |
@@ -15,8 +19,11 @@ limits.h | Yes | - |
 locale.h | Partial | Only basic support for C/POSIX locale |
 malloc.h | Partial | - |
 math.h | Partial | **Unsupported functions:** fmal(), tgamma() |
+netdb.h | Partial | Functions implicitly call out to untrusted host. **Supported functions:** getaddrinfo(), freeaddrinfo(), getnameinfo() |
+poll.h | Partial | Functions implicitly call out to untrusted host <br> Full support on Linux hosts. <br> Unsupported on Windows hosts |
 setjmp.h | Yes | - |
 signal.h | No | - |
+socket.h | Partial | Functions implicitly call out to untrusted host <br> Full support available on Linux hosts<br> **Unsupported functions on Windows hosts:**  recvmsg(), sendmsg(), socketpair()
 stdalign.h | No | - |
 stdarg.h | Yes | - |
 stdatomic.h | No | - |
@@ -32,6 +39,8 @@ pthread.h | Partial | Synchronization primitives are not secure across calls to 
 threads.h | No | - |
 time.h | Partial | All time functions implicitly call out to untrusted host for time values. The resulting time values should not be used for security purposes. <br> **Supported functions:** time(), gettimeofday(), clock_gettime(), nanosleep(). _Please note that clock_gettime() only supports CLOCK_REALTIME_ |
 uchar.h | Yes | - |
+unistd.h | Partial | All functions implicitly call out to untrusted host. <br>**Supported functions on Linux hosts:** read(), write(), pread(), pwrite(), open(), lseek(), close(),stat(), access(), link(), unlink(), rename(), truncate(), dup(), getpid(), getppid(), getpgrp(), getuid(), geteuid(), getgid(), getegid(), getpgid(), getgroups() <br> **Supported functions on Windows hosts (Note: support is experimental currently):** <br>_read()*_, _write()*_, _open()*_, _lseek()*_, _close()*_, _stat()_, _access()_, _link()_, _unlink()_, _rename()_, _truncate()_, _dup()_  <br> * Only supported for files|
 wchar.h | Partial | Only basic support for C/POSIX locale. <br> **Unsupported functions:** <br> - All I/O (e.g. swprintf()) <br> - All multi-byte & wide string conversions (e.g. mbrtowc()) |
+utsname.h | Yes | - |
 wctype.h | Yes | - |
 
