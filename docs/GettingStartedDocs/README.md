@@ -30,7 +30,6 @@ platforms. If you're just getting started, you can compile and test your apps
 without an enclave, or you can use one of
 the hardware types below.
 
-
 ### Intel SGX
 
 If you would like to start developing apps with the preview Open Enclave SDK
